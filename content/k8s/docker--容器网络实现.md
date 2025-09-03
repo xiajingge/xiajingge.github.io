@@ -2,7 +2,7 @@
 date = '2025-05-14T21:22:23+08:00'
 title = "docker--容器网络实现"
 tags = ["docker","network"]
-categories = ["kubernetes","docker"]
+categories = ["k8s","docker"]
 +++
 
 

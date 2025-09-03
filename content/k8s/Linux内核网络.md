@@ -1,8 +1,8 @@
 +++
 date = '2025-05-13T19:56:15+08:00'
 title = "k8s网络之Linux内核网络"
-tags = ["kubernetes","k8s","Linux"]
-categories = ["kubernetes","k8s"]
+tags = ["k8s","Linux"]
+categories = ["k8s","k8s"]
 +++
 
 Kubernetes 的网络是构建在 Linux 内核网络能力之上的一个具体应用和策略集。

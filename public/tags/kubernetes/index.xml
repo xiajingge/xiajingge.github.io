@@ -6,17 +6,8 @@
     <description>记录 Go、AI、中间件与后端开发的技术博客</description>
     <generator>Hugo 0.163.1 &amp; FixIt v0.4.5</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Tue, 13 May 2025 19:56:15 +0800</lastBuildDate>
+    <lastBuildDate>Fri, 22 Nov 2024 17:35:53 +0800</lastBuildDate>
     <atom:link href="http://localhost:1313/tags/kubernetes/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>k8s网络之Linux内核网络</title>
-      <link>http://localhost:1313/k8s/linux%E5%86%85%E6%A0%B8%E7%BD%91%E7%BB%9C/</link>
-      <pubDate>Tue, 13 May 2025 19:56:15 +0800</pubDate>
-      <guid>http://localhost:1313/k8s/linux%E5%86%85%E6%A0%B8%E7%BD%91%E7%BB%9C/</guid>
-      <category domain="http://localhost:1313/categories/kubernetes/">Kubernetes</category>
-      <category domain="http://localhost:1313/categories/k8s/">K8s</category>
-      <description>&lt;p&gt;Kubernetes 的网络是构建在 Linux 内核网络能力之上的一个具体应用和策略集。&#xA;可以把 Linux 内核网络看作操作系统的“网络能力库”，而 Kubernetes 网络则是一个使用这些能力搭建的“网络解决方案”。它们的关系可以这样理解：&lt;/p&gt;</description>
-    </item>
     <item>
       <title>部署：使用kind安装k8s</title>
       <link>http://localhost:1313/k8s/%E9%83%A8%E7%BD%B2%E4%BD%BF%E7%94%A8kind%E5%AE%89%E8%A3%85k8s/</link>
