@@ -1,26 +1,19 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
-    <title>cubxxw is blog</title>
-    <link>http://localhost:1313/</link>
-    <description>Recent content on cubxxw is blog</description>
+    <title>Pres on cubxxw is blog</title>
+    <link>http://localhost:1313/pre/</link>
+    <description>Recent content in Pres on cubxxw is blog</description>
     <generator>Hugo -- 0.155.2</generator>
     <language>en-us</language>
     <lastBuildDate>Mon, 09 Feb 2026 16:40:57 +0800</lastBuildDate>
-    <atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://localhost:1313/pre/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Fit</title>
       <link>http://localhost:1313/pre/fit/</link>
       <pubDate>Mon, 09 Feb 2026 16:40:57 +0800</pubDate>
       <guid>http://localhost:1313/pre/fit/</guid>
       <description>&lt;p&gt;泽宝&lt;/p&gt;</description>
-    </item>
-    <item>
-      <title>My First Post</title>
-      <link>http://localhost:1313/posts/my-first-post/</link>
-      <pubDate>Mon, 09 Feb 2026 15:57:24 +0800</pubDate>
-      <guid>http://localhost:1313/posts/my-first-post/</guid>
-      <description>&lt;p&gt;自定义文章&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>
