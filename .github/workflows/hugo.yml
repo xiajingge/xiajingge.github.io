@@ -1,0 +1,70 @@
+name: Deploy Hugo site to GitHub Pages
+
+on:
+  # 当推送到 main 分支时触发部署
+  push:
+    branches:
+      - main
+  # 允许手动触发工作流
+  workflow_dispatch:
+
+# 设置 GITHUB_TOKEN 权限，以允许部署到 GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 只允许一个并发部署，跳过正在运行中的队列
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+# 默认的运行环境
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  # 构建 Hugo 站点的任务
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true  # 获取 Hugo 主题
+          fetch-depth: 0    # 获取所有历史记录和标签
+
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v2
+        with:
+          hugo-version: 'latest'
+          extended: true    # 启用 Hugo 扩展版本
+
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v4
+
+      - name: Build with Hugo
+        env:
+          # 使用 GitHub Pages URL 作为基本 URL
+          HUGO_BASEURL: ${{ steps.pages.outputs.base_url }}/
+        run: |
+          hugo --minify
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./public
+
+  # 部署到 GitHub Pages 的任务
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4 
