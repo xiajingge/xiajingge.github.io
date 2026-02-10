@@ -1,8 +1,8 @@
 +++
 date = '2026-02-10T22:03:52+08:00'
-title = "Uber-fx依赖注入"
-tags = [go]
-categories = [go]
+title = "fx 依赖注入"
+tags = ["go", "依赖注入", "框架"]
+categories = ["go","后端开发"]
 
 +++
 

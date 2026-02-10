@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
-    <title>cubxxw is blog</title>
-    <link>http://localhost:1313/</link>
-    <description>Recent content on cubxxw is blog</description>
+    <title>Go on cubxxw is blog</title>
+    <link>http://localhost:1313/categories/go/</link>
+    <description>Recent content in Go on cubxxw is blog</description>
     <generator>Hugo -- 0.155.2</generator>
     <language>en-us</language>
     <lastBuildDate>Tue, 10 Feb 2026 22:03:52 +0800</lastBuildDate>
-    <atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://localhost:1313/categories/go/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>fx 依赖注入</title>
+      <title>Uber-fx依赖注入</title>
       <link>http://localhost:1313/go/uber-fx/</link>
       <pubDate>Tue, 10 Feb 2026 22:03:52 +0800</pubDate>
       <guid>http://localhost:1313/go/uber-fx/</guid>
@@ -43,13 +43,6 @@
 &lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
 &lt;li&gt;
 &lt;p&gt;&lt;strong&gt;New&lt;/strong&gt;&lt;/p&gt;</description>
-    </item>
-    <item>
-      <title>My First Post</title>
-      <link>http://localhost:1313/posts/my-first-post/</link>
-      <pubDate>Mon, 09 Feb 2026 15:57:24 +0800</pubDate>
-      <guid>http://localhost:1313/posts/my-first-post/</guid>
-      <description>&lt;p&gt;自定义文章&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>
