@@ -32,6 +32,10 @@ minifyOutput = true
   imageTitle = "my image"
 # 仅在 Profile Mode 禁用时显示
     [[params.profileMode.buttons]]
+    name = "go"
+    url = "go"
+	
+    [[params.profileMode.buttons]]
     name = "Posts"
     url = "posts"
 
