@@ -29,5 +29,19 @@
       <guid>http://localhost:1313/tags/%E6%A1%86%E6%9E%B6/</guid>
       <description></description>
     </item>
+    <item>
+      <title>Goroutine</title>
+      <link>http://localhost:1313/tags/goroutine/</link>
+      <pubDate>Thu, 08 May 2025 23:50:52 +0800</pubDate>
+      <guid>http://localhost:1313/tags/goroutine/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>协程</title>
+      <link>http://localhost:1313/tags/%E5%8D%8F%E7%A8%8B/</link>
+      <pubDate>Thu, 08 May 2025 23:50:52 +0800</pubDate>
+      <guid>http://localhost:1313/tags/%E5%8D%8F%E7%A8%8B/</guid>
+      <description></description>
+    </item>
   </channel>
 </rss>
