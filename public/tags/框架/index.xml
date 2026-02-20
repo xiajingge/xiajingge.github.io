@@ -6,12 +6,12 @@
     <description>Recent content in 框架 on cubxxw is blog</description>
     <generator>Hugo -- 0.155.2</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 10 Feb 2026 22:03:52 +0800</lastBuildDate>
+    <lastBuildDate>Mon, 10 Feb 2025 22:03:52 +0800</lastBuildDate>
     <atom:link href="http://localhost:1313/tags/%E6%A1%86%E6%9E%B6/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>fx 依赖注入</title>
       <link>http://localhost:1313/go/uber-fx/</link>
-      <pubDate>Tue, 10 Feb 2026 22:03:52 +0800</pubDate>
+      <pubDate>Mon, 10 Feb 2025 22:03:52 +0800</pubDate>
       <guid>http://localhost:1313/go/uber-fx/</guid>
       <description>&lt;h1 id=&#34;fx依赖注入&#34;&gt;fx依赖注入&lt;/h1&gt;
 &lt;h2 id=&#34;简介&#34;&gt;简介&lt;/h2&gt;

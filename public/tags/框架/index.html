@@ -9,7 +9,7 @@ func main() { var x NewC fx.New( fx.Provide(NewA, NewB, NewC), fx.Populate(&amp;
 所以，我们使用 Provide 向fx注入构造函数时，注入顺序并不重要。
 函数签名 这里会列出fx的主要的函数和方法，并对作用做出简要解释。
 func New(opts ...Option) *App func Provide(constructors ...interface{}) Option func Supply(values ...interface{}) Option func Populate(targets ...interface{}) Option func Invoke(funcs ...interface{}) Option New
-...</p></div><footer class=entry-footer><span title='2026-02-10 22:03:52 +0800 CST'>February 10, 2026</span></footer><a class=entry-link aria-label="post link to fx 依赖注入" href=http://localhost:1313/go/uber-fx/></a></article></main><footer class=footer><span>&copy; 2026 <a href=http://localhost:1313/>cubxxw is blog</a></span> ·
+...</p></div><footer class=entry-footer><span title='2025-02-10 22:03:52 +0800 CST'>February 10, 2025</span></footer><a class=entry-link aria-label="post link to fx 依赖注入" href=http://localhost:1313/go/uber-fx/></a></article></main><footer class=footer><span>&copy; 2026 <a href=http://localhost:1313/>cubxxw is blog</a></span> ·
 <span>Powered by
 <a href=https://gohugo.io/ rel="noopener noreferrer" target=_blank>Hugo</a> &
 <a href=https://github.com/adityatelange/hugo-PaperMod/ rel=noopener target=_blank>PaperMod</a></span></footer><a href=#top aria-label="go to top" title="Go to Top (Alt + G)" class=top-link id=top-link accesskey=g><svg viewBox="0 0 12 6" fill="currentColor"><path d="M12 6H0l6-6z"/></svg>
