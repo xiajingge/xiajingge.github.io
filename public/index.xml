@@ -16,6 +16,86 @@
       <description>&lt;p&gt;自定义文章&lt;/p&gt;</description>
     </item>
     <item>
+      <title>ES从入门到精通一篇</title>
+      <link>http://localhost:1313/middleware/es%E4%BB%8E%E5%85%A5%E9%97%A8%E5%88%B0%E7%B2%BE%E9%80%9A/</link>
+      <pubDate>Fri, 13 Jun 2025 11:50:52 +0800</pubDate>
+      <guid>http://localhost:1313/middleware/es%E4%BB%8E%E5%85%A5%E9%97%A8%E5%88%B0%E7%B2%BE%E9%80%9A/</guid>
+      <description>&lt;h1&gt;&lt;/h1&gt;
+&lt;h1 id=&#34;elasticsearch-es从入门到精通一篇就够了---不吃紫菜&#34;&gt;ElasticSearch (ES从入门到精通一篇就够了) - 不吃紫菜&lt;/h1&gt;
+&lt;p&gt;原文链接：https://www.cnblogs.com/buchizicai/p/17093719.html&lt;/p&gt;
+&lt;h1 id=&#34;es分布式搜索引擎&#34;&gt;ES分布式搜索引擎&lt;/h1&gt;
+&lt;p&gt;注意： 在没有创建库的时候搜索，ES会创建一个库并自动创建该字段并且设置为String类型也就是text
+什么是elasticsearch？&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;一个开源的分布式搜索引擎，可以用来实现搜索、日志统计、分析、系统监控等功能&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;什么是elastic stack（ELK）？&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;是以elasticsearch为核心的技术栈，包括beats、Logstash、kibana、elasticsearch&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;什么是Lucene？&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;是Apache的开源搜索引擎类库，提供了搜索引擎的核心API&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;elasticsearch是一款非常强大的开源搜索引擎，具备非常多强大功能，可以帮助我们从海量数据中快速找到需要的内容
+&lt;strong&gt;ELK技术栈&lt;/strong&gt;
+本文只使用了elasticsearch，以及kibana做可视化界面
+elasticsearch结合kibana、Logstash、Beats，也就是elastic stack（ELK）。被广泛应用在日志数据分析、实时监控等领域：
+&lt;img alt=&#34;image&#34; loading=&#34;lazy&#34; src=&#34;https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205171715684-1824564189.png&#34;&gt;
+而elasticsearch是elastic stack的核心，负责存储、搜索、分析数据。
+&lt;img alt=&#34;image&#34; loading=&#34;lazy&#34; src=&#34;https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205171722024-1222796164.png&#34;&gt;&lt;/p&gt;
+&lt;h2 id=&#34;初识elasticsearch&#34;&gt;初识elasticsearch&lt;/h2&gt;
+&lt;h3 id=&#34;1-elasticsearch背景介绍&#34;&gt;1. elasticsearch背景介绍&lt;/h3&gt;
+&lt;p&gt;elasticsearch底层是基于&lt;strong&gt;lucene&lt;/strong&gt;来实现的。
+&lt;strong&gt;Lucene&lt;/strong&gt;是一个Java语言的搜索引擎类库，是Apache公司的顶级项目，由DougCutting于1999年研发。官网地址：&lt;a href=&#34;https://lucene.apache.org/&#34;&gt;https://lucene.apache.org/&lt;/a&gt; 。
+&lt;img alt=&#34;image&#34; loading=&#34;lazy&#34; src=&#34;https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205171730614-533765512.png&#34;&gt;
+&lt;strong&gt;elasticsearch&lt;/strong&gt;的发展历史：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;2004年Shay Banon基于Lucene开发了Compass&lt;/li&gt;
+&lt;li&gt;2010年Shay Banon 重写了Compass，取名为Elasticsearch。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img alt=&#34;image&#34; loading=&#34;lazy&#34; src=&#34;https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205171735479-91571788.png&#34;&gt;&lt;/p&gt;
+&lt;h3 id=&#34;2-倒排索引&#34;&gt;2. 倒排索引&lt;/h3&gt;
+&lt;p&gt;倒排索引的概念是基于MySQL这样的正向索引而言的。&lt;/p&gt;
+&lt;h4 id=&#34;21-正向索引&#34;&gt;2.1 正向索引&lt;/h4&gt;
+&lt;p&gt;设置了索引的话挺快的，但要是模糊查询则就很慢！
+那么什么是正向索引呢？例如给下表（tb_goods）中的id创建索引：
+&lt;img alt=&#34;image&#34; loading=&#34;lazy&#34; src=&#34;https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205171741388-1990334679.png&#34;&gt;
+如果是根据id查询，那么直接走索引，查询速度非常快。
+但如果是基于title做模糊查询，只能是逐行扫描数据，流程如下：
+1）用户搜索数据，条件是title符合&lt;code&gt;&amp;quot;%手机%&amp;quot;&lt;/code&gt;
+2）逐行获取数据，比如id为1的数据
+3）判断数据中的title是否符合用户搜索条件
+4）如果符合则放入结果集，不符合则丢弃。回到步骤1
+逐行扫描，也就是全表扫描，随着数据量增加，其查询效率也会越来越低。当数据量达到数百万时，就是一场灾难。&lt;/p&gt;
+&lt;h4 id=&#34;22-倒排索引&#34;&gt;2.2 倒排索引&lt;/h4&gt;
+&lt;p&gt;倒排索引中有两个非常重要的概念：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;文档（&lt;code&gt;Document&lt;/code&gt;）：用来搜索的数据，其中的每一条数据就是一个文档。例如一个网页、一个商品信息&lt;/li&gt;
+&lt;li&gt;词条（&lt;code&gt;Term&lt;/code&gt;）：对文档数据或用户搜索数据，利用某种算法分词，得到的具备含义的词语就是词条。例如：我是中国人，就可以分为：我、是、中国人、中国、国人这样的几个词条&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;创建倒排索引&lt;/strong&gt;是对正向索引的一种特殊处理，流程如下：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;将每一个文档的数据利用算法分词，得到一个个词条&lt;/li&gt;
+&lt;li&gt;创建表，每行数据包括词条、词条所在文档id、位置等信息&lt;/li&gt;
+&lt;li&gt;因为词条唯一性，可以给词条创建索引，例如hash表结构索引&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如图：
+&lt;img alt=&#34;image&#34; loading=&#34;lazy&#34; src=&#34;https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205171751933-576636800.png&#34;&gt;
+倒排索引的&lt;strong&gt;搜索流程&lt;/strong&gt;如下（以搜索&amp;quot;华为手机&amp;quot;为例）：
+1）用户输入条件&lt;code&gt;&amp;quot;华为手机&amp;quot;&lt;/code&gt;进行搜索。
+2）对用户输入内容&lt;strong&gt;分词&lt;/strong&gt;，得到词条：&lt;code&gt;华为&lt;/code&gt;、&lt;code&gt;手机&lt;/code&gt;。
+3）拿着词条在倒排索引中查找，可以得到包含词条的文档id：1、2、3。
+4）拿着文档id到正向索引中查找具体文档。
+如图：
+&lt;img alt=&#34;image&#34; loading=&#34;lazy&#34; src=&#34;https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205171803916-704919285.png&#34;&gt;
+虽然要先查询倒排索引，再查询倒排索引，但是无论是词条、还是文档id都建立了索引，查询速度非常快！无需全表扫描。&lt;/p&gt;
+&lt;h4 id=&#34;23-正向和倒排对比&#34;&gt;2.3 正向和倒排对比&lt;/h4&gt;
+&lt;h2 id=&#34;概念区别&#34;&gt;概念区别：&lt;/h2&gt;
+&lt;h2 id=&#34;正向索引是最传统的根据id索引的方式但根据词条查询时必须先逐条获取每个文档然后判断文档中是否包含所需要的词条是根据文档找词条的过程&#34;&gt;&lt;strong&gt;正向索引&lt;/strong&gt;是最传统的，根据id索引的方式。但根据词条查询时，必须先逐条获取每个文档，然后判断文档中是否包含所需要的词条，是&lt;strong&gt;根据文档找词条的过程&lt;/strong&gt;。&lt;/h2&gt;
+&lt;p&gt;而&lt;strong&gt;倒排索引&lt;/strong&gt;则相反，是先找到用户要搜索的词条，根据词条得到保护词条的文档的id，然后根据id获取文档。是&lt;strong&gt;根据词条找文档的过程&lt;/strong&gt;。&lt;/p&gt;</description>
+    </item>
+    <item>
       <title>Go 并发控制：sync.Pool</title>
       <link>http://localhost:1313/go/go%E5%B9%B6%E5%8F%91%E6%8E%A7%E5%88%B6sync.pool/</link>
       <pubDate>Thu, 12 Jun 2025 13:43:52 +0800</pubDate>

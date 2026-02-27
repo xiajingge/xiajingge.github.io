@@ -1,0 +1,2075 @@
+<!doctype html><html lang=en dir=auto data-theme=auto><head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset=utf-8><meta http-equiv=X-UA-Compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta name=robots content="noindex, nofollow"><title>ES从入门到精通一篇 | cubxxw is blog</title><meta name=keywords content="es,中间件"><meta name=description content='
+ElasticSearch (ES从入门到精通一篇就够了) - 不吃紫菜
+原文链接：https://www.cnblogs.com/buchizicai/p/17093719.html
+ES分布式搜索引擎
+注意： 在没有创建库的时候搜索，ES会创建一个库并自动创建该字段并且设置为String类型也就是text
+什么是elasticsearch？
+
+一个开源的分布式搜索引擎，可以用来实现搜索、日志统计、分析、系统监控等功能
+
+什么是elastic stack（ELK）？
+
+是以elasticsearch为核心的技术栈，包括beats、Logstash、kibana、elasticsearch
+
+什么是Lucene？
+
+是Apache的开源搜索引擎类库，提供了搜索引擎的核心API
+
+elasticsearch是一款非常强大的开源搜索引擎，具备非常多强大功能，可以帮助我们从海量数据中快速找到需要的内容
+ELK技术栈
+本文只使用了elasticsearch，以及kibana做可视化界面
+elasticsearch结合kibana、Logstash、Beats，也就是elastic stack（ELK）。被广泛应用在日志数据分析、实时监控等领域：
+
+而elasticsearch是elastic stack的核心，负责存储、搜索、分析数据。
+
+初识elasticsearch
+1. elasticsearch背景介绍
+elasticsearch底层是基于lucene来实现的。
+Lucene是一个Java语言的搜索引擎类库，是Apache公司的顶级项目，由DougCutting于1999年研发。官网地址：https://lucene.apache.org/ 。
+
+elasticsearch的发展历史：
+
+2004年Shay Banon基于Lucene开发了Compass
+2010年Shay Banon 重写了Compass，取名为Elasticsearch。
+
+
+2. 倒排索引
+倒排索引的概念是基于MySQL这样的正向索引而言的。
+2.1 正向索引
+设置了索引的话挺快的，但要是模糊查询则就很慢！
+那么什么是正向索引呢？例如给下表（tb_goods）中的id创建索引：
+
+如果是根据id查询，那么直接走索引，查询速度非常快。
+但如果是基于title做模糊查询，只能是逐行扫描数据，流程如下：
+1）用户搜索数据，条件是title符合"%手机%"
+2）逐行获取数据，比如id为1的数据
+3）判断数据中的title是否符合用户搜索条件
+4）如果符合则放入结果集，不符合则丢弃。回到步骤1
+逐行扫描，也就是全表扫描，随着数据量增加，其查询效率也会越来越低。当数据量达到数百万时，就是一场灾难。
+2.2 倒排索引
+倒排索引中有两个非常重要的概念：
+
+文档（Document）：用来搜索的数据，其中的每一条数据就是一个文档。例如一个网页、一个商品信息
+词条（Term）：对文档数据或用户搜索数据，利用某种算法分词，得到的具备含义的词语就是词条。例如：我是中国人，就可以分为：我、是、中国人、中国、国人这样的几个词条
+
+创建倒排索引是对正向索引的一种特殊处理，流程如下：
+
+将每一个文档的数据利用算法分词，得到一个个词条
+创建表，每行数据包括词条、词条所在文档id、位置等信息
+因为词条唯一性，可以给词条创建索引，例如hash表结构索引
+
+如图：
+
+倒排索引的搜索流程如下（以搜索"华为手机"为例）：
+1）用户输入条件"华为手机"进行搜索。
+2）对用户输入内容分词，得到词条：华为、手机。
+3）拿着词条在倒排索引中查找，可以得到包含词条的文档id：1、2、3。
+4）拿着文档id到正向索引中查找具体文档。
+如图：
+
+虽然要先查询倒排索引，再查询倒排索引，但是无论是词条、还是文档id都建立了索引，查询速度非常快！无需全表扫描。
+2.3 正向和倒排对比
+概念区别：
+正向索引是最传统的，根据id索引的方式。但根据词条查询时，必须先逐条获取每个文档，然后判断文档中是否包含所需要的词条，是根据文档找词条的过程。
+而倒排索引则相反，是先找到用户要搜索的词条，根据词条得到保护词条的文档的id，然后根据id获取文档。是根据词条找文档的过程。'><meta name=author content><link rel=canonical href=http://localhost:1313/middleware/es%E4%BB%8E%E5%85%A5%E9%97%A8%E5%88%B0%E7%B2%BE%E9%80%9A/><link crossorigin=anonymous href=/assets/css/stylesheet.a29c24210eb31d9ce56f669c66a35c9c51b17376b7764e336a49af7dec914cf0.css integrity="sha256-opwkIQ6zHZzlb2acZqNcnFGxc3a3dk4zakmvfeyRTPA=" rel="preload stylesheet" as=style><link rel=icon href=http://localhost:1313/favicon.ico><link rel=icon type=image/png sizes=16x16 href=http://localhost:1313/favicon-16x16.png><link rel=icon type=image/png sizes=32x32 href=http://localhost:1313/favicon-32x32.png><link rel=apple-touch-icon href=http://localhost:1313/apple-touch-icon.png><link rel=mask-icon href=http://localhost:1313/safari-pinned-tab.svg><meta name=theme-color content="#2e2e33"><meta name=msapplication-TileColor content="#2e2e33"><link rel=alternate hreflang=en href=http://localhost:1313/middleware/es%E4%BB%8E%E5%85%A5%E9%97%A8%E5%88%B0%E7%B2%BE%E9%80%9A/><noscript><style>#theme-toggle,.top-link{display:none}</style><style>@media(prefers-color-scheme:dark){:root{--theme:rgb(29, 30, 32);--entry:rgb(46, 46, 51);--primary:rgb(218, 218, 219);--secondary:rgb(155, 156, 157);--tertiary:rgb(65, 66, 68);--content:rgb(196, 196, 197);--code-block-bg:rgb(46, 46, 51);--code-bg:rgb(55, 56, 62);--border:rgb(51, 51, 51);color-scheme:dark}.list{background:var(--theme)}.toc{background:var(--entry)}}@media(prefers-color-scheme:light){.list::-webkit-scrollbar-thumb{border-color:var(--code-bg)}}</style></noscript><script>localStorage.getItem("pref-theme")==="dark"?document.querySelector("html").dataset.theme="dark":localStorage.getItem("pref-theme")==="light"?document.querySelector("html").dataset.theme="light":window.matchMedia("(prefers-color-scheme: dark)").matches?document.querySelector("html").dataset.theme="dark":document.querySelector("html").dataset.theme="light"</script></head><body id=top><header class=header><nav class=nav><div class=logo><a href=http://localhost:1313/ accesskey=h title="Home (Alt + H)"><img src=http://localhost:1313/apple-touch-icon.png alt aria-label=logo height=35>Home</a><div class=logo-switches><button id=theme-toggle accesskey=t title="(Alt + T)" aria-label="Toggle theme">
+<svg id="moon" width="24" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+<svg id="sun" width="24" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></button></div></div><ul id=menu><li><a href=http://localhost:1313/categories/ title=categories><span>categories</span></a></li><li><a href=http://localhost:1313/tags/ title=tags><span>tags</span></a></li><li><a href=https://example.org title=example.org><span>example.org</span>&nbsp;
+<svg fill="none" shape-rendering="geometricPrecision" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24" height="12" width="12"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></a></li></ul></nav></header><main class=main><article class=post-single><header class=post-header><h1 class="post-title entry-hint-parent">ES从入门到精通一篇</h1><div class=post-meta><span title='2025-06-13 11:50:52 +0800 CST'>June 13, 2025</span></div></header><div class=post-content><h1></h1><h1 id=elasticsearch-es从入门到精通一篇就够了---不吃紫菜>ElasticSearch (ES从入门到精通一篇就够了) - 不吃紫菜<a hidden class=anchor aria-hidden=true href=#elasticsearch-es从入门到精通一篇就够了---不吃紫菜>#</a></h1><p>原文链接：https://www.cnblogs.com/buchizicai/p/17093719.html</p><h1 id=es分布式搜索引擎>ES分布式搜索引擎<a hidden class=anchor aria-hidden=true href=#es分布式搜索引擎>#</a></h1><p>注意： 在没有创建库的时候搜索，ES会创建一个库并自动创建该字段并且设置为String类型也就是text
+什么是elasticsearch？</p><ul><li>一个开源的分布式搜索引擎，可以用来实现搜索、日志统计、分析、系统监控等功能</li></ul><p>什么是elastic stack（ELK）？</p><ul><li>是以elasticsearch为核心的技术栈，包括beats、Logstash、kibana、elasticsearch</li></ul><p>什么是Lucene？</p><ul><li>是Apache的开源搜索引擎类库，提供了搜索引擎的核心API</li></ul><p>elasticsearch是一款非常强大的开源搜索引擎，具备非常多强大功能，可以帮助我们从海量数据中快速找到需要的内容
+<strong>ELK技术栈</strong>
+本文只使用了elasticsearch，以及kibana做可视化界面
+elasticsearch结合kibana、Logstash、Beats，也就是elastic stack（ELK）。被广泛应用在日志数据分析、实时监控等领域：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205171715684-1824564189.png>
+而elasticsearch是elastic stack的核心，负责存储、搜索、分析数据。
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205171722024-1222796164.png></p><h2 id=初识elasticsearch>初识elasticsearch<a hidden class=anchor aria-hidden=true href=#初识elasticsearch>#</a></h2><h3 id=1-elasticsearch背景介绍>1. elasticsearch背景介绍<a hidden class=anchor aria-hidden=true href=#1-elasticsearch背景介绍>#</a></h3><p>elasticsearch底层是基于<strong>lucene</strong>来实现的。
+<strong>Lucene</strong>是一个Java语言的搜索引擎类库，是Apache公司的顶级项目，由DougCutting于1999年研发。官网地址：<a href=https://lucene.apache.org/>https://lucene.apache.org/</a> 。
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205171730614-533765512.png>
+<strong>elasticsearch</strong>的发展历史：</p><ul><li>2004年Shay Banon基于Lucene开发了Compass</li><li>2010年Shay Banon 重写了Compass，取名为Elasticsearch。</li></ul><p><img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205171735479-91571788.png></p><h3 id=2-倒排索引>2. 倒排索引<a hidden class=anchor aria-hidden=true href=#2-倒排索引>#</a></h3><p>倒排索引的概念是基于MySQL这样的正向索引而言的。</p><h4 id=21-正向索引>2.1 正向索引<a hidden class=anchor aria-hidden=true href=#21-正向索引>#</a></h4><p>设置了索引的话挺快的，但要是模糊查询则就很慢！
+那么什么是正向索引呢？例如给下表（tb_goods）中的id创建索引：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205171741388-1990334679.png>
+如果是根据id查询，那么直接走索引，查询速度非常快。
+但如果是基于title做模糊查询，只能是逐行扫描数据，流程如下：
+1）用户搜索数据，条件是title符合<code>"%手机%"</code>
+2）逐行获取数据，比如id为1的数据
+3）判断数据中的title是否符合用户搜索条件
+4）如果符合则放入结果集，不符合则丢弃。回到步骤1
+逐行扫描，也就是全表扫描，随着数据量增加，其查询效率也会越来越低。当数据量达到数百万时，就是一场灾难。</p><h4 id=22-倒排索引>2.2 倒排索引<a hidden class=anchor aria-hidden=true href=#22-倒排索引>#</a></h4><p>倒排索引中有两个非常重要的概念：</p><ul><li>文档（<code>Document</code>）：用来搜索的数据，其中的每一条数据就是一个文档。例如一个网页、一个商品信息</li><li>词条（<code>Term</code>）：对文档数据或用户搜索数据，利用某种算法分词，得到的具备含义的词语就是词条。例如：我是中国人，就可以分为：我、是、中国人、中国、国人这样的几个词条</li></ul><p><strong>创建倒排索引</strong>是对正向索引的一种特殊处理，流程如下：</p><ul><li>将每一个文档的数据利用算法分词，得到一个个词条</li><li>创建表，每行数据包括词条、词条所在文档id、位置等信息</li><li>因为词条唯一性，可以给词条创建索引，例如hash表结构索引</li></ul><p>如图：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205171751933-576636800.png>
+倒排索引的<strong>搜索流程</strong>如下（以搜索"华为手机"为例）：
+1）用户输入条件<code>"华为手机"</code>进行搜索。
+2）对用户输入内容<strong>分词</strong>，得到词条：<code>华为</code>、<code>手机</code>。
+3）拿着词条在倒排索引中查找，可以得到包含词条的文档id：1、2、3。
+4）拿着文档id到正向索引中查找具体文档。
+如图：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205171803916-704919285.png>
+虽然要先查询倒排索引，再查询倒排索引，但是无论是词条、还是文档id都建立了索引，查询速度非常快！无需全表扫描。</p><h4 id=23-正向和倒排对比>2.3 正向和倒排对比<a hidden class=anchor aria-hidden=true href=#23-正向和倒排对比>#</a></h4><h2 id=概念区别>概念区别：<a hidden class=anchor aria-hidden=true href=#概念区别>#</a></h2><h2 id=正向索引是最传统的根据id索引的方式但根据词条查询时必须先逐条获取每个文档然后判断文档中是否包含所需要的词条是根据文档找词条的过程><strong>正向索引</strong>是最传统的，根据id索引的方式。但根据词条查询时，必须先逐条获取每个文档，然后判断文档中是否包含所需要的词条，是<strong>根据文档找词条的过程</strong>。<a hidden class=anchor aria-hidden=true href=#正向索引是最传统的根据id索引的方式但根据词条查询时必须先逐条获取每个文档然后判断文档中是否包含所需要的词条是根据文档找词条的过程>#</a></h2><p>而<strong>倒排索引</strong>则相反，是先找到用户要搜索的词条，根据词条得到保护词条的文档的id，然后根据id获取文档。是<strong>根据词条找文档的过程</strong>。</p><p>优缺点：
+<strong>正向索引</strong>：</p><ul><li><p>优点：</p></li><li><p>可以给多个字段创建索引</p></li><li><p>根据索引字段搜索、排序速度非常快</p></li><li><p>缺点：</p></li><li><p>根据非索引字段，或者索引字段中的部分词条查找时，只能全表扫描。</p></li></ul><p><strong>倒排索引</strong>：</p><ul><li><p>优点：</p></li><li><p>根据词条搜索、模糊搜索时，速度非常快</p></li><li><p>缺点：</p></li><li><p>只能给词条创建索引，而不是字段</p></li><li><p>无法根据字段做排序</p></li></ul><h3 id=3-es数据库基本概念>3. ES数据库基本概念<a hidden class=anchor aria-hidden=true href=#3-es数据库基本概念>#</a></h3><p>elasticsearch中有很多独有的概念，与mysql中略有差别，但也有相似之处。</p><h4 id=31文档和字段>3.1.文档和字段<a hidden class=anchor aria-hidden=true href=#31文档和字段>#</a></h4><p>一个文档就像数据库里的一条数据，字段就像数据库里的列
+elasticsearch是面向<strong>文档（Document）<strong>存储的，可以是</strong>数据库中的一条商品数据</strong>，一个订单信息。文档数据会被序列化为json格式后存储在elasticsearch中：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205171811564-2114810461.png>
+而Json文档中往往包含很多的<strong>字段（Field）</strong>，类似于<strong>mysql数据库中的列</strong>。</p><h4 id=32索引和映射>3.2.索引和映射<a hidden class=anchor aria-hidden=true href=#32索引和映射>#</a></h4><p>索引就像数据库里的表，映射就像数据库中定义的表结构
+<strong>索引（Index）</strong>，就是相同类型的文档的集合【<strong>类似mysql中的表</strong>】
+例如：</p><ul><li>所有用户文档，就可以组织在一起，称为用户的索引；</li><li>所有商品的文档，可以组织在一起，称为商品的索引；</li><li>所有订单的文档，可以组织在一起，称为订单的索引；</li></ul><p><img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205171817377-1198317744.png>
+因此，我们可以把索引当做是数据库中的表。
+数据库的表会有约束信息，用来定义表的结构、字段的名称、类型等信息。因此，索引库中就有<strong>映射（mapping）</strong>，是索引中文档的字段约束信息，类似表的结构约束。</p><h4 id=33mysql与elasticsearch>3.3.mysql与elasticsearch<a hidden class=anchor aria-hidden=true href=#33mysql与elasticsearch>#</a></h4><h2 id=各自长处>各自长处：<a hidden class=anchor aria-hidden=true href=#各自长处>#</a></h2><h2 id=mysql擅长事务类型操作可以确保数据的安全和一致性>Mysql：擅长事务类型操作，可以确保数据的安全和一致性<a hidden class=anchor aria-hidden=true href=#mysql擅长事务类型操作可以确保数据的安全和一致性>#</a></h2><p>Elasticsearch：擅长海量数据的搜索、分析、计算</p><p>我们统一的把<strong>mysql与elasticsearch的概念做一下对比</strong>：
+<strong>MySQL<strong><strong>Elasticsearch</strong></strong>说明</strong>Table Index 索引(index)，就是文档的集合，类似数据库的表(table) Row Document 文档（Document），就是一条条的数据，类似数据库中的行（Row），文档都是JSON格式 Column Field 字段（Field），就是JSON文档中的字段，类似数据库中的列（Column） Schema Mapping Mapping（映射）是索引中文档的约束，例如字段类型约束。类似数据库的表结构（Schema） SQL DSL DSL是elasticsearch提供的JSON风格的请求语句，用来操作elasticsearch，实现CRUD
+在企业中，往往是两者结合使用：</p><ul><li>对安全性要求较高的写操作，使用mysql实现</li><li>对查询性能要求较高的搜索需求，使用elasticsearch实现</li><li>两者再基于某种方式，实现数据的同步，保证一致性</li></ul><p><img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205171824403-1152991371.png></p><h3 id=4-安装eskibana分词器>4. 安装es、kibana、分词器<a hidden class=anchor aria-hidden=true href=#4-安装eskibana分词器>#</a></h3><p>分词器的作用是什么？</p><ul><li>创建倒排索引时对文档分词</li><li>用户搜索时，对输入的内容分词</li></ul><p>IK分词器有几种模式？</p><ul><li>ik_smart：智能切分，粗粒度</li><li>ik_max_word：最细切分，细粒度</li></ul><p>IK分词器如何拓展词条？如何停用词条？</p><ul><li>利用config目录的IkAnalyzer.cfg.xml文件添加拓展词典和停用词典</li><li>在词典中添加拓展词条或者停用词条</li></ul><h4 id=41-部署单点es>4.1 部署单点es<a hidden class=anchor aria-hidden=true href=#41-部署单点es>#</a></h4><h5 id=411创建网络>4.1.1.创建网络<a hidden class=anchor aria-hidden=true href=#411创建网络>#</a></h5><p>因为我们还需要部署kibana容器，因此需要让es和kibana容器互联。这里先创建一个网络：</p><pre tabindex=0><code>docker network create es-net
+</code></pre><h5 id=412加载镜像>4.1.2.加载镜像<a hidden class=anchor aria-hidden=true href=#412加载镜像>#</a></h5><p>这里我们采用elasticsearch的7.12.1版本的镜像，这个镜像体积非常大，接近1G。不建议大家自己pull。
+课前资料提供了镜像的tar包：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205171831042-1395359270.png>
+大家将其上传到虚拟机中，然后运行命令加载即可：</p><pre tabindex=0><code># 导入数据
+docker load -i es.tar
+</code></pre><p><strong>注意：同理还有<code>kibana</code>的tar包也需要这样做。</strong></p><h5 id=413运行>4.1.3.运行<a hidden class=anchor aria-hidden=true href=#413运行>#</a></h5><p>运行docker命令，部署单点es：</p><pre tabindex=0><code>docker run -d \
+	--name es \
+    -e &#34;ES_JAVA_OPTS=-Xms512m -Xmx512m&#34; \
+    -e &#34;discovery.type=single-node&#34; \
+    -v es-data:/usr/share/elasticsearch/data \
+    -v es-plugins:/usr/share/elasticsearch/plugins \
+    --privileged \
+    --network es-net \
+    -p 9200:9200 \
+    -p 9300:9300 \
+elasticsearch:7.12.1
+</code></pre><p>命令解释：</p><ul><li><code>-e "cluster.name=es-docker-cluster"</code>：设置集群名称</li><li><code>-e "http.host=0.0.0.0"</code>：监听的地址，可以外网访问</li><li><code>-e "ES_JAVA_OPTS=-Xms512m -Xmx512m"</code>：内存大小</li><li><code>-e "discovery.type=single-node"</code>：非集群模式</li><li><code>-v es-data:/usr/share/elasticsearch/data</code>：挂载逻辑卷，绑定es的数据目录</li><li><code>-v es-logs:/usr/share/elasticsearch/logs</code>：挂载逻辑卷，绑定es的日志目录</li><li><code>-v es-plugins:/usr/share/elasticsearch/plugins</code>：挂载逻辑卷，绑定es的插件目录</li><li><code>--privileged</code>：授予逻辑卷访问权</li><li><code>--network es-net</code>：加入一个名为es-net的网络中</li><li><code>-p 9200:9200</code>：端口映射配置</li></ul><p>在浏览器中输入：<a href=http://192.168.194.131/:9200>http://192.168.194.131/:9200</a> 即可看到elasticsearch的响应结果：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205171842180-458017634.png></p><h4 id=42部署kibana>4.2.部署kibana<a hidden class=anchor aria-hidden=true href=#42部署kibana>#</a></h4><p>kibana可以给我们提供一个elasticsearch的可视化界面，便于我们学习。</p><h5 id=421部署>4.2.1.部署<a hidden class=anchor aria-hidden=true href=#421部署>#</a></h5><p><strong>创建网络后，导入kibana压缩包，然后创建并启动相应容器。【和前面部署单点es一样做法】</strong>
+再运行docker命令，部署kibana</p><pre tabindex=0><code>docker run -d \
+--name kibana \
+-e ELASTICSEARCH_HOSTS=http://es:9200 \
+--network=es-net \
+-p 5601:5601  \
+kibana:7.12.1
+</code></pre><ul><li><code>--network es-net</code>：加入一个名为es-net的网络中，与elasticsearch在同一个网络中</li><li><code>-e ELASTICSEARCH_HOSTS=http://es:9200"</code>：设置elasticsearch的地址，因为kibana已经与elasticsearch在一个网络，因此可以用容器名直接访问elasticsearch</li><li><code>-p 5601:5601</code>：端口映射配置</li></ul><p>kibana启动一般比较慢，需要多等待一会，可以通过命令：</p><pre tabindex=0><code>docker logs -f kibana
+</code></pre><p>查看运行日志，当查看到下面的日志，说明成功：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205171848067-1760891955.png>
+此时，在浏览器输入地址访问：<a href=http://192.168.194.131:5601>http://192.168.194.131:5601</a> ，即可看到结果如下图：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205171852468-457961443.png>
+kibana左侧中提供了一个DevTools界面：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205171858509-678638964.png>
+这个界面中可以编写DSL来操作elasticsearch。并且对DSL语句有自动补全功能。</p><h4 id=43安装ik分词器>4.3.安装IK分词器<a hidden class=anchor aria-hidden=true href=#43安装ik分词器>#</a></h4><h5 id=431在线安装ik插件较慢>4.3.1.在线安装ik插件（较慢）<a hidden class=anchor aria-hidden=true href=#431在线安装ik插件较慢>#</a></h5><pre tabindex=0><code># 进入容器内部
+docker exec -it elasticsearch /bin/bash
+
+# 在线下载并安装
+./bin/elasticsearch-plugin  install https://github.com/medcl/elasticsearch-analysis-ik/releases/download/v7.12.1/elasticsearch-analysis-ik-7.12.1.zip
+
+#退出
+exit
+#重启容器
+docker restart elasticsearch
+</code></pre><h5 id=432离线安装ik插件推荐>4.3.2.离线安装ik插件（推荐）<a hidden class=anchor aria-hidden=true href=#432离线安装ik插件推荐>#</a></h5><p><strong>1）查看数据卷目录</strong>
+安装插件需要知道elasticsearch的plugins目录位置，而我们用了数据卷挂载，因此需要查看elasticsearch的数据卷目录，通过下面命令查看:</p><pre tabindex=0><code>docker volume inspect es-plugins
+</code></pre><p>显示结果：</p><pre tabindex=0><code>[
+    {
+        &#34;CreatedAt&#34;: &#34;2022-05-06T10:06:34+08:00&#34;,
+        &#34;Driver&#34;: &#34;local&#34;,
+        &#34;Labels&#34;: null,
+        &#34;Mountpoint&#34;: &#34;/var/lib/docker/volumes/es-plugins/_data&#34;,
+        &#34;Name&#34;: &#34;es-plugins&#34;,
+        &#34;Options&#34;: null,
+        &#34;Scope&#34;: &#34;local&#34;
+    }
+]
+</code></pre><p>说明plugins目录被挂载到了：<code>/var/lib/docker/volumes/es-plugins/_data</code>这个目录中。
+<strong>2）解压缩分词器安装包</strong>
+下面我们需要把课前资料中的ik分词器解压缩，重命名为ik
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205171931639-1168552613.png>
+<strong>3）上传到es容器的插件数据卷中</strong>
+也就是<code>/var/lib/docker/volumes/es-plugins/_data</code>：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205171956796-973760726.png>
+<strong>4）重启容器</strong></p><pre tabindex=0><code># 4、重启容器
+docker restart es
+</code></pre><pre tabindex=0><code># 查看es日志
+docker logs -f es
+</code></pre><h2 id=ik分词器包含两种模式><strong>5）测试：</strong>
+IK分词器包含两种模式：</h2><h2 id=ik_smart最少切分><code>ik_smart</code>：最少切分<a hidden class=anchor aria-hidden=true href=#ik_smart最少切分>#</a></h2><p><code>ik_max_word</code>：最细切分</p><p>在kibana的Dev tools中输入以下代码：
+”analyzer“ 就是选择分词器模式</p><pre tabindex=0><code>GET /_analyze
+{
+  &#34;analyzer&#34;: &#34;ik_max_word&#34;,
+  &#34;text&#34;: &#34;黑马程序员学习java太棒了&#34;
+}
+</code></pre><p>结果：</p><pre tabindex=0><code>{
+  &#34;tokens&#34; : [
+    {
+      &#34;token&#34; : &#34;黑马&#34;,
+      &#34;start_offset&#34; : 0,
+      &#34;end_offset&#34; : 2,
+      &#34;type&#34; : &#34;CN_WORD&#34;,
+      &#34;position&#34; : 0
+    },
+    {
+      &#34;token&#34; : &#34;程序员&#34;,
+      &#34;start_offset&#34; : 2,
+      &#34;end_offset&#34; : 5,
+      &#34;type&#34; : &#34;CN_WORD&#34;,
+      &#34;position&#34; : 1
+    },
+    {
+      &#34;token&#34; : &#34;程序&#34;,
+      &#34;start_offset&#34; : 2,
+      &#34;end_offset&#34; : 4,
+      &#34;type&#34; : &#34;CN_WORD&#34;,
+      &#34;position&#34; : 2
+    },
+    {
+      &#34;token&#34; : &#34;员&#34;,
+      &#34;start_offset&#34; : 4,
+      &#34;end_offset&#34; : 5,
+      &#34;type&#34; : &#34;CN_CHAR&#34;,
+      &#34;position&#34; : 3
+    },
+    {
+      &#34;token&#34; : &#34;学习&#34;,
+      &#34;start_offset&#34; : 5,
+      &#34;end_offset&#34; : 7,
+      &#34;type&#34; : &#34;CN_WORD&#34;,
+      &#34;position&#34; : 4
+    },
+    {
+      &#34;token&#34; : &#34;java&#34;,
+      &#34;start_offset&#34; : 7,
+      &#34;end_offset&#34; : 11,
+      &#34;type&#34; : &#34;ENGLISH&#34;,
+      &#34;position&#34; : 5
+    },
+    {
+      &#34;token&#34; : &#34;太棒了&#34;,
+      &#34;start_offset&#34; : 11,
+      &#34;end_offset&#34; : 14,
+      &#34;type&#34; : &#34;CN_WORD&#34;,
+      &#34;position&#34; : 6
+    },
+    {
+      &#34;token&#34; : &#34;太棒&#34;,
+      &#34;start_offset&#34; : 11,
+      &#34;end_offset&#34; : 13,
+      &#34;type&#34; : &#34;CN_WORD&#34;,
+      &#34;position&#34; : 7
+    },
+    {
+      &#34;token&#34; : &#34;了&#34;,
+      &#34;start_offset&#34; : 13,
+      &#34;end_offset&#34; : 14,
+      &#34;type&#34; : &#34;CN_CHAR&#34;,
+      &#34;position&#34; : 8
+    }
+  ]
+}
+</code></pre><h5 id=433-扩展词词典>4.3.3 扩展词词典<a hidden class=anchor aria-hidden=true href=#433-扩展词词典>#</a></h5><p>随着互联网的发展，“造词运动”也越发的频繁。出现了很多新的词语，在原有的词汇列表中并不存在。比如：“奥力给”，“白嫖” 等。
+所以我们的词汇也需要不断的更新，IK分词器提供了扩展词汇的功能。
+1）打开IK分词器config目录：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172005673-1129389907.png>
+2）在IKAnalyzer.cfg.xml配置文件内容添加：</p><pre tabindex=0><code>&lt;?xml version=&#34;1.0&#34; encoding=&#34;UTF-8&#34;?&gt;
+&lt;!DOCTYPE properties SYSTEM &#34;http://java.sun.com/dtd/properties.dtd&#34;&gt;
+&lt;properties&gt;
+        &lt;comment&gt;IK Analyzer 扩展配置&lt;/comment&gt;
+        &lt;!--用户可以在这里配置自己的扩展字典 *** 添加扩展词典--&gt;
+        &lt;entry key=&#34;ext_dict&#34;&gt;ext.dic&lt;/entry&gt;
+&lt;/properties&gt;
+</code></pre><p>3）新建一个 ext.dic，可以参考config目录下复制一个配置文件进行修改</p><pre tabindex=0><code>白嫖
+奥力给
+</code></pre><p>4）重启elasticsearch</p><pre tabindex=0><code>docker restart es
+
+# 查看 日志
+docker logs -f elasticsearch
+</code></pre><p><img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172011932-1622225700.png>
+日志中已经成功加载ext.dic配置文件
+5）测试效果：</p><pre tabindex=0><code>GET /_analyze
+{
+  &#34;analyzer&#34;: &#34;ik_max_word&#34;,
+  &#34;text&#34;: &#34;传智播客Java就业超过90%,奥力给！&#34;
+}
+</code></pre><p>注意当前文件的编码必须是 UTF-8 格式，严禁使用Windows记事本编辑</p><h5 id=434-停用词词典>4.3.4 停用词词典<a hidden class=anchor aria-hidden=true href=#434-停用词词典>#</a></h5><p>在互联网项目中，在网络间传输的速度很快，所以很多语言是不允许在网络上传递的，如：关于宗教、政治等敏感词语，那么我们在搜索时也应该忽略当前词汇。
+IK分词器也提供了强大的停用词功能，让我们在索引时就直接忽略当前的停用词汇表中的内容。
+1）IKAnalyzer.cfg.xml配置文件内容添加：</p><pre tabindex=0><code>&lt;?xml version=&#34;1.0&#34; encoding=&#34;UTF-8&#34;?&gt;
+&lt;!DOCTYPE properties SYSTEM &#34;http://java.sun.com/dtd/properties.dtd&#34;&gt;
+&lt;properties&gt;
+        &lt;comment&gt;IK Analyzer 扩展配置&lt;/comment&gt;
+        &lt;!--用户可以在这里配置自己的扩展字典--&gt;
+        &lt;entry key=&#34;ext_dict&#34;&gt;ext.dic&lt;/entry&gt;
+         &lt;!--用户可以在这里配置自己的扩展停止词字典  *** 添加停用词词典--&gt;
+        &lt;entry key=&#34;ext_stopwords&#34;&gt;stopword.dic&lt;/entry&gt;
+&lt;/properties&gt;
+</code></pre><p>3）在 stopword.dic 添加停用词</p><pre tabindex=0><code>大帅逼
+</code></pre><p>4）重启elasticsearch</p><pre tabindex=0><code># 重启服务
+docker restart es
+docker restart kibana
+
+# 查看 日志
+docker logs -f elasticsearch
+</code></pre><p>日志中已经成功加载stopword.dic配置文件
+5）测试效果：</p><pre tabindex=0><code>GET /_analyze
+{
+  &#34;analyzer&#34;: &#34;ik_max_word&#34;,
+  &#34;text&#34;: &#34;我是真的会谢Java就业率超过95%,大帅逼都点赞白嫖,奥力给！&#34;
+}
+</code></pre><p>注意当前文件的编码必须是 UTF-8 格式，严禁使用Windows记事本编辑</p><h2 id=索引库操作>索引库操作<a hidden class=anchor aria-hidden=true href=#索引库操作>#</a></h2><p>索引库就类似数据库表，mapping映射就类似表的结构。
+我们要向es中存储数据，必须先创建“库”和“表”。</p><h3 id=1-mapping映射属性>1. Mapping映射属性<a hidden class=anchor aria-hidden=true href=#1-mapping映射属性>#</a></h3><h2 id=mapping是对索引库中文档的约束常见的mapping属性包括>mapping是对索引库中文档的约束，常见的mapping属性包括：<a hidden class=anchor aria-hidden=true href=#mapping是对索引库中文档的约束常见的mapping属性包括>#</a></h2><h2 id=type字段数据类型常见的简单类型有>type：字段数据类型，常见的简单类型有：<a hidden class=anchor aria-hidden=true href=#type字段数据类型常见的简单类型有>#</a></h2><h2 id=keyword类型只能整体搜索不支持搜索部分内容>字符串：text（可分词的文本）、keyword（精确值，例如：品牌、国家、ip地址）
+<strong>keyword类型只能整体搜索，不支持搜索部分内容</strong></h2><h2 id=数值longintegershortbytedoublefloat>数值：long、integer、short、byte、double、float、<a hidden class=anchor aria-hidden=true href=#数值longintegershortbytedoublefloat>#</a></h2><h2 id=布尔boolean>布尔：boolean<a hidden class=anchor aria-hidden=true href=#布尔boolean>#</a></h2><h2 id=日期date>日期：date<a hidden class=anchor aria-hidden=true href=#日期date>#</a></h2><p>对象：object</p><ul><li></li></ul><h2 id=index是否创建索引默认为true>index：是否创建索引，默认为true<a hidden class=anchor aria-hidden=true href=#index是否创建索引默认为true>#</a></h2><h2 id=analyzer使用哪种分词器>analyzer：使用哪种分词器<a hidden class=anchor aria-hidden=true href=#analyzer使用哪种分词器>#</a></h2><p>properties：该字段的子字段</p><p>例如下面的json文档：</p><pre tabindex=0><code>{
+    &#34;age&#34;: 21,
+    &#34;weight&#34;: 52.1,
+    &#34;isMarried&#34;: false,
+    &#34;info&#34;: &#34;真相只有一个！&#34;,
+    &#34;email&#34;: &#34;zy@itcast.cn&#34;,
+    &#34;score&#34;: [99.1, 99.5, 98.9],
+    &#34;name&#34;: {
+        &#34;firstName&#34;: &#34;柯&#34;,
+        &#34;lastName&#34;: &#34;南&#34;
+    }
+}
+</code></pre><p>对应的每个字段映射（mapping）：</p><ul><li>age：类型为 integer；参与搜索，因此需要index为true；无需分词器</li><li>weight：类型为float；参与搜索，因此需要index为true；无需分词器</li><li>isMarried：类型为boolean；参与搜索，因此需要index为true；无需分词器</li><li>info：类型为字符串，需要分词，因此是text；参与搜索，因此需要index为true；分词器可以用ik_smart</li><li>email：类型为字符串，但是不需要分词，因此是keyword；不参与搜索，因此需要index为false；无需分词器</li><li>score：虽然是数组，但是我们只看元素的类型，类型为float；参与搜索，因此需要index为true；无需分词器</li><li>name：类型为object，需要定义多个子属性</li><li>name.firstName；类型为字符串，但是不需要分词，因此是keyword；参与搜索，因此需要index为true；无需分词器</li><li>name.lastName；类型为字符串，但是不需要分词，因此是keyword；参与搜索，因此需要index为true；无需分词器</li></ul><h3 id=2-索引库的crud>2. 索引库的CRUD<a hidden class=anchor aria-hidden=true href=#2-索引库的crud>#</a></h3><p>CRUD简单描述：</p><ul><li>创建索引库：PUT /索引库名</li><li>查询索引库：GET /索引库名</li><li>删除索引库：DELETE /索引库名</li><li>修改索引库（添加字段）：PUT /索引库名/_mapping</li></ul><p>这里统一使用Kibana编写DSL的方式来演示。</p><h4 id=21-创建索引库和映射>2.1 创建索引库和映射<a hidden class=anchor aria-hidden=true href=#21-创建索引库和映射>#</a></h4><p><strong>基本语法：</strong></p><ul><li>请求方式：PUT</li><li>请求路径：/索引库名，可以自定义</li><li>请求参数：mapping映射</li></ul><p>格式：</p><pre tabindex=0><code>PUT /索引库名称
+{
+  &#34;mappings&#34;: {
+    &#34;properties&#34;: {
+      &#34;字段名&#34;:{
+        &#34;type&#34;: &#34;text&#34;,
+        &#34;analyzer&#34;: &#34;ik_smart&#34;
+      },
+      &#34;字段名2&#34;:{
+        &#34;type&#34;: &#34;keyword&#34;,
+        &#34;index&#34;: &#34;false&#34;
+      },
+      &#34;字段名3&#34;:{
+        &#34;properties&#34;: {
+          &#34;子字段&#34;: {
+            &#34;type&#34;: &#34;keyword&#34;
+          }
+        }
+      },
+      // ...略
+    }
+  }
+}
+</code></pre><p><strong>示例：</strong></p><pre tabindex=0><code>PUT /conan
+{
+  &#34;mappings&#34;: {
+    &#34;properties&#34;: {
+      &#34;column1&#34;:{
+        &#34;type&#34;: &#34;text&#34;,
+        &#34;analyzer&#34;: &#34;ik_smart&#34;
+      },
+      &#34;column2&#34;:{
+        &#34;type&#34;: &#34;keyword&#34;,
+        &#34;index&#34;: &#34;false&#34;
+      },
+      &#34;column3&#34;:{
+        &#34;properties&#34;: {
+          &#34;子字段1&#34;: {
+            &#34;type&#34;: &#34;keyword&#34;
+          },
+          &#34;子字段2&#34;: {
+            &#34;type&#34;: &#34;keyword&#34;
+          }
+        }
+      },
+      // ...略
+    }
+  }
+}
+</code></pre><h4 id=22-查询索引库>2.2 查询索引库<a hidden class=anchor aria-hidden=true href=#22-查询索引库>#</a></h4><h2 id=基本语法><strong>基本语法</strong>：<a hidden class=anchor aria-hidden=true href=#基本语法>#</a></h2><h2 id=请求方式get>请求方式：GET<a hidden class=anchor aria-hidden=true href=#请求方式get>#</a></h2><h2 id=请求路径索引库名>请求路径：/索引库名<a hidden class=anchor aria-hidden=true href=#请求路径索引库名>#</a></h2><p>请求参数：无</p><p><strong>格式</strong>：</p><pre tabindex=0><code>GET /索引库名
+</code></pre><p><strong>示例</strong>：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172026788-713413668.png></p><h4 id=23-修改索引库>2.3 修改索引库<a hidden class=anchor aria-hidden=true href=#23-修改索引库>#</a></h4><p>这里的修改是只能增加新的字段到mapping中
+倒排索引结构虽然不复杂，但是一旦数据结构改变（比如改变了分词器），就需要重新创建倒排索引，这简直是灾难。因此索引库<strong>一旦创建，无法修改mapping</strong>。
+虽然无法修改mapping中已有的字段，但是却<strong>允许添加新的字段</strong>到mapping中，因为不会对倒排索引产生影响。
+<strong>语法说明</strong>：</p><pre tabindex=0><code>PUT /索引库名/_mapping
+{
+  &#34;properties&#34;: {
+    &#34;新字段名&#34;:{
+      &#34;type&#34;: &#34;integer&#34;
+    }
+  }
+}
+</code></pre><p><strong>示例</strong>：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172037719-1357645386.png></p><h4 id=24-删除索引库>2.4 删除索引库<a hidden class=anchor aria-hidden=true href=#24-删除索引库>#</a></h4><h2 id=语法><strong>语法：</strong><a hidden class=anchor aria-hidden=true href=#语法>#</a></h2><h2 id=请求方式delete>请求方式：DELETE<a hidden class=anchor aria-hidden=true href=#请求方式delete>#</a></h2><h2 id=请求路径索引库名-1>请求路径：/索引库名<a hidden class=anchor aria-hidden=true href=#请求路径索引库名-1>#</a></h2><p>请求参数：无</p><p><strong>格式：</strong></p><pre tabindex=0><code>DELETE /索引库名
+</code></pre><p>在kibana中测试：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172043420-1340912851.png></p><h2 id=文档操作>文档操作<a hidden class=anchor aria-hidden=true href=#文档操作>#</a></h2><p>文档操作有哪些？</p><ul><li>创建文档：POST /{索引库名}/_doc/文档id</li><li>查询文档：GET /{索引库名}/_doc/文档id</li><li>删除文档：DELETE /{索引库名}/_doc/文档id</li><li>修改文档：</li><li>全量修改：PUT /{索引库名}/_doc/文档id</li><li>增量修改：POST /{索引库名}/_update/文档id { &ldquo;doc&rdquo;: {字段}}</li></ul><h3 id=1-文档的crud>1. 文档的CRUD<a hidden class=anchor aria-hidden=true href=#1-文档的crud>#</a></h3><h4 id=11-新增文档>1.1 新增文档<a hidden class=anchor aria-hidden=true href=#11-新增文档>#</a></h4><p><strong>语法：</strong></p><pre tabindex=0><code>POST /索引库名/_doc/文档id
+{
+    &#34;字段1&#34;: &#34;值1&#34;,
+    &#34;字段2&#34;: &#34;值2&#34;,
+    &#34;字段3&#34;: {
+        &#34;子属性1&#34;: &#34;值3&#34;,
+        &#34;子属性2&#34;: &#34;值4&#34;
+    },
+    // ...
+}
+</code></pre><p><strong>示例：</strong></p><pre tabindex=0><code>POST /heima/_doc/1
+{
+    &#34;info&#34;: &#34;真相只有一个！&#34;,
+    &#34;email&#34;: &#34;zy@itcast.cn&#34;,
+    &#34;name&#34;: {
+        &#34;firstName&#34;: &#34;柯&#34;,
+        &#34;lastName&#34;: &#34;南&#34;
+    }
+}
+</code></pre><p><strong>响应：</strong>
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172052120-910375955.png></p><h4 id=12-查询文档>1.2 查询文档<a hidden class=anchor aria-hidden=true href=#12-查询文档>#</a></h4><p>根据rest风格，新增是post，查询应该是get，不过查询一般都需要条件，这里我们把文档id带上。
+<strong>语法：</strong></p><pre tabindex=0><code>GET /{索引库名称}/_doc/{id}
+//批量查询：查询该索引库下的全部文档
+GET /{索引库名称}/_search
+</code></pre><p><strong>通过kibana查看数据：</strong></p><pre tabindex=0><code>GET /heima/_doc/1
+</code></pre><p><strong>查看结果：</strong>
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172058746-892146016.png></p><h4 id=13-删除文档>1.3 删除文档<a hidden class=anchor aria-hidden=true href=#13-删除文档>#</a></h4><p>删除使用DELETE请求，同样，需要根据id进行删除：
+<strong>语法：</strong></p><pre tabindex=0><code>DELETE /{索引库名}/_doc/id值
+</code></pre><p><strong>示例：</strong></p><pre tabindex=0><code># 根据id删除数据
+DELETE /heima/_doc/1
+</code></pre><p><strong>结果：</strong>
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172105015-1483849739.png></p><h4 id=14-修改文档>1.4 修改文档<a hidden class=anchor aria-hidden=true href=#14-修改文档>#</a></h4><p>修改有两种方式：</p><ul><li>全量修改：直接覆盖原来的文档</li><li>增量修改：修改文档中的部分字段</li></ul><h5 id=141-全量修改>1.4.1 全量修改<a hidden class=anchor aria-hidden=true href=#141-全量修改>#</a></h5><p>全量修改是覆盖原来的文档，其本质是：</p><ul><li>根据指定的id删除文档</li><li>新增一个相同id的文档</li></ul><p><strong>注意</strong>：如果根据id删除时，id不存在，第二步的新增也会执行，也就从修改变成了新增操作了。
+<strong>语法：</strong></p><pre tabindex=0><code>PUT /{索引库名}/_doc/文档id
+{
+    &#34;字段1&#34;: &#34;值1&#34;,
+    &#34;字段2&#34;: &#34;值2&#34;,
+    // ... 略
+}
+</code></pre><p><strong>示例：</strong></p><pre tabindex=0><code>PUT /heima/_doc/1
+{
+    &#34;info&#34;: &#34;黑马程序员高级Java讲师&#34;,
+    &#34;email&#34;: &#34;zy@itcast.cn&#34;,
+    &#34;name&#34;: {
+        &#34;firstName&#34;: &#34;云&#34;,
+        &#34;lastName&#34;: &#34;赵&#34;
+    }
+}
+</code></pre><h5 id=142-增量修改>1.4.2 增量修改<a hidden class=anchor aria-hidden=true href=#142-增量修改>#</a></h5><p>增量修改是只修改指定id匹配的文档中的部分字段。
+<strong>语法：</strong></p><pre tabindex=0><code>POST /{索引库名}/_update/文档id
+{
+    &#34;doc&#34;: {
+         &#34;字段名&#34;: &#34;新的值&#34;,
+    }
+}
+</code></pre><p><strong>示例：</strong></p><pre tabindex=0><code>POST /heima/_update/1
+{
+  &#34;doc&#34;: {
+    &#34;email&#34;: &#34;ZhaoYun@itcast.cn&#34;
+  }
+}
+</code></pre><h2 id=restapi>RestAPI<a hidden class=anchor aria-hidden=true href=#restapi>#</a></h2><p>ES官方提供了各种不同语言的客户端，用来操作ES。这些客户端的本质就是组装DSL语句，通过http请求发送给ES。官方文档地址：<a href=https://www.elastic.co/guide/en/elasticsearch/client/index.html>https://www.elastic.co/guide/en/elasticsearch/client/index.html</a>
+其中的Java Rest Client又包括两种：</p><ul><li>Java Low Level Rest Client</li><li>Java High Level Rest Client</li></ul><p><img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172112415-1704197079.png>
+我们使用的是Java HighLevel Rest Client客户端API</p><h3 id=api操作索引库>API操作索引库<a hidden class=anchor aria-hidden=true href=#api操作索引库>#</a></h3><p>JavaRestClient操作elasticsearch的流程基本类似。核心是client.indices()方法来获取索引库的操作对象。
+索引库操作的基本步骤：【可以根据发送请求那步的第一个参数，发过来判断需要创建什么XXXXRequest】</p><ul><li>初始化RestHighLevelClient</li><li>创建XxxIndexRequest。XXX是Create、Get、Delete</li><li>准备DSL（ Create时需要，其它是无参）</li><li>发送请求。调用RestHighLevelClient#indices().xxx()方法，xxx是create、exists、delete</li></ul><h4 id=1-mapping映射分析>1. mapping映射分析<a hidden class=anchor aria-hidden=true href=#1-mapping映射分析>#</a></h4><p><strong>根据MySQL数据库表结构（建表语句），去写索引库结构JSON。表和索引库一一对应</strong>
+<strong>注意</strong>：地理坐标、组合字段。索引库里的地理坐标是一个字段：<code>坐标：维度,精度</code>。copy_to组合字段作用是供用户查询（输入关键字可以查询多个字段）
+创建索引库，最关键的是mapping映射，而mapping映射要考虑的信息包括：</p><ul><li>字段名</li><li>字段数据类型</li><li>是否参与搜索</li><li>是否需要分词</li><li>如果分词，分词器是什么？</li></ul><p>其中：</p><ul><li>字段名、字段数据类型，可以参考数据表结构的名称和类型</li><li>是否参与搜索要分析业务来判断，例如图片地址，就无需参与搜索</li><li>是否分词呢要看内容，内容如果是一个整体就无需分词，反之则要分词</li><li>分词器，我们可以统一使用ik_max_word</li></ul><p>来看下酒店数据的索引库结构:</p><pre tabindex=0><code>PUT /hotel
+{
+  &#34;mappings&#34;: {
+    &#34;properties&#34;: {
+      &#34;id&#34;: {
+        &#34;type&#34;: &#34;keyword&#34;
+      },
+      &#34;name&#34;:{
+        &#34;type&#34;: &#34;text&#34;,
+        &#34;analyzer&#34;: &#34;ik_max_word&#34;,
+        &#34;copy_to&#34;: &#34;all&#34;
+      },
+      &#34;address&#34;:{
+        &#34;type&#34;: &#34;keyword&#34;,
+        &#34;index&#34;: false
+      },
+      &#34;price&#34;:{
+        &#34;type&#34;: &#34;integer&#34;
+      },
+      &#34;score&#34;:{
+        &#34;type&#34;: &#34;integer&#34;
+      },
+      &#34;brand&#34;:{
+        &#34;type&#34;: &#34;keyword&#34;,
+        &#34;copy_to&#34;: &#34;all&#34;
+      },
+      &#34;city&#34;:{
+        &#34;type&#34;: &#34;keyword&#34;,
+        &#34;copy_to&#34;: &#34;all&#34;
+      },
+      &#34;starName&#34;:{
+        &#34;type&#34;: &#34;keyword&#34;
+      },
+      &#34;business&#34;:{
+        &#34;type&#34;: &#34;keyword&#34;
+      },
+      &#34;location&#34;:{
+        &#34;type&#34;: &#34;geo_point&#34;
+      },
+      &#34;pic&#34;:{
+        &#34;type&#34;: &#34;keyword&#34;,
+        &#34;index&#34;: false
+      },
+      &#34;all&#34;:{
+        &#34;type&#34;: &#34;text&#34;,
+        &#34;analyzer&#34;: &#34;ik_max_word&#34;
+      }
+    }
+  }
+}
+</code></pre><p>几个特殊字段说明：</p><ul><li>location：地理坐标，里面包含精度、纬度</li><li>all：一个组合字段，其目的是将多字段的值 利用copy_to合并，提供给用户搜索</li></ul><p>地理坐标说明：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172124085-626335563.png>
+copy_to说明：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172128097-289087887.png></p><h4 id=2初始化restclient>2.初始化RestClient<a hidden class=anchor aria-hidden=true href=#2初始化restclient>#</a></h4><p>在elasticsearch提供的API中，与elasticsearch一切交互都封装在一个名为RestHighLevelClient的类中，必须先完成这个对象的初始化，建立与elasticsearch的连接。
+分为三步：
+1）引入es的RestHighLevelClient依赖：</p><pre tabindex=0><code>&lt;dependency&gt;
+    &lt;groupId&gt;org.elasticsearch.client&lt;/groupId&gt;
+    &lt;artifactId&gt;elasticsearch-rest-high-level-client&lt;/artifactId&gt;
+&lt;/dependency&gt;
+</code></pre><p>2）因为SpringBoot默认的ES版本是7.6.2，所以我们需要覆盖默认的ES版本：</p><pre tabindex=0><code>&lt;properties&gt;
+    &lt;java.version&gt;1.8&lt;/java.version&gt;
+    &lt;elasticsearch.version&gt;7.12.1&lt;/elasticsearch.version&gt;
+&lt;/properties&gt;
+</code></pre><p>3）初始化RestHighLevelClient：这里一般在启动类或者配置类里注入该Bean，用于告诉Java 访问ES的ip地址
+初始化的代码如下：</p><pre tabindex=0><code>@Bean
+public RestHighLevelClient client(){
+    return new RestHighLevelClient(RestClient.builder(
+        HttpHost.create(&#34;http://192.168.150.101:9200&#34;)
+	));
+}
+</code></pre><p>这里为了单元测试方便，我们创建一个测试类HotelIndexTest，然后将初始化的代码编写在@BeforeEach方法中：</p><pre tabindex=0><code>package cn.itcast.hotel;
+
+import org.apache.http.HttpHost;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+
+public class HotelIndexTest {
+    private RestHighLevelClient client;
+
+    @BeforeEach
+    void setUp() {
+        this.client = new RestHighLevelClient(RestClient.builder(
+                HttpHost.create(&#34;http://192.168.150.101:9200&#34;)
+        ));
+    }
+
+    @AfterEach
+    void tearDown() throws IOException {
+        this.client.close();
+    }
+}
+</code></pre><h4 id=3-索引库crud>3. 索引库CRUD<a hidden class=anchor aria-hidden=true href=#3-索引库crud>#</a></h4><h5 id=31-创建索引库>3.1 创建索引库<a hidden class=anchor aria-hidden=true href=#31-创建索引库>#</a></h5><p>代码分为三步：</p><ul><li>1）创建Request对象。因为是创建索引库的操作，因此Request是CreateIndexRequest。</li><li>2）添加请求参数，其实就是DSL的JSON参数部分。因为json字符串很长，这里是定义了静态字符串常量MAPPING_TEMPLATE，让代码看起来更加优雅。</li><li>3）发送请求，client.indices()方法的返回值是IndicesClient类型，封装了所有与索引库操作有关的方法。</li></ul><p>创建索引库的API如下：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172138463-1252488196.png>
+<strong>代码：</strong>
+在hotel-demo的cn.itcast.hotel.constants包下，创建一个类，定义mapping映射的JSON字符串常量：</p><pre tabindex=0><code>package cn.itcast.hotel.constants;
+
+public class HotelConstants {
+    public static final String MAPPING_TEMPLATE = &#34;{\n&#34; +
+            &#34;  \&#34;mappings\&#34;: {\n&#34; +
+            &#34;    \&#34;properties\&#34;: {\n&#34; +
+            &#34;      \&#34;id\&#34;: {\n&#34; +
+            &#34;        \&#34;type\&#34;: \&#34;keyword\&#34;\n&#34; +
+            &#34;      },\n&#34; +
+            &#34;      \&#34;name\&#34;:{\n&#34; +
+            &#34;        \&#34;type\&#34;: \&#34;text\&#34;,\n&#34; +
+            &#34;        \&#34;analyzer\&#34;: \&#34;ik_max_word\&#34;,\n&#34; +
+            &#34;        \&#34;copy_to\&#34;: \&#34;all\&#34;\n&#34; +
+            &#34;      },\n&#34; +
+            &#34;      \&#34;address\&#34;:{\n&#34; +
+            &#34;        \&#34;type\&#34;: \&#34;keyword\&#34;,\n&#34; +
+            &#34;        \&#34;index\&#34;: false\n&#34; +
+            &#34;      },\n&#34; +
+            &#34;      \&#34;price\&#34;:{\n&#34; +
+            &#34;        \&#34;type\&#34;: \&#34;integer\&#34;\n&#34; +
+            &#34;      },\n&#34; +
+            &#34;      \&#34;score\&#34;:{\n&#34; +
+            &#34;        \&#34;type\&#34;: \&#34;integer\&#34;\n&#34; +
+            &#34;      },\n&#34; +
+            &#34;      \&#34;brand\&#34;:{\n&#34; +
+            &#34;        \&#34;type\&#34;: \&#34;keyword\&#34;,\n&#34; +
+            &#34;        \&#34;copy_to\&#34;: \&#34;all\&#34;\n&#34; +
+            &#34;      },\n&#34; +
+            &#34;      \&#34;city\&#34;:{\n&#34; +
+            &#34;        \&#34;type\&#34;: \&#34;keyword\&#34;,\n&#34; +
+            &#34;        \&#34;copy_to\&#34;: \&#34;all\&#34;\n&#34; +
+            &#34;      },\n&#34; +
+            &#34;      \&#34;starName\&#34;:{\n&#34; +
+            &#34;        \&#34;type\&#34;: \&#34;keyword\&#34;\n&#34; +
+            &#34;      },\n&#34; +
+            &#34;      \&#34;business\&#34;:{\n&#34; +
+            &#34;        \&#34;type\&#34;: \&#34;keyword\&#34;\n&#34; +
+            &#34;      },\n&#34; +
+            &#34;      \&#34;location\&#34;:{\n&#34; +
+            &#34;        \&#34;type\&#34;: \&#34;geo_point\&#34;\n&#34; +
+            &#34;      },\n&#34; +
+            &#34;      \&#34;pic\&#34;:{\n&#34; +
+            &#34;        \&#34;type\&#34;: \&#34;keyword\&#34;,\n&#34; +
+            &#34;        \&#34;index\&#34;: false\n&#34; +
+            &#34;      },\n&#34; +
+            &#34;      \&#34;all\&#34;:{\n&#34; +
+            &#34;        \&#34;type\&#34;: \&#34;text\&#34;,\n&#34; +
+            &#34;        \&#34;analyzer\&#34;: \&#34;ik_max_word\&#34;\n&#34; +
+            &#34;      }\n&#34; +
+            &#34;    }\n&#34; +
+            &#34;  }\n&#34; +
+            &#34;}&#34;;
+}
+</code></pre><p>在hotel-demo中的HotelIndexTest测试类中，编写单元测试，实现创建索引：</p><pre tabindex=0><code>@Test
+void createHotelIndex() throws IOException {
+    // 1.创建Request对象
+    CreateIndexRequest request = new CreateIndexRequest(&#34;hotel&#34;);
+    // 2.准备请求的参数：DSL语句
+    request.source(MAPPING_TEMPLATE, XContentType.JSON);
+    // 3.发送请求
+    client.indices().create(request, RequestOptions.DEFAULT);
+}
+</code></pre><h5 id=32-删除索引库>3.2 删除索引库<a hidden class=anchor aria-hidden=true href=#32-删除索引库>#</a></h5><p>三步走：</p><ul><li>1）创建Request对象。这次是DeleteIndexRequest对象</li><li>2）准备参数。这里是无参</li><li>3）发送请求。改用delete方法</li></ul><p>删除索引库的DSL语句非常简单：</p><pre tabindex=0><code>DELETE /hotel
+</code></pre><p>在hotel-demo中的HotelIndexTest测试类中，编写单元测试，实现删除索引：</p><pre tabindex=0><code>@Test
+void testDeleteHotelIndex() throws IOException {
+    // 1.创建Request对象
+    DeleteIndexRequest request = new DeleteIndexRequest(&#34;hotel&#34;);
+    // 2.发送请求
+    client.indices().delete(request, RequestOptions.DEFAULT);
+}
+</code></pre><h5 id=33-查询索引库>3.3 查询索引库<a hidden class=anchor aria-hidden=true href=#33-查询索引库>#</a></h5><p>三步走：</p><ul><li>1）创建Request对象。这次是GetIndexRequest对象</li><li>2）准备参数。这里是无参</li><li>3）发送请求。改用exists方法</li></ul><p>判断索引库是否存在，本质就是查询，对应的DSL是：</p><pre tabindex=0><code>GET /hotel
+</code></pre><pre tabindex=0><code>@Test
+void testExistsHotelIndex() throws IOException {
+    // 1.创建Request对象
+    GetIndexRequest request = new GetIndexRequest(&#34;hotel&#34;);
+    // 2.发送请求
+    boolean exists = client.indices().exists(request, RequestOptions.DEFAULT);
+    // 3.输出
+    System.err.println(exists ? &#34;索引库已经存在！&#34; : &#34;索引库不存在！&#34;);
+}
+</code></pre><h3 id=api操作文档>API操作文档<a hidden class=anchor aria-hidden=true href=#api操作文档>#</a></h3><p>这里更多的是先读取Mysql中的数据，然后再存进ES中。
+文档操作的基本步骤：【可以根据发送请求那步的第一个参数，发过来判断需要创建什么XXXXRequest】</p><ul><li>初始化RestHighLevelClient</li><li>创建XxxRequest。XXX是Index、Get、Update、Delete、Bulk</li><li>准备参数（Index、Update、Bulk时需要）</li><li>发送请求。调用RestHighLevelClient#.xxx()方法，xxx是index、get、update、delete、bulk</li><li>解析结果（Get时需要）</li></ul><h4 id=1-初始化restclient>1. 初始化RestClient<a hidden class=anchor aria-hidden=true href=#1-初始化restclient>#</a></h4><p>在elasticsearch提供的API中，与elasticsearch一切交互都封装在一个名为RestHighLevelClient的类中，必须先完成这个对象的初始化，建立与elasticsearch的连接。
+分为三步：
+1）引入es的RestHighLevelClient依赖：</p><pre tabindex=0><code>&lt;dependency&gt;
+    &lt;groupId&gt;org.elasticsearch.client&lt;/groupId&gt;
+    &lt;artifactId&gt;elasticsearch-rest-high-level-client&lt;/artifactId&gt;
+&lt;/dependency&gt;
+</code></pre><p>2）因为SpringBoot默认的ES版本是7.6.2，所以我们需要覆盖默认的ES版本：</p><pre tabindex=0><code>&lt;properties&gt;
+    &lt;java.version&gt;1.8&lt;/java.version&gt;
+    &lt;elasticsearch.version&gt;7.12.1&lt;/elasticsearch.version&gt;
+&lt;/properties&gt;
+</code></pre><p>3）初始化RestHighLevelClient：这里一般写在最前面，用于告诉Java 访问ES的ip地址
+初始化的代码如下：</p><pre tabindex=0><code>RestHighLevelClient client = new RestHighLevelClient(RestClient.builder(
+        HttpHost.create(&#34;http://192.168.150.101:9200&#34;)
+));
+</code></pre><p>这里为了单元测试方便，我们创建一个测试类HotelIndexTest，然后将初始化的代码编写在@BeforeEach方法中：</p><pre tabindex=0><code>package cn.itcast.hotel;
+
+import org.apache.http.HttpHost;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+
+public class HotelIndexTest {
+    private RestHighLevelClient client;
+
+    @BeforeEach
+    void setUp() {
+        this.client = new RestHighLevelClient(RestClient.builder(
+                HttpHost.create(&#34;http://192.168.150.101:9200&#34;)
+        ));
+    }
+
+    @AfterEach
+    void tearDown() throws IOException {
+        this.client.close();
+    }
+}
+</code></pre><h4 id=2-文档crud>2. 文档CRUD<a hidden class=anchor aria-hidden=true href=#2-文档crud>#</a></h4><h5 id=20-批量导入文档>2.0 批量导入文档<a hidden class=anchor aria-hidden=true href=#20-批量导入文档>#</a></h5><p>三步走：</p><ul><li>1）创建Request对象。这里是BulkRequest</li><li>2）准备参数。批处理的参数，就是其它Request对象，这里就是多个IndexRequest</li><li>3）发起请求。这里是批处理，调用的方法为client.bulk()方法</li></ul><h2 id=步骤如下>案例需求：利用BulkRequest批量将数据库数据导入到索引库中。
+步骤如下：</h2><h2 id=利用mybatis-plus查询酒店数据>利用mybatis-plus查询酒店数据<a hidden class=anchor aria-hidden=true href=#利用mybatis-plus查询酒店数据>#</a></h2><h2 id=将查询到的酒店数据hotel转换为文档类型数据hoteldoc>将查询到的酒店数据（Hotel）转换为文档类型数据（HotelDoc）<a hidden class=anchor aria-hidden=true href=#将查询到的酒店数据hotel转换为文档类型数据hoteldoc>#</a></h2><p>利用JavaRestClient中的BulkRequest批处理，实现批量新增文档</p><p><strong>语法说明：</strong>
+批量处理BulkRequest，其本质就是将多个普通的CRUD请求组合在一起发送。
+其中提供了一个add方法，用来添加其他请求：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172220573-1990074801.png>
+可以看到，能添加的请求包括：</p><ul><li>IndexRequest，也就是新增</li><li>UpdateRequest，也就是修改</li><li>DeleteRequest，也就是删除</li></ul><p>因此Bulk中添加了多个IndexRequest，就是批量新增功能了。示例：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172227358-759338253.png>
+我们在导入酒店数据时，将上述代码改造成for循环处理即可。
+在hotel-demo的HotelDocumentTest测试类中，编写单元测试：</p><pre tabindex=0><code>@Test
+void testBulkRequest() throws IOException {
+    // 批量查询酒店数据
+    List&lt;Hotel&gt; hotels = hotelService.list();
+
+    // 1.创建Request
+    BulkRequest request = new BulkRequest();
+    // 2.准备参数，添加多个新增的Request
+    for (Hotel hotel : hotels) {
+        // 2.1.转换为文档类型HotelDoc
+        HotelDoc hotelDoc = new HotelDoc(hotel);
+        // 2.2.创建新增文档的Request对象
+        request.add(new IndexRequest(&#34;hotel&#34;)
+                    .id(hotelDoc.getId().toString())
+                    .source(JSON.toJSONString(hotelDoc), XContentType.JSON));
+    }
+    // 3.发送请求
+    client.bulk(request, RequestOptions.DEFAULT);
+}
+</code></pre><h5 id=21-批量新增文档>2.1 批量新增文档<a hidden class=anchor aria-hidden=true href=#21-批量新增文档>#</a></h5><p>四步走：</p><ul><li>0）创建索引库实体类</li><li>1）创建Request对象</li><li>2）准备请求参数，也就是DSL中的JSON文档</li><li>3）发送请求 （注意：这里直接使用client.xxx()的API，不再需要client.indices()了）</li></ul><p>我们要将数据库的酒店数据查询出来，写入elasticsearch中。
+<strong>1）创建索引库实体类</strong>
+一般实体类里包含经纬度都需要创建一个新的实体类，将经纬度拼成一个字段
+数据库查询后的结果是一个Hotel类型的对象。结构如下：</p><pre tabindex=0><code>@Data
+@TableName(&#34;tb_hotel&#34;)
+public class Hotel {
+    @TableId(type = IdType.INPUT)
+    private Long id;
+    private String name;
+    private String address;
+    private Integer price;
+    private Integer score;
+    private String brand;
+    private String city;
+    private String starName;
+    private String business;
+    private String longitude;
+    private String latitude;
+    private String pic;
+}
+</code></pre><p>与我们的索引库结构存在差异：</p><ul><li>longitude和latitude需要合并为location</li></ul><p>因此，我们需要定义一个新的类型，与索引库结构吻合：</p><pre tabindex=0><code>package cn.itcast.hotel.pojo;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+public class HotelDoc {
+    private Long id;
+    private String name;
+    private String address;
+    private Integer price;
+    private Integer score;
+    private String brand;
+    private String city;
+    private String starName;
+    private String business;
+    private String location;
+    private String pic;
+
+    public HotelDoc(Hotel hotel) {
+        this.id = hotel.getId();
+        this.name = hotel.getName();
+        this.address = hotel.getAddress();
+        this.price = hotel.getPrice();
+        this.score = hotel.getScore();
+        this.brand = hotel.getBrand();
+        this.city = hotel.getCity();
+        this.starName = hotel.getStarName();
+        this.business = hotel.getBusiness();
+        this.location = hotel.getLatitude() + &#34;, &#34; + hotel.getLongitude();
+        this.pic = hotel.getPic();
+    }
+}
+</code></pre><p><strong>2）新增代码</strong>
+新增文档的DSL语句如下：</p><pre tabindex=0><code>POST /{索引库名}/_doc/1
+{
+    &#34;name&#34;: &#34;Jack&#34;,
+    &#34;age&#34;: 21
+}
+</code></pre><p>对应的java代码如图：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172259030-1988634807.png>
+我们导入酒店数据，基本流程一致，但是需要考虑几点变化：</p><ul><li>酒店数据来自于数据库，我们需要先查询出来，得到hotel对象</li><li>hotel对象需要转为HotelDoc对象</li><li>HotelDoc需要序列化为json格式</li></ul><p>在hotel-demo的HotelDocumentTest测试类中，编写单元测试：</p><pre tabindex=0><code>@Test
+void testAddDocument() throws IOException {
+    // 批量查询酒店数据
+    List&lt;Hotel&gt; hotels = hotelService.list();
+
+    // 1.创建Request
+    BulkRequest request = new BulkRequest();
+    // 2.准备参数，添加多个新增的Request
+    for (Hotel hotel : hotels) {
+        // 2.1.转换为文档类型HotelDoc
+        HotelDoc hotelDoc = new HotelDoc(hotel);
+        // 2.2.创建新增文档的Request对象
+        request.add(new IndexRequest(&#34;hotel&#34;)
+                    .id(hotelDoc.getId().toString())
+                    .source(JSON.toJSONString(hotelDoc), XContentType.JSON));//实体类转JSON，指定JSON格式
+        request.add(new IndexRequest(&#34;xxx&#34;)...)
+    }
+    // 3.发送请求
+    client.bulk(request, RequestOptions.DEFAULT);
+}
+</code></pre><h5 id=22-查询文档>2.2 查询文档<a hidden class=anchor aria-hidden=true href=#22-查询文档>#</a></h5><p>查询文档是根据id查询的，所以没有批量查询
+三步走：</p><ul><li>1）准备Request对象。这次是查询，所以是GetRequest</li><li>2）发送请求，得到结果。因为是查询，这里调用client.get()方法</li><li>3）解析结果，就是对JSON做反序列化</li></ul><p>查询的DSL语句如下：</p><pre tabindex=0><code>GET /hotel/_doc/{id}
+</code></pre><p>非常简单，因此代码大概分两步：</p><ul><li>准备Request对象</li><li>发送请求</li></ul><p>不过查询的目的是得到结果，解析为HotelDoc，因此难点是结果的解析。完整代码如下：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172309780-381577770.png>
+可以看到，结果是一个JSON，其中文档放在一个<code>_source</code>属性中，因此解析就是拿到<code>_source</code>，使用工具反序列化为Java对象即可。
+在hotel-demo的HotelDocumentTest测试类中，编写单元测试：</p><pre tabindex=0><code>@Test
+void testGetDocumentById() throws IOException {
+    // 1.准备Request
+    GetRequest request = new GetRequest(&#34;hotel&#34;, &#34;61082&#34;);
+    // 2.发送请求，得到响应
+    GetResponse response = client.get(request, RequestOptions.DEFAULT);
+    // 3.解析响应结果
+    String json = response.getSourceAsString();
+
+    HotelDoc hotelDoc = JSON.parseObject(json, HotelDoc.class);
+    System.out.println(hotelDoc);
+}
+</code></pre><h5 id=23-批量删除文档>2.3 批量删除文档<a hidden class=anchor aria-hidden=true href=#23-批量删除文档>#</a></h5><p>三步走：</p><ul><li>1）准备Request对象，因为是删除，这次是DeleteRequest对象。要指定索引库名和id</li><li>2）准备参数，无参</li><li>3）发送请求。因为是删除，所以是client.delete()方法</li></ul><p>删除的DSL为是这样的：</p><pre tabindex=0><code>DELETE /hotel/_doc/{id}
+</code></pre><p>在hotel-demo的HotelDocumentTest测试类中，编写单元测试：</p><pre tabindex=0><code>@Test
+void testDeleteDocument() throws IOException {
+    //0.查询数据库中的数据
+    List&lt;Hotel&gt; list = hotelService.list();
+    // 1.创建Request
+    BulkRequest request = new BulkRequest();
+    //2.批量转换实体类，顺便写入到ES中
+    for (Hotel hotel : list) {
+        //2.1转换实体类
+        HotelDoc hotelDoc =new HotelDoc(hotel);
+        //2.2写入ES
+        request.add(new DeleteRequest(&#34;hotel&#34;)
+                    .id(hotel.getId().toString()));
+    }
+    //3.发送请求
+    client.bulk(request,RequestOptions.DEFAULT);
+}
+</code></pre><h5 id=24-批量修改文档>2.4 批量修改文档<a hidden class=anchor aria-hidden=true href=#24-批量修改文档>#</a></h5><p>三步走：</p><ul><li>1）准备Request对象。这次是修改，所以是UpdateRequest</li><li>2）准备参数。也就是JSON文档，里面包含要修改的字段</li><li>3）更新文档。这里调用client.update()方法</li></ul><p>修改有两种方式：</p><ul><li>全量修改：本质是先根据id删除，再新增</li><li>增量修改：修改文档中的指定字段值</li></ul><p>在RestClient的API中，全量修改与新增的API完全一致，判断依据是ID：</p><ul><li>如果新增时，ID已经存在，则修改</li><li>如果新增时，ID不存在，则新增</li></ul><p><strong>只演示增量修改：</strong>
+代码示例如图：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172320621-611636092.png>
+在hotel-demo的HotelDocumentTest测试类中，编写单元测试：</p><pre tabindex=0><code>@Test
+void testUpdateDocument() throws IOException {
+    //0.查询数据库中的数据
+    List&lt;Hotel&gt; list = hotelService.list();
+    // 1.创建Request
+    BulkRequest request = new BulkRequest();
+    //2.批量转换实体类，顺便写入到ES中
+    for (Hotel hotel : list) {
+        //2.1转换实体类
+        HotelDoc hotelDoc =new HotelDoc(hotel);
+        //2.2写入ES
+        request.add(new UpdateRequest(&#34;hotel&#34;,hotel.getId().toString())
+                    .doc(
+                        &#34;price&#34;, &#34;952&#34;,
+                        &#34;starName&#34;, &#34;四钻&#34;
+                    ));
+    }
+    //3.发送请求
+    client.bulk(request,RequestOptions.DEFAULT);
+}
+</code></pre><h2 id=es搜索引擎>ES搜索引擎<a hidden class=anchor aria-hidden=true href=#es搜索引擎>#</a></h2><p>elasticsearch的查询依然是基于JSON风格的DSL来实现的。</p><h3 id=1-dsl设置查询条件>1. DSL设置查询条件<a hidden class=anchor aria-hidden=true href=#1-dsl设置查询条件>#</a></h3><h4 id=11-dsl查询分类>1.1 DSL查询分类<a hidden class=anchor aria-hidden=true href=#11-dsl查询分类>#</a></h4><h2 id=elasticsearch提供了基于json的dsldomain-specific-language-来定义查询常见的查询类型包括>Elasticsearch提供了基于JSON的DSL（<a href=https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html>Domain Specific Language</a> ）来定义查询。常见的查询类型包括：<a hidden class=anchor aria-hidden=true href=#elasticsearch提供了基于json的dsldomain-specific-language-来定义查询常见的查询类型包括>#</a></h2><h2 id=查询所有查询出所有数据一般测试用例如match_all><strong>查询所有</strong>：查询出所有数据，<em>一般测试用</em>。例如：match_all<a hidden class=anchor aria-hidden=true href=#查询所有查询出所有数据一般测试用例如match_all>#</a></h2><p><strong>全文检索（full text）查询</strong>：利用分词器对用户输入内容分词，然后去倒排索引库中匹配。例如：</p><ul><li><p>match_query</p></li><li><p>multi_match_query</p></li><li></li></ul><p><strong>精确查询</strong>：根据精确词条值查找数据，一般是查找keyword、数值、日期、boolean等类型字段。例如：</p><ul><li><p>ids</p></li><li><p>range</p></li><li><p>term</p></li><li></li></ul><p><strong>地理（geo）查询</strong>：根据经纬度查询。例如：</p><ul><li><p>geo_distance</p></li><li><p>geo_bounding_box</p></li><li></li></ul><p><strong>复合（compound）查询</strong>：复合查询可以将上述各种查询条件组合起来，合并查询条件。例如：</p><ul><li>bool</li><li>function_score</li></ul><p>查询的语法基本一致：</p><pre tabindex=0><code>GET /indexName/_search
+{
+  &#34;query&#34;: {
+    &#34;查询类型&#34;: {
+      &#34;查询条件&#34;: &#34;条件值&#34;
+    }
+  }
+}
+</code></pre><p>我们以查询所有为例，其中：</p><ul><li>查询类型为match_all</li><li>没有查询条件</li></ul><pre tabindex=0><code>// 查询所有
+GET /indexName/_search
+{
+  &#34;query&#34;: {
+    &#34;match_all&#34;: {
+    }
+  }
+}
+</code></pre><p>其它查询无非就是<strong>查询类型</strong>、<strong>查询条件</strong>的变化。</p><h4 id=12-全文检索查询>1.2 全文检索查询<a hidden class=anchor aria-hidden=true href=#12-全文检索查询>#</a></h4><p>match和multi_match的区别是什么？</p><ul><li>match：根据一个字段查询【推荐：使用copy_to构造all字段】</li><li>multi_match：根据多个字段查询，参与查询字段越多，查询性能越差</li></ul><p><strong>注：搜索字段越多，对查询性能影响越大，因此建议采用copy_to，然后单字段查询的方式。</strong></p><h5 id=121-使用场景>1.2.1 使用场景<a hidden class=anchor aria-hidden=true href=#121-使用场景>#</a></h5><p>全文检索查询的<strong>基本流程</strong>如下：</p><ul><li>对用户搜索的内容做分词，得到词条</li><li>根据词条去倒排索引库中匹配，得到文档id</li><li>根据文档id找到文档，返回给用户</li></ul><p>比较常用的<strong>场景</strong>包括：</p><ul><li>商城的输入框搜索</li><li>百度输入框搜索</li></ul><p>例如京东：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172332617-1391223216.png>
+因为是拿着词条去匹配，因此参与搜索的字段也必须是可分词的text类型的字段。
+常见的全文检索查询包括：</p><ul><li>match查询：单字段查询</li><li>multi_match查询：多字段查询，任意一个字段符合条件就算符合查询条件</li></ul><h5 id=122-match查询>1.2.2 match查询<a hidden class=anchor aria-hidden=true href=#122-match查询>#</a></h5><p>match查询语法如下：</p><pre tabindex=0><code>GET /indexName/_search
+{
+  &#34;query&#34;: {
+    &#34;match&#34;: {
+      &#34;FIELD&#34;: &#34;TEXT&#34;
+    }
+  }
+}
+</code></pre><p>match查询示例：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172338916-1567477721.png></p><h5 id=123-mulit_match查询>1.2.3 mulit_match查询<a hidden class=anchor aria-hidden=true href=#123-mulit_match查询>#</a></h5><p>mulit_match语法如下：</p><pre tabindex=0><code>GET /indexName/_search
+{
+  &#34;query&#34;: {
+    &#34;multi_match&#34;: {
+      &#34;query&#34;: &#34;TEXT&#34;,
+      &#34;fields&#34;: [&#34;FIELD1&#34;, &#34; FIELD12&#34;]
+    }
+  }
+}
+</code></pre><p>multi_match查询示例：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172344847-66722394.png></p><h4 id=13-精准查询>1.3 精准查询<a hidden class=anchor aria-hidden=true href=#13-精准查询>#</a></h4><p>精准查询类型：</p><ul><li>term查询：根据词条精确匹配，一般搜索keyword类型、数值类型、布尔类型、日期类型字段</li><li>range查询：根据数值范围查询，可以是数值、日期的范围</li></ul><p>精确查询一般是查找keyword、数值、日期、boolean等类型字段。所以<strong>不会</strong>对搜索条件分词。常见的有：</p><ul><li><strong>term：根据词条精确值查询</strong></li><li><strong>range：根据值的范围查询</strong></li></ul><h5 id=131-term查询>1.3.1 term查询<a hidden class=anchor aria-hidden=true href=#131-term查询>#</a></h5><p>因为精确查询的字段搜时不分词的字段，因此查询的条件也必须是<strong>不分词</strong>的词条。查询时，用户输入的内容跟自动值完全匹配时才认为符合条件。如果用户输入的内容过多，反而搜索不到数据。
+语法说明：</p><pre tabindex=0><code>// term查询
+GET /indexName/_search
+{
+  &#34;query&#34;: {
+    &#34;term&#34;: {
+      &#34;FIELD&#34;: {
+        &#34;value&#34;: &#34;VALUE&#34;
+      }
+    }
+  }
+}
+</code></pre><p>示例：
+当我搜索的是精确词条时，能正确查询出结果：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172353868-723957119.png>
+但是，当我搜索的内容不是词条，而是多个词语形成的短语时，反而搜索不到：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172404632-400137183.png></p><h5 id=132-range查询>1.3.2 range查询<a hidden class=anchor aria-hidden=true href=#132-range查询>#</a></h5><p>范围查询，一般应用在对数值类型做范围过滤的时候。比如做价格范围过滤。
+基本语法：</p><pre tabindex=0><code>// range查询
+GET /indexName/_search
+{
+  &#34;query&#34;: {
+    &#34;range&#34;: {
+      &#34;FIELD&#34;: {
+        &#34;gte&#34;: 10, // 这里的gte代表大于等于，gt则代表大于
+        &#34;lte&#34;: 20 // lte代表小于等于，lt则代表小于
+      }
+    }
+  }
+}
+</code></pre><p>示例：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172415197-322405876.png></p><h4 id=14-地理坐标查询>1.4 地理坐标查询<a hidden class=anchor aria-hidden=true href=#14-地理坐标查询>#</a></h4><p>所谓的地理坐标查询，其实就是根据经纬度查询，官方文档：<a href=https://www.elastic.co/guide/en/elasticsearch/reference/current/geo-queries.html>https://www.elastic.co/guide/en/elasticsearch/reference/current/geo-queries.html</a>
+常见的使用场景包括：</p><ul><li>携程：搜索我附近的酒店</li><li>滴滴：搜索我附近的出租车</li><li>微信：搜索我附近的人</li></ul><p>附近的酒店：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172420925-939257883.png>
+附近的车：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172429568-981337372.png></p><h5 id=141-矩形范围查询>1.4.1 矩形范围查询<a hidden class=anchor aria-hidden=true href=#141-矩形范围查询>#</a></h5><p>很少有业务有这种需求
+矩形范围查询，也就是geo_bounding_box查询，查询坐标落在某个矩形范围的所有文档：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172556695-448469947.gif>
+查询时，需要指定矩形的<strong>左上</strong>、<strong>右下</strong>两个点的坐标，然后画出一个矩形，落在该矩形内的都是符合条件的点。
+语法如下：</p><pre tabindex=0><code>// geo_bounding_box查询
+GET /indexName/_search
+{
+  &#34;query&#34;: {
+    &#34;geo_bounding_box&#34;: {
+      &#34;FIELD&#34;: {
+        &#34;top_left&#34;: { // 左上点
+          &#34;lat&#34;: 31.1,
+          &#34;lon&#34;: 121.5
+        },
+        &#34;bottom_right&#34;: { // 右下点
+          &#34;lat&#34;: 30.9,
+          &#34;lon&#34;: 121.7
+        }
+      }
+    }
+  }
+}
+</code></pre><h5 id=142-附近圆形查询>1.4.2 附近(圆形)查询<a hidden class=anchor aria-hidden=true href=#142-附近圆形查询>#</a></h5><p>附近查询，也叫做距离查询（geo_distance）：查询到指定中心点小于某个距离值的所有文档。
+换句话来说，在地图上找一个点作为圆心，以指定距离为半径，画一个圆，落在圆内的坐标都算符合条件：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172657385-1268854128.gif>
+语法说明：</p><pre tabindex=0><code>// geo_distance 查询
+GET /indexName/_search
+{
+  &#34;query&#34;: {
+    &#34;geo_distance&#34;: {
+      &#34;distance&#34;: &#34;15km&#34;, // 半径
+      &#34;FIELD&#34;: &#34;31.21,121.5&#34; // 圆心
+    }
+  }
+}
+</code></pre><p>示例：
+我们先搜索陆家嘴附近15km的酒店：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205172724869-1773754207.png>
+发现共有47家酒店。</p><h4 id=15-复合查询>1.5 复合查询<a hidden class=anchor aria-hidden=true href=#15-复合查询>#</a></h4><p>复合（compound）查询：复合查询可以将其它简单查询组合起来，实现更复杂的搜索逻辑。常见的有两种：</p><ul><li>fuction score：算分函数查询，可以控制文档相关性算分，控制文档排名</li><li>bool query：布尔查询，利用逻辑关系组合多个其它的查询，实现复杂搜索</li></ul><h5 id=150-复合查询归纳>1.5.0 复合查询归纳<a hidden class=anchor aria-hidden=true href=#150-复合查询归纳>#</a></h5><pre tabindex=0><code>GET /hotel/_search
+{
+  &#34;query&#34;: {
+    &#34;function_score&#34;: {
+      &#34;query&#34;: { // 原始查询，可以是任意条件
+          &#34;bool&#34;: {
+              &#34;must&#34;: [
+                  {&#34;term&#34;: {&#34;city&#34;: &#34;上海&#34; }}
+              ],
+              &#34;should&#34;: [
+                  {&#34;term&#34;: {&#34;brand&#34;: &#34;皇冠假日&#34; }},
+                  {&#34;term&#34;: {&#34;brand&#34;: &#34;华美达&#34; }}
+              ],
+              &#34;must_not&#34;: [
+                  { &#34;range&#34;: { &#34;price&#34;: { &#34;lte&#34;: 500 } }}
+              ],
+              &#34;filter&#34;: [
+                  { &#34;range&#34;: {&#34;score&#34;: { &#34;gte&#34;: 45 } }}
+              ]
+          }
+      },
+      &#34;functions&#34;: [ // 算分函数
+        {
+          &#34;filter&#34;: { // 满足的条件，品牌必须是如家【品牌是如家的才加分，这里是加分条件】
+            &#34;term&#34;: {
+              &#34;brand&#34;: &#34;如家&#34;
+            }
+          },
+          &#34;weight&#34;: 2 // 算分权重为2
+        }
+      ],
+      &#34;boost_mode&#34;: &#34;sum&#34; // 加权模式，求和
+    }
+  }
+}
+</code></pre><h5 id=151-相关性算分>1.5.1 相关性算分<a hidden class=anchor aria-hidden=true href=#151-相关性算分>#</a></h5><p>elasticsearch会根据词条和文档的相关度做打分，算法由两种：</p><ul><li>TF-IDF算法</li><li>BM25算法，elasticsearch5.1版本后采用的算法</li></ul><p>当我们利用match查询时，文档结果会根据与搜索词条的关联度打分（_score），返回结果时按照分值降序排列。
+例如，我们搜索 &ldquo;虹桥如家&rdquo;，结果如下：</p><pre tabindex=0><code>[
+  {
+    &#34;_score&#34; : 17.850193,
+    &#34;_source&#34; : {
+      &#34;name&#34; : &#34;虹桥如家酒店真不错&#34;,
+    }
+  },
+  {
+    &#34;_score&#34; : 12.259849,
+    &#34;_source&#34; : {
+      &#34;name&#34; : &#34;外滩如家酒店真不错&#34;,
+    }
+  },
+  {
+    &#34;_score&#34; : 11.91091,
+    &#34;_source&#34; : {
+      &#34;name&#34; : &#34;迪士尼如家酒店真不错&#34;,
+    }
+  }
+]
+</code></pre><p>在elasticsearch中，早期使用的打分算法是TF-IDF算法，公式如下：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173433826-368331600.png>
+在后来的5.1版本升级中，elasticsearch将算法改进为BM25算法，公式如下：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173438720-1124832591.png>
+TF-IDF算法有一各缺陷，就是词条频率越高，文档得分也会越高，单个词条对文档影响较大。而BM25则会让单个词条的算分有一个上限，曲线更加平滑：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173443307-150506578.png></p><h5 id=152-算分函数查询>1.5.2 算分函数查询<a hidden class=anchor aria-hidden=true href=#152-算分函数查询>#</a></h5><p>在搜索出来的结果的分数基础上，再手动与指定的数字进行一定运算来改变算分，从而改变结果的排序。
+function score query定义的三要素是什么？</p><ul><li>过滤条件：哪些文档要加分</li><li>算分函数：如何计算function score</li><li>加权方式：function score 与 query score如何运算</li></ul><p>根据相关度打分是比较合理的需求，但<strong>合理的不一定是产品经理需要</strong>的。
+以百度为例，你搜索的结果中，并不是相关度越高排名越靠前，而是谁掏的钱多排名就越靠前。如图：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173451256-1402835153.png>
+要想认为控制相关性算分，就需要利用elasticsearch中的function score 查询了。</p><h6 id=function-score-查询>function score 查询<a hidden class=anchor aria-hidden=true href=#function-score-查询>#</a></h6><p><strong>1）语法说明</strong>
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173456315-243388005.png>
+function score 查询中包含四部分内容：</p><ul><li><p><strong>原始查询</strong>条件：query部分，基于这个条件搜索文档，并且基于BM25算法给文档打分，<strong>原始算分</strong>（query score)</p></li><li><p><strong>过滤条件</strong>：filter部分，符合该条件的文档才会重新算分</p></li><li><p><strong>算分函数</strong>：符合filter条件的文档要根据这个函数做运算，得到的<strong>函数算分</strong>（function score），有四种函数</p></li><li><p>weight：函数结果是常量</p></li><li><p>field_value_factor：以文档中的某个字段值作为函数结果</p></li><li><p>random_score：以随机数作为函数结果</p></li><li><p>script_score：自定义算分函数算法</p></li><li><p><strong>运算模式</strong>：算分函数的结果、原始查询的相关性算分，两者之间的运算方式，包括：</p></li><li><p>multiply：相乘</p></li><li><p>replace：用function score替换query score</p></li><li><p>其它，例如：sum、avg、max、min</p></li></ul><p>function score的运行流程如下：</p><ul><li>1）根据<strong>原始条件</strong>查询搜索文档，并且计算相关性算分，称为<strong>原始算分</strong>（query score）</li><li>2）根据<strong>过滤条件</strong>，过滤文档</li><li>3）符合<strong>过滤条件</strong>的文档，基于<strong>算分函数</strong>运算，得到<strong>函数算分</strong>（function score）</li><li>4）将<strong>原始算分</strong>（query score）和<strong>函数算分</strong>（function score）基于<strong>运算模式</strong>做运算，得到最终结果，作为相关性算分。</li></ul><p><strong>2）举例</strong>
+需求：给“如家”这个品牌的酒店排名靠前一些
+翻译一下这个需求，转换为之前说的四个要点：</p><ul><li>原始条件：不确定，可以任意变化</li><li>过滤条件：brand = &ldquo;如家&rdquo;</li><li>算分函数：可以简单粗暴，直接给固定的算分结果，weight</li><li>运算模式：比如求和</li></ul><p>因此最终的DSL语句如下：</p><pre tabindex=0><code>GET /hotel/_search
+{
+  &#34;query&#34;: {
+    &#34;function_score&#34;: {
+      &#34;query&#34;: {  .... }, // 原始查询，可以是任意条件
+      &#34;functions&#34;: [ // 算分函数
+        {
+          &#34;filter&#34;: { // 满足的条件，品牌必须是如家【品牌是如家的才加分，这里是加分条件】
+            &#34;term&#34;: {
+              &#34;brand&#34;: &#34;如家&#34;
+            }
+          },
+          &#34;weight&#34;: 2 // 算分权重为2
+        }
+      ],
+      &#34;boost_mode&#34;: &#34;sum&#34; // 加权模式，求和
+    }
+  }
+}
+</code></pre><p>测试，在未添加算分函数时，如家得分如下：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173504670-1488473639.png>
+添加了算分函数后，如家得分就提升了：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173509427-1841421871.png></p><h5 id=153-布尔查询>1.5.3 布尔查询<a hidden class=anchor aria-hidden=true href=#153-布尔查询>#</a></h5><p>布尔查询是一个或多个查询子句的组合，每一个子句就是一个<strong>子查询</strong>。子查询的组合方式有：</p><ul><li>must：必须匹配每个子查询，类似“与”</li><li>should：选择性匹配子查询，类似“或”</li><li>must_not：必须不匹配，<strong>不参与算分</strong>，类似“非”</li><li>filter：必须匹配，<strong>不参与算分</strong></li></ul><p>注意：尽量在筛选的时候多使用不参与算分的must_not和filter，以保证性能良好
+比如在搜索酒店时，除了关键字搜索外，我们还可能根据品牌、价格、城市等字段做过滤：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173518420-1928367735.png>
+每一个不同的字段，其查询的条件、方式都不一样，必须是多个不同的查询，而要组合这些查询，就必须用bool查询了。
+需要注意的是，搜索时，参与<strong>打分的字段越多，查询的性能也越差</strong>。因此这种多条件查询时，建议这样做：</p><ul><li>搜索框的关键字搜索，是全文检索查询，使用must查询，参与算分</li><li>其它过滤条件，采用filter查询。不参与算分</li></ul><h6 id=bool查询>bool查询<a hidden class=anchor aria-hidden=true href=#bool查询>#</a></h6><p>1）语法</p><pre tabindex=0><code>GET /hotel/_search
+{
+  &#34;query&#34;: {
+    &#34;bool&#34;: {
+      &#34;must&#34;: [
+        {&#34;term&#34;: {&#34;city&#34;: &#34;上海&#34; }}
+      ],
+      &#34;should&#34;: [
+        {&#34;term&#34;: {&#34;brand&#34;: &#34;皇冠假日&#34; }},
+        {&#34;term&#34;: {&#34;brand&#34;: &#34;华美达&#34; }}
+      ],
+      &#34;must_not&#34;: [
+        { &#34;range&#34;: { &#34;price&#34;: { &#34;lte&#34;: 500 } }}
+      ],
+      &#34;filter&#34;: [
+        { &#34;range&#34;: {&#34;score&#34;: { &#34;gte&#34;: 45 } }}
+      ]
+    }
+  }
+}
+</code></pre><p>2）示例
+需求：搜索名字包含“如家”，价格不高于400，在坐标31.21,121.5周围10km范围内的酒店。
+分析：</p><ul><li>名称搜索，属于全文检索查询，应该参与算分。放到must中</li><li>价格不高于400，用range查询，属于过滤条件，不参与算分。放到must_not中</li><li>周围10km范围内，用geo_distance查询，属于过滤条件，不参与算分。放到filter中</li></ul><p><img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173526171-218786081.png></p><h3 id=2-设置搜索结果>2. 设置搜索结果<a hidden class=anchor aria-hidden=true href=#2-设置搜索结果>#</a></h3><p>搜索的结果可以按照用户指定的方式去处理或展示。</p><h4 id=20-搜索结果种类>2.0 搜索结果种类<a hidden class=anchor aria-hidden=true href=#20-搜索结果种类>#</a></h4><p>查询的DSL是一个大的JSON对象，包含下列属性：</p><ul><li>query：查询条件</li><li>from和size：分页条件</li><li>sort：排序条件</li><li>highlight：高亮条件</li><li>aggs：定义聚合</li></ul><p>示例：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173604304-279114726.png>
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173609914-830516280.png></p><h4 id=21-排序>2.1 排序<a hidden class=anchor aria-hidden=true href=#21-排序>#</a></h4><p>在使用排序后就不会进行算分了，根据排序设置的规则排列
+普通字段是根据字典序排序
+地理坐标是根据举例远近排序</p><h5 id=211普通字段排序>2.1.1普通字段排序<a hidden class=anchor aria-hidden=true href=#211普通字段排序>#</a></h5><p>keyword、数值、日期类型排序的排序语法基本一致。
+<strong>语法</strong>：
+<strong>排序条件是一个数组，也就是可以写多个排序条件。按照声明的顺序，当第一个条件相等时，再按照第二个条件排序，以此类推</strong>
+<strong>（可以参考下面的图片案例）</strong></p><pre tabindex=0><code>GET /indexName/_search
+{
+  &#34;query&#34;: {
+    &#34;match_all&#34;: {}
+  },
+  &#34;sort&#34;: [
+    {
+      &#34;FIELD&#34;: &#34;desc&#34;  // 排序字段、排序方式ASC、DESC
+    }
+  ]
+}
+</code></pre><p><strong>示例</strong>：
+需求描述：酒店数据按照用户评价（score)降序排序，评价相同的按照价格(price)升序排序
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173616661-1802336128.png></p><h5 id=212-地理坐标排序>2.1.2 地理坐标排序<a hidden class=anchor aria-hidden=true href=#212-地理坐标排序>#</a></h5><p>地理坐标排序略有不同。
+<strong>语法说明</strong>：</p><pre tabindex=0><code>GET /indexName/_search
+{
+  &#34;query&#34;: {
+    &#34;match_all&#34;: {}
+  },
+  &#34;sort&#34;: [
+    {
+      &#34;_geo_distance&#34; : {
+          &#34;FIELD&#34; : &#34;纬度，经度&#34;, // 文档中geo_point类型的字段名、目标坐标点
+          &#34;order&#34; : &#34;asc&#34;, // 排序方式
+          &#34;unit&#34; : &#34;km&#34; // 排序的距离单位
+      }
+    }
+  ]
+}
+</code></pre><p>这个查询的含义是：</p><ul><li>指定一个坐标，作为目标点</li><li>计算每一个文档中，指定字段（必须是geo_point类型）的坐标 到目标点的距离是多少</li><li>根据距离排序</li></ul><p><strong>示例：</strong>
+需求描述：实现对酒店数据按照到你的位置坐标的距离升序排序
+提示：获取你的位置的经纬度的方式：<a href=https://lbs.amap.com/demo/jsapi-v2/example/map/click-to-get-lnglat/>https://lbs.amap.com/demo/jsapi-v2/example/map/click-to-get-lnglat/</a>
+假设我的位置是：31.034661，121.612282，寻找我周围距离最近的酒店。
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173623518-625657913.png></p><h4 id=22-分页>2.2 分页<a hidden class=anchor aria-hidden=true href=#22-分页>#</a></h4><p><strong>elasticsearch会禁止from+ size 超过10000的请求</strong>
+elasticsearch 默认情况下只返回top10的数据。而如果要查询更多数据就需要修改分页参数了。elasticsearch中通过修改from、size参数来控制要返回的分页结果：</p><ul><li>from：从第几个文档开始</li><li>size：总共查询几个文档</li></ul><p>类似于mysql中的<code>limit ?, ?</code></p><h5 id=221-基本分页>2.2.1 基本分页<a hidden class=anchor aria-hidden=true href=#221-基本分页>#</a></h5><p>分页的基本语法如下：</p><pre tabindex=0><code>GET /hotel/_search
+{
+  &#34;query&#34;: {
+    &#34;match_all&#34;: {}
+  },
+  &#34;from&#34;: 0, // 分页开始的位置，默认为0
+  &#34;size&#34;: 10, // 期望获取的文档总数
+  &#34;sort&#34;: [
+    {&#34;price&#34;: &#34;asc&#34;}
+  ]
+}
+</code></pre><h5 id=222-深度分页>2.2.2 深度分页<a hidden class=anchor aria-hidden=true href=#222-深度分页>#</a></h5><p>原理：elasticsearch内部分页时，必须先查询 0<del>1000条，然后截取其中的990 ~ 1000的这10条
+现在，我要查询990</del>1000的数据，查询逻辑要这么写：</p><pre tabindex=0><code>GET /hotel/_search
+{
+  &#34;query&#34;: {
+    &#34;match_all&#34;: {}
+  },
+  &#34;from&#34;: 990, // 分页开始的位置，默认为0
+  &#34;size&#34;: 10, // 期望获取的文档总数
+  &#34;sort&#34;: [
+    {&#34;price&#34;: &#34;asc&#34;}
+  ]
+}
+</code></pre><p>这里是查询990开始的数据，也就是 第990~第1000条 数据。
+<strong>集群情况的深度分页</strong>
+针对深度分页，ES提供了两种解决方案，<a href=https://www.elastic.co/guide/en/elasticsearch/reference/current/paginate-search-results.html>官方文档</a> ：</p><ul><li>search after：分页时需要排序，原理是从上一次的排序值开始，查询下一页数据。【官方推荐】</li><li>scroll：原理将排序后的文档id形成快照，保存在内存。</li></ul><p>不过，elasticsearch内部分页时，必须先查询 0<del>1000条，然后截取其中的990 ~ 1000的这10条：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173634279-892410813.png>
+查询TOP1000，如果es是单点模式，这并无太大影响。
+但是elasticsearch将来一定是集群，例如我集群有5个节点，我要查询TOP1000的数据，并不是每个节点查询200条就可以了。
+因为节点A的TOP200，在另一个节点可能排到10000名以外了。
+因此要想获取整个集群的TOP1000，必须先查询出每个节点的TOP1000，汇总结果后，重新排名，重新截取TOP1000。
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173640103-2006900274.png>
+那如果我要查询9900</del>10000的数据呢？是不是要先查询TOP10000呢？那每个节点都要查询10000条？汇总到内存中？
+当查询分页深度较大时，汇总数据过多，对内存和CPU会产生非常大的压力，因此<strong>elasticsearch会禁止from+ size 超过10000的请求</strong>。</p><h4 id=23-高亮>2.3 高亮<a hidden class=anchor aria-hidden=true href=#23-高亮>#</a></h4><p><strong>注意：</strong></p><ul><li>高亮是对关键字高亮，因此<strong>搜索条件必须带有关键字</strong>，而不能是范围这样的查询。</li><li>默认情况下，<strong>高亮的字段，必须与搜索指定的字段一致</strong>，否则无法高亮</li><li>如果要对非搜索字段高亮，则需要添加一个属性：required_field_match=false</li></ul><p>使用场景：在百度等搜索后，会对结果中出现搜索字段的部分进行高亮处理。</p><h5 id=高亮原理>高亮原理<a hidden class=anchor aria-hidden=true href=#高亮原理>#</a></h5><p>高亮显示的实现分为两步：</p><ul><li>1）给文档中的所有关键字都添加一个标签，例如<code>&lt;em></code>标签</li><li>2）页面给<code>&lt;em></code>标签编写CSS样式</li></ul><h5 id=实现高亮>实现高亮<a hidden class=anchor aria-hidden=true href=#实现高亮>#</a></h5><p>1）语法</p><pre tabindex=0><code>GET /hotel/_search
+{
+  &#34;query&#34;: {
+    &#34;match&#34;: {
+      &#34;FIELD&#34;: &#34;TEXT&#34; // 查询条件，高亮一定要使用全文检索查询
+    }
+  },
+  &#34;highlight&#34;: {
+    &#34;fields&#34;: { // 指定要高亮的字段
+      &#34;FIELD&#34;: { //【要和上面的查询字段FIELD一致】
+        &#34;pre_tags&#34;: &#34;&lt;em&gt;&#34;,  // 用来标记高亮字段的前置标签
+        &#34;post_tags&#34;: &#34;&lt;/em&gt;&#34; // 用来标记高亮字段的后置标签
+      }
+    }
+  }
+}
+</code></pre><p>2）示例：组合字段all的案例
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173651044-506239214.png></p><h4 id=24-数据聚合>2.4 数据聚合<a hidden class=anchor aria-hidden=true href=#24-数据聚合>#</a></h4><p>类似于mysql中的【**度量（Metric）**聚合】聚合语句实现AVG，MAX，MIN；以及【**桶（Bucket）**聚合】GroupBy实现分组
+**<a href=https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations.html>聚合（</a><a href=https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations.html>aggregations</a><a href=https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations.html>）</a>**可以让我们极其方便的实现对数据的统计、分析、运算。例如：</p><ul><li>什么品牌的手机最受欢迎？</li><li>这些手机的平均价格、最高价格、最低价格？</li><li>这些手机每月的销售情况如何？</li></ul><p>实现这些统计功能的比数据库的sql要方便的多，而且查询速度非常快，可以实现近实时搜索效果。
+aggs代表聚合，与query同级，此时query的作用是？</p><ul><li>限定聚合的的文档范围</li></ul><p>聚合必须的三要素：</p><ul><li>聚合名称</li><li>聚合类型</li><li>聚合字段</li></ul><p>聚合可配置属性有：</p><ul><li>size：指定聚合结果数量</li><li>order：指定聚合结果排序方式</li><li>field：指定聚合字段</li></ul><h5 id=241-聚合种类>2.4.1 聚合种类<a hidden class=anchor aria-hidden=true href=#241-聚合种类>#</a></h5><h2 id=聚合常见的有三类>**注意：**参加聚合的字段必须是keyword、日期、数值、布尔类型
+聚合常见的有三类：</h2><p>**桶（Bucket）**聚合：用来对文档做分组</p><ul><li><p>TermAggregation：按照文档字段值分组，例如按照品牌值分组、按照国家分组</p></li><li><p>Date Histogram：按照日期阶梯分组，例如一周为一组，或者一月为一组</p></li><li></li></ul><p>**度量（Metric）**聚合：用以计算一些值，比如：最大值、最小值、平均值等</p><ul><li><p>Avg：求平均值</p></li><li><p>Max：求最大值</p></li><li><p>Min：求最小值</p></li><li><p>Stats：同时求max、min、avg、sum等</p></li><li></li></ul><p>**管道（pipeline）**聚合：其它聚合的结果为基础做聚合
+如：用桶聚合实现种类排序，然后使用度量聚合实现各个桶的最大值、最小值、平均值等</p><h5 id=242-桶bucket聚合>2.4.2 桶(Bucket)聚合<a hidden class=anchor aria-hidden=true href=#242-桶bucket聚合>#</a></h5><p>以统计酒店品牌种类，并对其进行数据分组</p><pre tabindex=0><code>GET /hotel/_search
+{
+  &#34;query&#34;: { //限定要聚合的文档范围，只要添加query条件【一般在没搜索关键字时不写query】
+    &#34;range&#34;: {
+      &#34;price&#34;: {
+        &#34;lte&#34;: 200 // 只对200元以下的文档聚合
+      }
+    }
+  },
+  &#34;size&#34;: 0,  // 设置size为0，结果中不包含查询结果文档，只包含聚合结果
+  &#34;aggs&#34;: { // 定义聚合
+    &#34;brandAgg&#34;: { //给聚合起个名字
+      &#34;terms&#34;: { // 聚合的类型，按照品牌值聚合，所以选择term
+        &#34;field&#34;: &#34;brand&#34;, // 参与聚合的字段
+        &#34;order&#34;: {
+          &#34;doc_count&#34;: &#34;asc&#34; // 对聚合结果按照doc_count升序排列
+        },
+        &#34;size&#34;: 20 // 希望获取的聚合结果数量【设置多少就最多只显示多少】
+      }
+    }
+  }
+}
+</code></pre><p><img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173742270-1590923564.png></p><h5 id=243-度量metric-and-管道pipeline聚合>2.4.3 度量(Metric) and 管道(pipeline)聚合<a hidden class=anchor aria-hidden=true href=#243-度量metric-and-管道pipeline聚合>#</a></h5><p>度量聚合很少单独使用，一般是和桶聚合一并结合使用
+我们对酒店按照品牌分组，形成了一个个桶。现在我们需要对桶内的酒店做运算，获取每个品牌的用户评分的min、max、avg等值。
+这就要用到Metric聚合了，例如stat聚合：就可以获取min、max、avg等结果。
+语法如下：
+这次的score_stats聚合是在brandAgg的聚合内部嵌套的子聚合。因为我们需要在每个桶分别计算。</p><pre tabindex=0><code>GET /hotel/_search
+{
+  &#34;size&#34;: 0,
+  &#34;aggs&#34;: {
+    &#34;brandAgg&#34;: {
+      &#34;terms&#34;: {
+        &#34;field&#34;: &#34;brand&#34;,
+        &#34;order&#34;: {
+          &#34;scoreAgg.avg&#34;: &#34;desc&#34; // 对聚合结果按照指定字段降序排列
+        },
+        &#34;size&#34;: 20
+      },
+      &#34;aggs&#34;: { // 是brands聚合的子聚合，也就是分组后对每组分别计算
+        &#34;score_stats&#34;: { // 聚合名称
+          &#34;stats&#34;: { // 聚合类型，这里stats可以计算min、max、avg等
+            &#34;field&#34;: &#34;score&#34; // 聚合字段，这里是score
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre><p>另外，我们还可以给聚合结果做个排序，例如按照每个桶的酒店平均分做排序：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173748393-1737546340.png></p><h3 id=3-restclient查询文档>3. RestClient查询文档<a hidden class=anchor aria-hidden=true href=#3-restclient查询文档>#</a></h3><p>文档的查询同样适用昨天学习的 RestHighLevelClient对象，基本步骤包括：</p><ul><li>1）准备Request对象</li><li>2）准备请求参数</li><li>3）发起请求</li><li>4）解析响应</li></ul><h4 id=31-快速入门>3.1 快速入门<a hidden class=anchor aria-hidden=true href=#31-快速入门>#</a></h4><p>查询的基本步骤是：
+1.
+创建SearchRequest对象
+2.
+准备Request.source()，也就是DSL。
+① QueryBuilders来构建查询条件
+② 传入Request.source() 的 query() 方法
+3.
+发送请求，得到结果
+4.
+解析结果（参考JSON结果，从外到内，逐层解析）</p><h5 id=311-发送查询请求>3.1.1 发送查询请求<a hidden class=anchor aria-hidden=true href=#311-发送查询请求>#</a></h5><h2 id=代码解读><img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173800773-301602834.png>
+代码解读：</h2><h2 id=第一步创建searchrequest对象指定索引库名>第一步，创建<code>SearchRequest</code>对象，指定索引库名<a hidden class=anchor aria-hidden=true href=#第一步创建searchrequest对象指定索引库名>#</a></h2><p>第二步，利用<code>request.source()</code>构建DSL，DSL中可以包含查询、分页、排序、高亮等</p><ul><li><p><code>query()</code>：代表查询条件，利用<code>QueryBuilders.matchAllQuery()</code>构建一个match_all查询的DSL</p></li><li></li></ul><p>第三步，利用client.search()发送请求，得到响应</p><p>这里关键的API有两个，一个是<code>request.source()</code>，其中包含了查询、排序、分页、高亮等所有功能：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173808406-253737161.png>
+另一个是<code>QueryBuilders</code>，其中包含match、term、function_score、bool等各种查询：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173813297-2072845032.png></p><h5 id=312-解析响应结果>3.1.2 解析响应结果<a hidden class=anchor aria-hidden=true href=#312-解析响应结果>#</a></h5><p>响应结果的解析：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173819239-1577366921.png>
+elasticsearch返回的结果是一个JSON字符串，结构包含：</p><ul><li><code>hits</code>：命中的结果</li><li><code>total</code>：总条数，其中的value是具体的总条数值</li><li><code>max_score</code>：所有结果中得分最高的文档的相关性算分</li><li><code>hits</code>：搜索结果的文档数组，其中的每个文档都是一个json对象</li><li><code>_source</code>：文档中的原始数据，也是json对象</li></ul><p>因此，我们解析响应结果，就是逐层解析JSON字符串，流程如下：</p><ul><li><code>SearchHits</code>：通过response.getHits()获取，就是JSON中的最外层的hits，代表命中的结果</li><li><code>SearchHits#getTotalHits().value</code>：获取总条数信息</li><li><code>SearchHits#getHits()</code>：获取SearchHit数组，也就是文档数组</li><li><code>SearchHit#getSourceAsString()</code>：获取文档结果中的_source，也就是原始的json文档数据</li></ul><h5 id=313-完整代码>3.1.3 完整代码<a hidden class=anchor aria-hidden=true href=#313-完整代码>#</a></h5><p>完整代码如下：</p><pre tabindex=0><code>@Test
+void testMatchAll() throws IOException {
+    // 1.准备Request
+    SearchRequest request = new SearchRequest(&#34;hotel&#34;);
+    // 2.准备DSL
+    request.source()
+        .query(QueryBuilders.matchAllQuery());
+    // 3.发送请求
+    SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+
+    // 4.解析响应
+    handleResponse(response);
+}
+
+private void handleResponse(SearchResponse response) {
+    // 4.解析响应
+    SearchHits searchHits = response.getHits();
+    // 4.1.获取总条数
+    long total = searchHits.getTotalHits().value;
+    System.out.println(&#34;共搜索到&#34; + total + &#34;条数据&#34;);
+    // 4.2.文档数组
+    SearchHit[] hits = searchHits.getHits();
+    // 4.3.遍历
+    for (SearchHit hit : hits) {
+        // 获取文档source
+        String json = hit.getSourceAsString();
+        // 反序列化
+        HotelDoc hotelDoc = JSON.parseObject(json, HotelDoc.class);
+        System.out.println(&#34;hotelDoc = &#34; + hotelDoc);
+    }
+}
+</code></pre><h4 id=32-设置查询条件>3.2 设置查询条件<a hidden class=anchor aria-hidden=true href=#32-设置查询条件>#</a></h4><h5 id=321-全文检索查询>3.2.1 全文检索查询<a hidden class=anchor aria-hidden=true href=#321-全文检索查询>#</a></h5><p>全文检索的match和multi_match查询与match_all的API基本一致。差别是查询条件，也就是query的部分。
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173828395-1519960077.png>
+因此，Java代码上的差异主要是request.source().query()中的参数了。同样是利用QueryBuilders提供的方法：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173832386-1173507626.png>
+而结果解析代码则完全一致，可以抽取并共享。
+完整代码如下：</p><pre tabindex=0><code>@Test
+void testMatch() throws IOException {
+    // 1.准备Request
+    SearchRequest request = new SearchRequest(&#34;hotel&#34;);
+    // 2.准备DSL
+    request.source()
+        .query(QueryBuilders.matchQuery(&#34;all&#34;, &#34;如家&#34;));
+    // 3.发送请求
+    SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+    // 4.解析响应
+    handleResponse(response);
+
+}
+</code></pre><h5 id=322-精准查询>3.2.2 精准查询<a hidden class=anchor aria-hidden=true href=#322-精准查询>#</a></h5><p>精确查询主要是两者：</p><ul><li>term：词条精确匹配</li><li>range：范围查询</li></ul><p>与之前的查询相比，差异同样在查询条件，其它都一样。
+查询条件构造的API如下：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173839234-1487715770.png></p><h5 id=323-地理查询>3.2.3 地理查询<a hidden class=anchor aria-hidden=true href=#323-地理查询>#</a></h5><p>DSL格式
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173843949-30830550.png>
+在<code>cn.itcast.hotel.service.impl</code>的<code>HotelService</code>的<code>search</code>方法中，添加一个排序功能：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173850338-1907101734.png>
+完整代码：</p><pre tabindex=0><code>@Override
+public PageResult search(RequestParams params) {
+    try {
+        // 1.准备Request
+        SearchRequest request = new SearchRequest(&#34;hotel&#34;);
+        // 2.准备DSL
+        // 2.1.query
+        buildBasicQuery(params, request);
+
+        // 2.2.分页
+        int page = params.getPage();
+        int size = params.getSize();
+        request.source().from((page - 1) * size).size(size);
+
+        // 2.3.排序
+        String location = params.getLocation();
+        if (location != null &amp;&amp; !location.equals(&#34;&#34;)) {
+            request.source().sort(SortBuilders
+                                  .geoDistanceSort(&#34;location&#34;, new GeoPoint(location))
+                                  .order(SortOrder.ASC)
+                                  .unit(DistanceUnit.KILOMETERS)
+                                 );
+        }
+
+        // 3.发送请求
+        SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+        // 4.解析响应
+        return handleResponse(response);
+    } catch (IOException e) {
+        throw new RuntimeException(e);
+    }
+}
+</code></pre><h5 id=324-布尔查询>3.2.4 布尔查询<a hidden class=anchor aria-hidden=true href=#324-布尔查询>#</a></h5><p>布尔查询是用must、must_not、filter等方式组合其它查询，代码示例如下：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173858188-382428581.png>
+可以看到，API与其它查询的差别同样是在查询条件的构建，QueryBuilders，结果解析等其他代码完全不变。
+完整代码如下：</p><pre tabindex=0><code>@Test
+void testBool() throws IOException {
+    // 1.准备Request
+    SearchRequest request = new SearchRequest(&#34;hotel&#34;);
+    // 2.准备DSL
+    // 2.1.准备BooleanQuery
+    BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+    // 2.2.添加term
+    boolQuery.must(QueryBuilders.termQuery(&#34;city&#34;, &#34;杭州&#34;));
+    // 2.3.添加range
+    boolQuery.filter(QueryBuilders.rangeQuery(&#34;price&#34;).lte(250));
+
+    request.source().query(boolQuery);
+    // 3.发送请求
+    SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+    // 4.解析响应
+    handleResponse(response);
+
+}
+</code></pre><h5 id=325-算分函数查询>3.2.5 算分函数查询<a hidden class=anchor aria-hidden=true href=#325-算分函数查询>#</a></h5><p>java代码逻辑：添加一个isAD字段，在算分函数的filter中判断<code>isAD=ture</code>就进行重新算分
+function_score查询结构如下：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173906160-2115196651.png>
+对应的JavaAPI如下：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173910417-2019314328.png>
+我们可以将之前写的boolean查询作为<strong>原始查询</strong>条件放到query中，接下来就是添加<strong>过滤条件</strong>、<strong>算分函数</strong>、<strong>加权模式</strong>了。</p><pre tabindex=0><code>// 算分控制
+FunctionScoreQueryBuilder functionScoreQuery =
+    QueryBuilders.functionScoreQuery(
+    // 原始查询，相关性算分的查询
+    boolQuery,
+    // function score的数组
+    new FunctionScoreQueryBuilder.FilterFunctionBuilder[]{
+        // 其中的一个function score 元素
+        new FunctionScoreQueryBuilder.FilterFunctionBuilder(
+            // 过滤条件
+            QueryBuilders.termQuery(&#34;isAD&#34;, true),
+            // 算分函数
+            ScoreFunctionBuilders.weightFactorFunction(10)
+        )
+    });
+//将查询请求放入查询
+request.source().query(functionScoreQuery);
+</code></pre><h4 id=33-设置搜索结果>3.3 设置搜索结果<a hidden class=anchor aria-hidden=true href=#33-设置搜索结果>#</a></h4><h5 id=331-排序和分页>3.3.1 排序和分页<a hidden class=anchor aria-hidden=true href=#331-排序和分页>#</a></h5><p>由于这两个比较简单，所以一起写了
+搜索结果的排序和分页是与query同级的参数，因此同样是使用request.source()来设置。
+对应的API如下：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173917719-252030384.png>
+完整代码示例：</p><pre tabindex=0><code>@Test
+void testPageAndSort() throws IOException {
+    // 页码，每页大小
+    int page = 1, size = 5;
+
+    // 1.准备Request
+    SearchRequest request = new SearchRequest(&#34;hotel&#34;);
+    // 2.准备DSL
+    // 2.1.query
+    request.source().query(QueryBuilders.matchAllQuery());
+    // 2.2.排序 sort
+    request.source().sort(&#34;price&#34;, SortOrder.ASC);
+    // 2.3.分页 from、size
+    request.source().from((page - 1) * size).size(5);
+    // 3.发送请求
+    SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+    // 4.解析响应
+    handleResponse(response);
+
+}
+</code></pre><h5 id=332-高亮>3.3.2 高亮<a hidden class=anchor aria-hidden=true href=#332-高亮>#</a></h5><p>高亮的代码与之前代码差异较大，有两点：</p><ul><li>查询的DSL：其中除了查询条件，还需要添加高亮条件，同样是与query同级。</li><li>结果解析：结果除了要解析_source文档数据，还要解析高亮结果</li></ul><p><strong>1）高亮请求构建</strong>
+高亮请求的构建API如下：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173927424-735344633.png>
+上述代码省略了查询条件部分，但是大家不要忘了：高亮查询必须使用全文检索查询，并且要有搜索关键字，将来才可以对关键字高亮。
+完整代码如下：</p><pre tabindex=0><code>@Test
+void testHighlight() throws IOException {
+    // 1.准备Request
+    SearchRequest request = new SearchRequest(&#34;hotel&#34;);
+    // 2.准备DSL
+    // 2.1.query
+    request.source().query(QueryBuilders.matchQuery(&#34;all&#34;, &#34;如家&#34;));
+    // 2.2.高亮
+    request.source().highlighter(new HighlightBuilder().field(&#34;name&#34;).requireFieldMatch(false));
+    // 3.发送请求
+    SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+    // 4.解析响应
+    handleResponse(response);
+}
+</code></pre><p><strong>2）高亮结果解析</strong>
+高亮的结果与查询的文档结果默认是分离的，并不在一起。
+因此解析高亮的代码需要额外处理：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173934109-1738654654.png>
+代码解读：</p><ul><li>第一步：从结果中获取source。hit.getSourceAsString()，这部分是非高亮结果，json字符串。还需要反序列为HotelDoc对象</li><li>第二步：获取高亮结果。hit.getHighlightFields()，返回值是一个Map，key是高亮字段名称，值是HighlightField对象，代表高亮值</li><li>第三步：从map中根据高亮字段名称，获取高亮字段值对象HighlightField</li><li>第四步：从HighlightField中获取Fragments，并且转为字符串。这部分就是真正的高亮字符串了</li><li>第五步：用高亮的结果替换HotelDoc中的非高亮结果</li></ul><p>完整代码如下：</p><pre tabindex=0><code>private void handleResponse(SearchResponse response) {
+    // 4.解析响应
+    SearchHits searchHits = response.getHits();
+    // 4.1.获取总条数
+    long total = searchHits.getTotalHits().value;
+    System.out.println(&#34;共搜索到&#34; + total + &#34;条数据&#34;);
+    // 4.2.文档数组
+    SearchHit[] hits = searchHits.getHits();
+    // 4.3.遍历
+    for (SearchHit hit : hits) {
+        // 获取文档source
+        String json = hit.getSourceAsString();
+        // 反序列化
+        HotelDoc hotelDoc = JSON.parseObject(json, HotelDoc.class);
+        // 获取高亮结果
+        Map&lt;String, HighlightField&gt; highlightFields = hit.getHighlightFields();
+        if (!CollectionUtils.isEmpty(highlightFields)) {
+            // 根据字段名获取高亮结果
+            HighlightField highlightField = highlightFields.get(&#34;name&#34;);
+            if (highlightField != null) {
+                // 获取高亮值
+                String name = highlightField.getFragments()[0].string();
+                // 覆盖非高亮结果
+                hotelDoc.setName(name);
+            }
+        }
+        System.out.println(&#34;hotelDoc = &#34; + hotelDoc);
+    }
+}
+</code></pre><h5 id=333-聚合>3.3.3 聚合<a hidden class=anchor aria-hidden=true href=#333-聚合>#</a></h5><p>聚合条件与query条件同级别，因此需要使用request.source()来指定聚合条件。
+聚合条件的语法：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173941332-769786160.png>
+聚合的结果也与查询结果不同，API也比较特殊。不过同样是JSON逐层解析：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173947241-344347749.png>
+举例：业务代码</p><pre tabindex=0><code>@Override
+public Map&lt;String, List&lt;String&gt;&gt; filters(RequestParams params) {
+    try {
+        // 1.准备Request
+        SearchRequest request = new SearchRequest(&#34;hotel&#34;);
+        // 2.准备DSL
+        // 2.1.query查询语句
+        buildBasicQuery(params, request);
+        // 2.2.设置size
+        request.source().size(0);
+        // 2.3.聚合
+        buildAggregation(request);
+        // 3.发出请求
+        SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+        // 4.解析结果
+        Map&lt;String, List&lt;String&gt;&gt; result = new HashMap&lt;&gt;();
+        Aggregations aggregations = response.getAggregations();
+        // 4.1.根据品牌名称，获取品牌结果
+        List&lt;String&gt; brandList = getAggByName(aggregations, &#34;brandAgg&#34;);
+        result.put(&#34;品牌&#34;, brandList);
+        // 4.2.根据品牌名称，获取品牌结果
+        List&lt;String&gt; cityList = getAggByName(aggregations, &#34;cityAgg&#34;);
+        result.put(&#34;城市&#34;, cityList);
+        // 4.3.根据品牌名称，获取品牌结果
+        List&lt;String&gt; starList = getAggByName(aggregations, &#34;starAgg&#34;);
+        result.put(&#34;星级&#34;, starList);
+
+        return result;
+    } catch (IOException e) {
+        throw new RuntimeException(e);
+    }
+}
+
+private void buildAggregation(SearchRequest request) {
+    request.source().aggregation(AggregationBuilders
+                                 .terms(&#34;brandAgg&#34;)
+                                 .field(&#34;brand&#34;)
+                                 .size(100)
+                                );
+    request.source().aggregation(AggregationBuilders
+                                 .terms(&#34;cityAgg&#34;)
+                                 .field(&#34;city&#34;)
+                                 .size(100)
+                                );
+    request.source().aggregation(AggregationBuilders
+                                 .terms(&#34;starAgg&#34;)
+                                 .field(&#34;starName&#34;)
+                                 .size(100)
+                                );
+}
+
+private List&lt;String&gt; getAggByName(Aggregations aggregations, String aggName) {
+    // 4.1.根据聚合名称获取聚合结果
+    Terms brandTerms = aggregations.get(aggName);
+    // 4.2.获取buckets
+    List&lt;? extends Terms.Bucket&gt; buckets = brandTerms.getBuckets();
+    // 4.3.遍历
+    List&lt;String&gt; brandList = new ArrayList&lt;&gt;();
+    for (Terms.Bucket bucket : buckets) {
+        // 4.4.获取key
+        String key = bucket.getKeyAsString();
+        brandList.add(key);
+    }
+    return brandList;
+}
+</code></pre><h2 id=自动补全>自动补全<a hidden class=anchor aria-hidden=true href=#自动补全>#</a></h2><p>① 设置创建索引库（设置一个自动补全字段，类型为：completion）
+② 重新插入数据
+③ 查询（查询时要设置这个自动补全操作的名称，并且指定那个类型为completion的字段）
+④ 分解结果（结果也需要根据之前设置这个自动查询操作的名称来取）
+当用户在搜索框输入字符时，我们应该提示出与该字符有关的搜索项，如图：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205173955366-662214896.png>
+这种根据用户输入的字母，提示完整词条的功能，就是自动补全了。</p><h3 id=1-拼音分词器>1. 拼音分词器<a hidden class=anchor aria-hidden=true href=#1-拼音分词器>#</a></h3><p>下载拼音分词器记得版本要和ES对应，不对应会报错
+要实现根据字母做补全，就必须对文档按照拼音分词。在GitHub上恰好有elasticsearch的拼音分词插件。地址：<a href=https://github.com/medcl/elasticsearch-analysis-pinyin>https://github.com/medcl/elasticsearch-analysis-pinyin</a>
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174001307-1237866057.png>
+课前资料中也提供了拼音分词器的安装包：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174006161-848439820.png>
+安装方式与IK分词器一样，分三步：
+​ ①解压
+​ ②上传到虚拟机中，elasticsearch的plugin目录
+​ ③重启elasticsearch
+​ ④测试
+详细安装步骤可以参考IK分词器的安装过程。</p><h3 id=2-自定义拼音分词器>2. 自定义拼音分词器<a hidden class=anchor aria-hidden=true href=#2-自定义拼音分词器>#</a></h3><h2 id=如何使用拼音分词器>如何使用拼音分词器？<a hidden class=anchor aria-hidden=true href=#如何使用拼音分词器>#</a></h2><h2 id=下载pinyin分词器>①下载pinyin分词器<a hidden class=anchor aria-hidden=true href=#下载pinyin分词器>#</a></h2><h2 id=解压并放到elasticsearch的plugin目录>②解压并放到elasticsearch的plugin目录<a hidden class=anchor aria-hidden=true href=#解压并放到elasticsearch的plugin目录>#</a></h2><p>③重启即可</p><h2 id=如何自定义分词器>如何自定义分词器？<a hidden class=anchor aria-hidden=true href=#如何自定义分词器>#</a></h2><h2 id=创建索引库时在settings中配置可以包含三部分>①创建索引库时，在settings中配置，可以包含三部分<a hidden class=anchor aria-hidden=true href=#创建索引库时在settings中配置可以包含三部分>#</a></h2><h2 id=character-filter>②character filter<a hidden class=anchor aria-hidden=true href=#character-filter>#</a></h2><h2 id=tokenizer>③tokenizer<a hidden class=anchor aria-hidden=true href=#tokenizer>#</a></h2><p>④filter</p><p>拼音分词器注意事项？</p><ul><li>为了避免搜索到同音字，<strong>搜索时不要使用拼音分词器</strong></li></ul><p>默认的拼音分词器会将每个汉字单独分为拼音，而我们希望的是每个词条形成一组拼音，需要对拼音分词器做个性化定制，形成自定义分词器。官网文档查询地址：<a href=https://github.com/medcl/elasticsearch-analysis-pinyin>https://github.com/medcl/elasticsearch-analysis-pinyin</a>
+elasticsearch中分词器（analyzer）的组成包含三部分：</p><ul><li>character filters：在tokenizer之前对文本进行处理。例如删除字符、替换字符</li><li>tokenizer：将文本按照一定的规则切割成词条（term）。例如keyword，就是不分词；还有ik_smart</li><li>tokenizer filter：将tokenizer输出的词条做进一步处理。例如大小写转换、同义词处理、拼音处理等</li></ul><p>文档分词时会依次由这三部分来处理文档：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174015343-1046847662.png>
+声明自定义分词器的语法如下：</p><pre tabindex=0><code>PUT /test
+{
+  &#34;settings&#34;: {
+    &#34;analysis&#34;: {
+      &#34;analyzer&#34;: { // 自定义分词器
+        &#34;my_analyzer&#34;: {  // 分词器名称
+          &#34;tokenizer&#34;: &#34;ik_max_word&#34;,
+          &#34;filter&#34;: &#34;py&#34;
+        }
+      },
+      &#34;filter&#34;: {   // 自定义tokenizer filter
+        &#34;py&#34;: {  // 过滤器名称
+          &#34;type&#34;: &#34;pinyin&#34;, // 过滤器类型，这里是pinyin
+		  &#34;keep_full_pinyin&#34;: false,
+          &#34;keep_joined_full_pinyin&#34;: true,
+          &#34;keep_original&#34;: true,
+          &#34;limit_first_letter_length&#34;: 16,
+          &#34;remove_duplicated_term&#34;: true,
+          &#34;none_chinese_pinyin_tokenize&#34;: false
+        }
+      }
+    }
+  },
+  &#34;mappings&#34;: {
+    &#34;properties&#34;: {
+      &#34;name&#34;: {
+        &#34;type&#34;: &#34;text&#34;,
+        &#34;analyzer&#34;: &#34;my_analyzer&#34;,
+        &#34;search_analyzer&#34;: &#34;ik_smart&#34;
+      }
+    }
+  }
+}
+</code></pre><p>测试：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174024486-1094893452.png></p><h3 id=3-自动补全查询>3. 自动补全查询<a hidden class=anchor aria-hidden=true href=#3-自动补全查询>#</a></h3><h2 id=elasticsearch提供了completion-suggester-查询来实现自动补全功能这个查询会匹配以用户输入内容开头的词条并返回为了提高补全查询的效率对于文档中字段的类型有一些约束>三步骤：
+① 创建索引库
+② 插入数据
+③ 查询的DSL语句
+elasticsearch提供了<a href=https://www.elastic.co/guide/en/elasticsearch/reference/7.6/search-suggesters.html>Completion Suggester</a> 查询来实现自动补全功能。这个查询会匹配以用户输入内容开头的词条并返回。为了提高补全查询的效率，对于文档中字段的类型有一些约束：</h2><h2 id=参与补全查询的字段必须是completion类型>参与补全查询的字段必须是completion类型。<a hidden class=anchor aria-hidden=true href=#参与补全查询的字段必须是completion类型>#</a></h2><p>字段的内容一般是用来补全的多个词条形成的数组。</p><p>比如，一个这样的索引库：</p><pre tabindex=0><code>// 创建索引库
+PUT test
+{
+  &#34;mappings&#34;: {
+    &#34;properties&#34;: {
+      &#34;title&#34;:{
+        &#34;type&#34;: &#34;completion&#34;
+      }
+    }
+  }
+}
+</code></pre><p>然后插入下面的数据：</p><pre tabindex=0><code>// 示例数据
+POST test/_doc
+{
+  &#34;title&#34;: [&#34;Sony&#34;, &#34;WH-1000XM3&#34;]
+}
+POST test/_doc
+{
+  &#34;title&#34;: [&#34;SK-II&#34;, &#34;PITERA&#34;]
+}
+POST test/_doc
+{
+  &#34;title&#34;: [&#34;Nintendo&#34;, &#34;switch&#34;]
+}
+</code></pre><p>查询的DSL语句如下：</p><pre tabindex=0><code>// 自动补全查询
+GET /test/_search
+{
+  &#34;suggest&#34;: {
+    &#34;title_suggest&#34;: {	//设置这个自动查询操作的名称
+      &#34;text&#34;: &#34;s&#34;, // 关键字
+      &#34;completion&#34;: {
+        &#34;field&#34;: &#34;title&#34;, // 补全查询的字段名
+        &#34;skip_duplicates&#34;: true, // 跳过重复的
+        &#34;size&#34;: 10 // 获取前10条结果
+      }
+    }
+  }
+}
+</code></pre><h3 id=4-自动补全嵌入项目>4. 自动补全嵌入项目<a hidden class=anchor aria-hidden=true href=#4-自动补全嵌入项目>#</a></h3><h4 id=41-修改索引库映射结构>4.1 修改索引库映射结构<a hidden class=anchor aria-hidden=true href=#41-修改索引库映射结构>#</a></h4><p>重点注意：
+① all、name字段等要 分词设置为自定义分词器(&ldquo;analyzer&rdquo;: &ldquo;text_anlyzer&rdquo;)（一般要分词，然后再对分词后的词语进行拼音处理），查询设置为最精简分词器(&ldquo;search_analyzer&rdquo;: &ldquo;ik_smart&rdquo;)
+② 设置一个自动补全字段(如 suggestion) 类型必须为：completion，并且使用自定义分词器（一般不分词直接对整个词语进行拼音处理）
+先删除之前的索引库，再设置如下：</p><pre tabindex=0><code>// 酒店数据索引库
+PUT /hotel
+{
+  &#34;settings&#34;: {
+    &#34;analysis&#34;: {
+      &#34;analyzer&#34;: {
+        &#34;text_anlyzer&#34;: {
+          &#34;tokenizer&#34;: &#34;ik_max_word&#34;,
+          &#34;filter&#34;: &#34;py&#34;
+        },
+        &#34;completion_analyzer&#34;: {
+          &#34;tokenizer&#34;: &#34;keyword&#34;,
+          &#34;filter&#34;: &#34;py&#34;
+        }
+      },
+      &#34;filter&#34;: {
+        &#34;py&#34;: {
+          &#34;type&#34;: &#34;pinyin&#34;,
+          &#34;keep_full_pinyin&#34;: false,
+          &#34;keep_joined_full_pinyin&#34;: true,
+          &#34;keep_original&#34;: true,
+          &#34;limit_first_letter_length&#34;: 16,
+          &#34;remove_duplicated_term&#34;: true,
+          &#34;none_chinese_pinyin_tokenize&#34;: false
+        }
+      }
+    }
+  },
+  &#34;mappings&#34;: {
+    &#34;properties&#34;: {
+      &#34;id&#34;:{
+        &#34;type&#34;: &#34;keyword&#34;
+      },
+      &#34;name&#34;:{
+        &#34;type&#34;: &#34;text&#34;,
+        &#34;analyzer&#34;: &#34;text_anlyzer&#34;,
+        &#34;search_analyzer&#34;: &#34;ik_smart&#34;,
+        &#34;copy_to&#34;: &#34;all&#34;
+      },
+      &#34;address&#34;:{
+        &#34;type&#34;: &#34;keyword&#34;,
+        &#34;index&#34;: false
+      },
+      &#34;price&#34;:{
+        &#34;type&#34;: &#34;integer&#34;
+      },
+      &#34;score&#34;:{
+        &#34;type&#34;: &#34;integer&#34;
+      },
+      &#34;brand&#34;:{
+        &#34;type&#34;: &#34;keyword&#34;,
+        &#34;copy_to&#34;: &#34;all&#34;
+      },
+      &#34;city&#34;:{
+        &#34;type&#34;: &#34;keyword&#34;
+      },
+      &#34;starName&#34;:{
+        &#34;type&#34;: &#34;keyword&#34;
+      },
+      &#34;business&#34;:{
+        &#34;type&#34;: &#34;keyword&#34;,
+        &#34;copy_to&#34;: &#34;all&#34;
+      },
+      &#34;location&#34;:{
+        &#34;type&#34;: &#34;geo_point&#34;
+      },
+      &#34;pic&#34;:{
+        &#34;type&#34;: &#34;keyword&#34;,
+        &#34;index&#34;: false
+      },
+      &#34;all&#34;:{
+        &#34;type&#34;: &#34;text&#34;,
+        &#34;analyzer&#34;: &#34;text_anlyzer&#34;,
+        &#34;search_analyzer&#34;: &#34;ik_smart&#34;
+      },
+      &#34;suggestion&#34;:{
+          &#34;type&#34;: &#34;completion&#34;,
+          &#34;analyzer&#34;: &#34;completion_analyzer&#34;
+      }
+    }
+  }
+}
+</code></pre><h4 id=42-修改实体类>4.2 修改实体类<a hidden class=anchor aria-hidden=true href=#42-修改实体类>#</a></h4><p>类型为completion的字段需要在改造方法里做组装
+HotelDoc中要添加一个字段，用来做自动补全，内容可以是酒店品牌、城市、商圈等信息。按照自动补全字段的要求，最好是这些字段的数组。
+因此我们在HotelDoc中添加一个suggestion字段，类型为<code>List&lt;String></code>，然后将brand、city、business等信息放到里面。
+代码如下：</p><pre tabindex=0><code>package cn.itcast.hotel.pojo;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+@Data
+@NoArgsConstructor
+public class HotelDoc {
+    private Long id;
+    private String name;
+    private String address;
+    private Integer price;
+    private Integer score;
+    private String brand;
+    private String city;
+    private String starName;
+    private String business;
+    private String location;
+    private String pic;
+    private Object distance;
+    private Boolean isAD;
+    private List&lt;String&gt; suggestion;
+
+    public HotelDoc(Hotel hotel) {
+        this.id = hotel.getId();
+        this.name = hotel.getName();
+        this.address = hotel.getAddress();
+        this.price = hotel.getPrice();
+        this.score = hotel.getScore();
+        this.brand = hotel.getBrand();
+        this.city = hotel.getCity();
+        this.starName = hotel.getStarName();
+        this.business = hotel.getBusiness();
+        this.location = hotel.getLatitude() + &#34;, &#34; + hotel.getLongitude();
+        this.pic = hotel.getPic();
+        // 组装suggestion
+        if(this.business.contains(&#34;/&#34;)){
+            // business有多个值，需要切割
+            String[] arr = this.business.split(&#34;/&#34;);
+            // 添加元素
+            this.suggestion = new ArrayList&lt;&gt;();
+            this.suggestion.add(this.brand);
+            Collections.addAll(this.suggestion, arr);
+        }else {
+            this.suggestion = Arrays.asList(this.brand, this.business);
+        }
+    }
+}
+</code></pre><h4 id=43-重新导入数据>4.3 重新导入数据<a hidden class=anchor aria-hidden=true href=#43-重新导入数据>#</a></h4><p>先删除数据，再重新执行之前编写的导入数据功能，可以看到新的酒店数据中包含了suggestion：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174055585-873118927.png></p><h4 id=44-自动补全的javaapi>4.4 自动补全的JavaAPI<a hidden class=anchor aria-hidden=true href=#44-自动补全的javaapi>#</a></h4><p>示例：（这两幅图有点乱，看不懂就忽略）
+<strong>查询代码如下：</strong>
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174142619-1304761758.png>
+<strong>解析结果代码如下：</strong>
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174149201-911882808.png>
+1）在<code>cn.itcast.hotel.web</code>包下的<code>HotelController</code>中添加新接口，接收新的请求：</p><pre tabindex=0><code>@GetMapping(&#34;suggestion&#34;)
+public List&lt;String&gt; getSuggestions(@RequestParam(&#34;key&#34;) String prefix) {
+    return hotelService.getSuggestions(prefix);
+}
+</code></pre><p>2）在<code>cn.itcast.hotel.service</code>包下的<code>IhotelService</code>中添加方法：</p><pre tabindex=0><code>List&lt;String&gt; getSuggestions(String prefix);
+</code></pre><p>3）在<code>cn.itcast.hotel.service.impl.HotelService</code>中实现该方法：</p><pre tabindex=0><code>@Override
+public List&lt;String&gt; getSuggestion(String prefix) {
+    try {
+        // 1.准备Request
+        SearchRequest request = new SearchRequest(&#34;hotel&#34;);
+        // 2.准备DSL
+        request.source().suggest(new SuggestBuilder().addSuggestion(
+            &#34;hotelSuggestion&#34;,  //设置这个自动补全操作的名称
+            SuggestBuilders.completionSuggestion(&#34;suggestion&#34;) //类型为completion的字段名
+            .prefix(prefix)
+            .skipDuplicates(true)
+            .size(10)
+        ));
+        // 3.发起请求
+        SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+        // 4.解析结果
+        Suggest suggest = response.getSuggest();
+        // 4.1.根据补全查询名称，获取补全结果(这里的参数是索引库里类型为completion的字段名）
+        CompletionSuggestion suggestions = suggest.getSuggestion(&#34;hotelSuggestion&#34;);  //之前设置的这个自动查询操作的名称
+        // 4.2.获取options
+        List&lt;CompletionSuggestion.Entry.Option&gt; options = suggestions.getOptions();
+        // 4.3.遍历
+        List&lt;String&gt; list = new ArrayList&lt;&gt;(options.size());
+        for (CompletionSuggestion.Entry.Option option : options) {
+            String text = option.getText().toString();
+            list.add(text);
+        }
+        return list;
+    } catch (IOException e) {
+        throw new RuntimeException(e);
+    }
+}
+</code></pre><h2 id=es与mysql数据同步>ES与Mysql数据同步<a hidden class=anchor aria-hidden=true href=#es与mysql数据同步>#</a></h2><p>elasticsearch中的酒店数据来自于mysql数据库，因此mysql数据发生改变时，elasticsearch也必须跟着改变，这个就是elasticsearch与mysql之间的<strong>数据同步</strong>。
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174157480-242761835.png></p><h3 id=1-三种方法>1. 三种方法<a hidden class=anchor aria-hidden=true href=#1-三种方法>#</a></h3><p>常见的数据同步方案有三种：</p><ul><li>同步调用</li><li>异步通知</li><li>监听binlog</li></ul><p>方式一：同步调用</p><ul><li>优点：实现简单，粗暴</li><li>缺点：业务耦合度高</li></ul><p>方式二：异步通知【常用】</p><ul><li>优点：低耦合，实现难度一般</li><li>缺点：依赖mq的可靠性</li></ul><p>方式三：监听binlog</p><ul><li>优点：完全解除服务间耦合</li><li>缺点：开启binlog增加数据库负担、实现复杂度高</li></ul><h4 id=11同步调用>1.1.同步调用<a hidden class=anchor aria-hidden=true href=#11同步调用>#</a></h4><p>方案一：同步调用
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174204697-1782713458.png>
+基本步骤如下：</p><ul><li>hotel-demo对外提供接口，用来修改elasticsearch中的数据</li><li>酒店管理服务在完成数据库操作后，直接调用hotel-demo提供的接口，</li></ul><h4 id=12异步通知>1.2.异步通知<a hidden class=anchor aria-hidden=true href=#12异步通知>#</a></h4><p>方案二：异步通知
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174208679-699617903.png>
+流程如下：</p><ul><li>hotel-admin对mysql数据库数据完成增、删、改后，发送MQ消息</li><li>hotel-demo监听MQ，接收到消息后完成elasticsearch数据修改</li></ul><h4 id=13监听binlog>1.3.监听binlog<a hidden class=anchor aria-hidden=true href=#13监听binlog>#</a></h4><p>方案三：监听binlog
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174214464-753366960.png>
+流程如下：</p><ul><li>给mysql开启binlog功能</li><li>mysql完成增、删、改操作都会记录在binlog中</li><li>hotel-demo基于canal监听binlog变化，实时更新elasticsearch中的内容</li></ul><h3 id=2-实现数据同步>2. 实现数据同步<a hidden class=anchor aria-hidden=true href=#2-实现数据同步>#</a></h3><p>当数据发生增、删、改时，要求对elasticsearch中数据也要完成相同操作。
+步骤：</p><ul><li>单机部署并启动MQ（单机部署在MQ部分有讲）</li><li>接收者中声明exchange、queue、RoutingKey</li><li>在hotel-admin发送者中的增、删、改业务中完成消息发送</li><li>在hotel-demo接收者中完成消息监听，并更新elasticsearch中数据</li><li>启动并测试数据同步功能</li></ul><h4 id=20-导入依赖和yaml>2.0 导入依赖和yaml<a hidden class=anchor aria-hidden=true href=#20-导入依赖和yaml>#</a></h4><p>对<strong>发送者</strong>和<strong>消费者</strong>都添加依赖和yaml信息</p><h5 id=1引入依赖>1）引入依赖<a hidden class=anchor aria-hidden=true href=#1引入依赖>#</a></h5><pre tabindex=0><code>&lt;!--amqp--&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-amqp&lt;/artifactId&gt;
+&lt;/dependency&gt;
+</code></pre><h5 id=2yaml>2）yaml<a hidden class=anchor aria-hidden=true href=#2yaml>#</a></h5><pre tabindex=0><code>spring:
+  rabbitmq:	#MQ配置
+    host: 192.168.194.131 # 主机名
+    port: 5672 # 端口
+    virtual-host: / # 虚拟主机
+    username: itcast # 用户名
+    password: 123321 # 密码
+</code></pre><h4 id=21-声明交换机队列>2.1 声明交换机、队列<a hidden class=anchor aria-hidden=true href=#21-声明交换机队列>#</a></h4><p>MQ结构如图：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174222118-844481945.png></p><h5 id=1声明队列交换机名称>1）声明队列交换机名称<a hidden class=anchor aria-hidden=true href=#1声明队列交换机名称>#</a></h5><p>在hotel-admin<strong>发送者</strong>和hotel-demo<strong>消费者</strong>中的<code>cn.itcast.hotel.constatnts</code>包下新建一个类<code>MqConstants</code>：</p><pre tabindex=0><code>package cn.itcast.hotel.constatnts;
+
+public class MqConstants {
+    /**
+     * 交换机
+     */
+    public final static String HOTEL_EXCHANGE = &#34;hotel.topic&#34;;
+    /**
+     * 监听新增和修改的队列
+     */
+    public final static String HOTEL_INSERT_QUEUE = &#34;hotel.insert.queue&#34;;
+    /**
+     * 监听删除的队列
+     */
+    public final static String HOTEL_DELETE_QUEUE = &#34;hotel.delete.queue&#34;;
+    /**
+     * 新增或修改的RoutingKey
+     */
+    public final static String HOTEL_INSERT_KEY = &#34;hotel.insert&#34;;
+    /**
+     * 删除的RoutingKey
+     */
+    public final static String HOTEL_DELETE_KEY = &#34;hotel.delete&#34;;
+}
+</code></pre><h5 id=2声明队列交换机>2）声明队列交换机<a hidden class=anchor aria-hidden=true href=#2声明队列交换机>#</a></h5><p>在hotel-demo<strong>消费者</strong>中，定义配置类，声明队列、交换机：</p><pre tabindex=0><code>package cn.itcast.hotel.config;
+
+import cn.itcast.hotel.constants.MqConstants;
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.TopicExchange;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class MqConfig {
+    @Bean
+    public TopicExchange topicExchange(){
+        return new TopicExchange(MqConstants.HOTEL_EXCHANGE, true, false);
+    }
+
+    @Bean
+    public Queue insertQueue(){
+        return new Queue(MqConstants.HOTEL_INSERT_QUEUE, true);
+    }
+
+    @Bean
+    public Queue deleteQueue(){
+        return new Queue(MqConstants.HOTEL_DELETE_QUEUE, true);
+    }
+
+    @Bean
+    public Binding insertQueueBinding(){
+        return BindingBuilder.bind(insertQueue()).to(topicExchange()).with(MqConstants.HOTEL_INSERT_KEY);
+    }
+
+    @Bean
+    public Binding deleteQueueBinding(){
+        return BindingBuilder.bind(deleteQueue()).to(topicExchange()).with(MqConstants.HOTEL_DELETE_KEY);
+    }
+}
+</code></pre><h4 id=22-发送mq消息>2.2 发送MQ消息<a hidden class=anchor aria-hidden=true href=#22-发送mq消息>#</a></h4><p>在hotel-admin发送者中的增、删、改业务中分别发送MQ消息：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174233487-324586391.png></p><h4 id=23-接收mq消息>2.3 接收MQ消息<a hidden class=anchor aria-hidden=true href=#23-接收mq消息>#</a></h4><p>hotel-demo接收到MQ消息要做的事情包括：</p><ul><li>新增消息：根据传递的hotel的id查询hotel信息，然后新增一条数据到索引库</li><li>删除消息：根据传递的hotel的id删除索引库中的一条数据</li></ul><h5 id=1写sdl业务>1）写SDL业务<a hidden class=anchor aria-hidden=true href=#1写sdl业务>#</a></h5><p>首先在hotel-demo的<code>cn.itcast.hotel.service</code>包下的<code>IHotelService</code>中新增新增、删除业务</p><pre tabindex=0><code>void deleteById(Long id);
+
+void insertById(Long id);
+</code></pre><p>给hotel-demo中的<code>cn.itcast.hotel.service.impl</code>包下的HotelService中实现业务：</p><pre tabindex=0><code>@Override
+public void deleteById(Long id) {
+    try {
+        // 1.准备Request
+        DeleteRequest request = new DeleteRequest(&#34;hotel&#34;, id.toString());
+        // 2.发送请求
+        client.delete(request, RequestOptions.DEFAULT);
+    } catch (IOException e) {
+        throw new RuntimeException(e);
+    }
+}
+
+@Override
+public void insertById(Long id) {
+    try {
+        // 0.根据id查询酒店数据
+        Hotel hotel = getById(id);
+        // 转换为文档类型
+        HotelDoc hotelDoc = new HotelDoc(hotel);
+
+        // 1.准备Request对象
+        IndexRequest request = new IndexRequest(&#34;hotel&#34;).id(hotel.getId().toString());
+        // 2.准备Json文档
+        request.source(JSON.toJSONString(hotelDoc), XContentType.JSON);
+        // 3.发送请求
+        client.index(request, RequestOptions.DEFAULT);
+    } catch (IOException e) {
+        throw new RuntimeException(e);
+    }
+}
+</code></pre><h5 id=2编写监听器>2）编写监听器<a hidden class=anchor aria-hidden=true href=#2编写监听器>#</a></h5><p>在hotel-demo中的<code>cn.itcast.hotel.mq</code>包新增一个类：</p><pre tabindex=0><code>package cn.itcast.hotel.mq;
+
+import cn.itcast.hotel.constants.MqConstants;
+import cn.itcast.hotel.service.IHotelService;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+@Component
+public class HotelListener {
+
+    @Autowired
+    private IHotelService hotelService;
+
+    /**
+     * 监听酒店新增或修改的业务
+     * @param id 酒店id
+     */
+    @RabbitListener(queues = MqConstants.HOTEL_INSERT_QUEUE)
+    public void listenHotelInsertOrUpdate(Long id){
+        hotelService.insertById(id);
+    }
+
+    /**
+     * 监听酒店删除的业务
+     * @param id 酒店id
+     */
+    @RabbitListener(queues = MqConstants.HOTEL_DELETE_QUEUE)
+    public void listenHotelDelete(Long id){
+        hotelService.deleteById(id);
+    }
+}
+</code></pre><h4 id=24-测试>2.4 测试<a hidden class=anchor aria-hidden=true href=#24-测试>#</a></h4><p>用postman调用增加/删除/修改mysql数据库的接口，然后去页面搜索看看删除的数据还是否能查到，或者修改/增加的数据能不能查出来</p><h2 id=es集群>ES集群<a hidden class=anchor aria-hidden=true href=#es集群>#</a></h2><h3 id=1-搭建es集群>1. 搭建ES集群<a hidden class=anchor aria-hidden=true href=#1-搭建es集群>#</a></h3><h4 id=11-创建es集群>1.1 创建ES集群<a hidden class=anchor aria-hidden=true href=#11-创建es集群>#</a></h4><p>部署es集群可以直接使用docker-compose来完成，不过要求你的Linux虚拟机至少有<strong>4G</strong>的内存空间
+首先编写一个docker-compose文件，内容如下：</p><pre tabindex=0><code>version: &#39;2.2&#39;
+services:
+  es01:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.12.1
+    container_name: es01
+    environment:
+      - node.name=es01
+      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=es02,es03
+      - cluster.initial_master_nodes=es01,es02,es03
+      - bootstrap.memory_lock=true
+      - &#34;ES_JAVA_OPTS=-Xms512m -Xmx512m&#34;
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - data01:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+    networks:
+      - elastic
+  es02:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.12.1
+    container_name: es02
+    environment:
+      - node.name=es02
+      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=es01,es03
+      - cluster.initial_master_nodes=es01,es02,es03
+      - bootstrap.memory_lock=true
+      - &#34;ES_JAVA_OPTS=-Xms512m -Xmx512m&#34;
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - data02:/usr/share/elasticsearch/data
+    networks:
+      - elastic
+  es03:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.12.1
+    container_name: es03
+    environment:
+      - node.name=es03
+      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=es01,es02
+      - cluster.initial_master_nodes=es01,es02,es03
+      - bootstrap.memory_lock=true
+      - &#34;ES_JAVA_OPTS=-Xms512m -Xmx512m&#34;
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - data03:/usr/share/elasticsearch/data
+    networks:
+      - elastic
+
+volumes:
+  data01:
+    driver: local
+  data02:
+    driver: local
+  data03:
+    driver: local
+
+networks:
+  elastic:
+    driver: bridge
+</code></pre><p>es运行需要修改一些linux系统权限，修改<code>/etc/sysctl.conf</code>文件</p><pre tabindex=0><code>vi /etc/sysctl.conf
+</code></pre><p>添加下面的内容：</p><pre tabindex=0><code>vm.max_map_count=262144
+</code></pre><p>然后执行命令，让配置生效：</p><pre tabindex=0><code>sysctl -p
+</code></pre><p><img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174247955-1940107168.png>
+通过docker-compose启动集群：</p><pre tabindex=0><code>docker-compose up -d
+</code></pre><h4 id=12-集群状态监控>1.2 集群状态监控<a hidden class=anchor aria-hidden=true href=#12-集群状态监控>#</a></h4><p>kibana可以监控es集群，不过新版本需要依赖es的x-pack 功能，配置比较复杂。
+这里推荐使用cerebro来监控es集群状态，官方网址：<a href=https://github.com/lmenezes/cerebro>https://github.com/lmenezes/cerebro</a>
+课前资料已经提供了安装包：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174253608-697990984.png>
+解压即可使用，非常方便。
+解压好的目录如下：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174258478-68607455.png>
+进入对应的bin目录：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174303403-1904751938.png>
+双击其中的cerebro.bat文件即可启动服务。
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174308478-812530281.png>
+访问http://localhost:9000 即可进入管理界面：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174337983-1157412120.png>
+输入你的elasticsearch的任意节点的地址和端口，点击connect即可：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174403049-1249651006.png>
+绿色的条，代表集群处于绿色（健康状态）。</p><h4 id=13创建索引库>1.3创建索引库<a hidden class=anchor aria-hidden=true href=#13创建索引库>#</a></h4><p>创建索引库的时候需要设置分片数量（其他还有多少个ES服务在该集群）以及副本数量（本服务的数据拷贝几份）</p><h5 id=方法一利用kibana的devtools创建索引库>方法一：利用kibana的DevTools创建索引库<a hidden class=anchor aria-hidden=true href=#方法一利用kibana的devtools创建索引库>#</a></h5><p>如果没有启动ES的可视化界面Kibana，那就用方法二
+在DevTools中输入指令：</p><pre tabindex=0><code>PUT /itcast
+{
+  &#34;settings&#34;: {
+    &#34;number_of_shards&#34;: 3, // 分片数量
+    &#34;number_of_replicas&#34;: 1 // 副本数量
+  },
+  &#34;mappings&#34;: {
+    &#34;properties&#34;: {
+      // mapping映射定义 ...
+    }
+  }
+}
+</code></pre><h5 id=方法二利用cerebro创建索引库>方法二：利用cerebro创建索引库<a hidden class=anchor aria-hidden=true href=#方法二利用cerebro创建索引库>#</a></h5><p>利用cerebro还可以创建索引库：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174414485-1108138446.png>
+填写索引库信息：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174418914-393171047.png>
+点击右下角的create按钮：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174423389-1597328756.png></p><h5 id=查看分片效果>查看分片效果<a hidden class=anchor aria-hidden=true href=#查看分片效果>#</a></h5><p>回到首页，即可查看索引库分片效果：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174428188-794591883.png></p><h3 id=2集群脑裂问题>2.集群脑裂问题<a hidden class=anchor aria-hidden=true href=#2集群脑裂问题>#</a></h3><p>master eligible节点的作用是什么？</p><ul><li>参与集群选主</li><li>主节点可以管理集群状态、管理分片信息、处理创建和删除索引库的请求</li></ul><p>data节点的作用是什么？</p><ul><li>数据的CRUD</li></ul><h2 id=coordinator节点的作用是什么>coordinator节点的作用是什么？<a hidden class=anchor aria-hidden=true href=#coordinator节点的作用是什么>#</a></h2><h2 id=路由请求到其它节点>路由请求到其它节点<a hidden class=anchor aria-hidden=true href=#路由请求到其它节点>#</a></h2><p>合并查询到的结果，返回给用户</p><h4 id=21集群职责划分>2.1.集群职责划分<a hidden class=anchor aria-hidden=true href=#21集群职责划分>#</a></h4><p>通过改变配置文件中的 true——> false 来改变职责。如data数据职责节点就只保留data为true其他为false
+注意：每个节点都是路由，这样可以保证不管哪个节点接收到请求可以分给其他人已经从其他人那接收信息。
+elasticsearch中集群节点有不同的职责划分：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174437248-89466588.png>
+默认情况下，集群中的任何一个节点都同时具备上述四种角色。
+但是真实的集群一定要将集群职责分离：（因为不同职责对CPU要求不同）</p><ul><li>master节点：对CPU要求高，但是内存要求低</li><li>data节点：对CPU和内存要求都高</li><li>coordinating节点：对网络带宽、CPU要求高</li></ul><p>职责分离可以让我们根据不同节点的需求分配不同的硬件去部署。而且避免业务之间的互相干扰。
+一个典型的es集群职责划分如图：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174442439-1069765383.png></p><h4 id=22脑裂问题>2.2.脑裂问题<a hidden class=anchor aria-hidden=true href=#22脑裂问题>#</a></h4><p>ES 7.0后默认配置了**( eligible节点数量 + 1 ）/ 2<strong>来解决脑裂问题
+脑裂是因为集群中的节点失联导致的。
+例如一个集群中，主节点与其它节点失联：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174447612-1377452674.png>
+此时，node2和node3认为node1宕机，就会重新选主：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174453080-1677763578.png>
+当node3当选后，集群继续对外提供服务，node2和node3自成集群，node1自成集群，两个集群数据不同步，出现数据差异。
+当网络恢复后，因为集群中有两个master节点，集群状态的不一致，出现脑裂的情况：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174457820-447955706.png>
+解决脑裂的方案是，要求选票超过</strong>( eligible节点数量 + 1 ）/ 2**才能当选为主，因此eligible节点数量最好是奇数。对应配置项是discovery.zen.minimum_master_nodes，在es7.0以后，已经成为默认配置，因此一般不会发生脑裂问题
+例如：3个节点形成的集群，选票必须超过 （3 + 1） / 2 ，也就是2票。node3得到node2和node3的选票，当选为主。node1只有自己1票，没有当选。集群中依然只有1个主节点，没有出现脑裂。</p><h3 id=3集群分布式存储>3.集群分布式存储<a hidden class=anchor aria-hidden=true href=#3集群分布式存储>#</a></h3><p>当新增文档时，应该保存到不同分片，保证数据均衡，那么coordinating node如何确定数据该存储到哪个分片呢？</p><h4 id=31分片存储测试>3.1.分片存储测试<a hidden class=anchor aria-hidden=true href=#31分片存储测试>#</a></h4><p>插入三条数据：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174505286-1396675284.png>
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174521870-302254487.png>
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174526716-644567480.png>
+测试可以看到，三条数据分别在不同分片：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174534715-323138622.png>
+结果：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174540673-592662626.png></p><h4 id=32分片存储原理>3.2.分片存储原理<a hidden class=anchor aria-hidden=true href=#32分片存储原理>#</a></h4><p>elasticsearch会通过hash算法来计算文档应该存储到哪个分片：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174546782-1705505226.png>
+说明：</p><ul><li>_routing默认是文档的id</li><li>算法与分片数量有关，因此索引库一旦创建，分片数量不能修改！</li></ul><p>新增文档的流程如下：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174551794-1811444061.png>
+解读：</p><ul><li>1）新增一个id=1的文档</li><li>2）对id做hash运算，假如得到的是2，则应该存储到shard-2</li><li>3）shard-2的主分片在node3节点，将数据路由到node3</li><li>4）保存文档</li><li>5）同步给shard-2的副本replica-2，在node2节点</li><li>6）返回结果给coordinating-node节点</li></ul><h3 id=4-集群分布式查询>4. 集群分布式查询<a hidden class=anchor aria-hidden=true href=#4-集群分布式查询>#</a></h3><h2 id=elasticsearch的查询分成两个阶段><strong>原理：</strong>
+elasticsearch的查询分成两个阶段：</h2><h2 id=scatter-phase分散阶段coordinating-node会把请求分发到每一个分片>scatter phase：分散阶段，coordinating node会把请求分发到每一个分片<a hidden class=anchor aria-hidden=true href=#scatter-phase分散阶段coordinating-node会把请求分发到每一个分片>#</a></h2><p>gather phase：聚集阶段，coordinating node汇总data node的搜索结果，并处理为最终结果集返回给用户</p><p><img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174557427-1969761296.png></p><h3 id=5集群故障转移>5.集群故障转移<a hidden class=anchor aria-hidden=true href=#5集群故障转移>#</a></h3><p>ES本身已经配置好了有集群故障转移，不需要我们再去配置
+集群的master节点会监控集群中的节点状态，如果发现有节点宕机，会立即将宕机节点的分片数据迁移到其它节点，确保数据安全，这个叫做故障转移。
+1）例如一个集群结构如图：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174602086-492617752.png>
+现在，node1是主节点，其它两个节点是从节点。
+2）突然，node1发生了故障：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174607756-480992428.png>
+宕机后的第一件事，需要重新选主，例如选中了node2：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174612261-197593780.png>
+node2成为主节点后，会检测集群监控状态，发现：shard-1、shard-0没有副本节点。因此需要将node1上的数据迁移到node2、node3：
+<img alt=image loading=lazy src=https://img2023.cnblogs.com/blog/2729274/202302/2729274-20230205174617803-1364879576.png></p></div><footer class=post-footer><ul class=post-tags><li><a href=http://localhost:1313/tags/es/>Es</a></li><li><a href=http://localhost:1313/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/>中间件</a></li></ul></footer></article></main><footer class=footer><span>&copy; 2026 <a href=http://localhost:1313/>cubxxw is blog</a></span> ·
+<span>Powered by
+<a href=https://gohugo.io/ rel="noopener noreferrer" target=_blank>Hugo</a> &
+<a href=https://github.com/adityatelange/hugo-PaperMod/ rel=noopener target=_blank>PaperMod</a></span></footer><a href=#top aria-label="go to top" title="Go to Top (Alt + G)" class=top-link id=top-link accesskey=g><svg viewBox="0 0 12 6" fill="currentColor"><path d="M12 6H0l6-6z"/></svg>
+</a><script>let menu=document.getElementById("menu");if(menu){const e=localStorage.getItem("menu-scroll-position");e&&(menu.scrollLeft=parseInt(e,10)),menu.onscroll=function(){localStorage.setItem("menu-scroll-position",menu.scrollLeft)}}document.querySelectorAll('a[href^="#"]').forEach(e=>{e.addEventListener("click",function(e){e.preventDefault();var t=this.getAttribute("href").substr(1);window.matchMedia("(prefers-reduced-motion: reduce)").matches?document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView():document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView({behavior:"smooth"}),t==="top"?history.replaceState(null,null," "):history.pushState(null,null,`#${t}`)})})</script><script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script><script>document.getElementById("theme-toggle").addEventListener("click",()=>{const e=document.querySelector("html");e.dataset.theme==="dark"?(e.dataset.theme="light",localStorage.setItem("pref-theme","light")):(e.dataset.theme="dark",localStorage.setItem("pref-theme","dark"))})</script></body></html>
