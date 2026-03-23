@@ -36,7 +36,7 @@ minifyOutput = true
     url = "go"
 
     [[params.profileMode.buttons]]
-    name = "AI"
+    name = "ai"
     url = "AI"
 
     [[params.profileMode.buttons]]
