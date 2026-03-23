@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>AI on cubxxw is blog</title>
+    <link>http://localhost:1313/categories/ai/</link>
+    <description>Recent content in AI on cubxxw is blog</description>
+    <generator>Hugo -- 0.155.2</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 29 Nov 2025 17:36:22 +0800</lastBuildDate>
+    <atom:link href="http://localhost:1313/categories/ai/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>模型上下文协议（MCP）的 Go 实现，实现了 LLM 应用程序与外部数据源和工具之间的无缝集成</title>
+      <link>http://localhost:1313/ai/go-mcp/</link>
+      <pubDate>Sat, 29 Nov 2025 17:36:22 +0800</pubDate>
+      <guid>http://localhost:1313/ai/go-mcp/</guid>
+      <description>&lt;h1 id=&#34;模型上下文协议mcp的-go-实现实现了-llm-应用程序与外部数据源和工具之间的无缝集成&#34;&gt;模型上下文协议（MCP）的 Go 实现，实现了 LLM 应用程序与外部数据源和工具之间的无缝集成&lt;/h1&gt;
+&lt;p&gt;如果你最近在看 AI 应用、Agent、工具调用或者 LLM 集成，大概率已经绕不过一个词：&lt;code&gt;MCP&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;MCP，全称 &lt;code&gt;Model Context Protocol&lt;/code&gt;，本质上是在定义一套标准接口，让模型能够以更统一、更可控的方式访问外部世界。工具、资源、提示词模板、会话上下文，这些原本散落在不同系统里的能力，开始可以用一套更稳定的协议来描述和暴露。&lt;/p&gt;
+&lt;p&gt;问题在于，协议本身只是开始。真正落地的时候，你还得处理一堆工程细节：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;JSON-RPC 消息怎么组织&lt;/li&gt;
+&lt;li&gt;工具参数怎么描述&lt;/li&gt;
+&lt;li&gt;资源怎么暴露&lt;/li&gt;
+&lt;li&gt;多种传输方式怎么接&lt;/li&gt;
+&lt;li&gt;会话状态怎么管理&lt;/li&gt;
+&lt;li&gt;长任务怎么异步返回&lt;/li&gt;
+&lt;li&gt;错误、恢复、钩子、中间件怎么做&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果这些都手写，你会很快发现：写的不是业务，而是在重复造一层协议框架。&lt;/p&gt;
+&lt;p&gt;这也是我觉得 &lt;a href=&#34;https://github.com/mark3labs/mcp-go&#34;&gt;&lt;code&gt;mark3labs/mcp-go&lt;/code&gt;&lt;/a&gt; 值得写一篇文章的原因。它不是在 Go 里“又造了一个神秘框架”，而是在一个非常务实的位置上，把 MCP 服务端和客户端开发里的重复劳动，整理成了可用、可读、可维护的 API。&lt;/p&gt;
+&lt;h2 id=&#34;一概要&#34;&gt;一、概要&lt;/h2&gt;
+&lt;p&gt;很多人第一次接触 MCP SDK，会先去找一个 hello world，然后很快得出一个结论：不就是把工具包装成几个 handler 吗？&lt;/p&gt;
+&lt;p&gt;这个理解只对了一半。&lt;/p&gt;
+&lt;p&gt;真正的问题不是“把一个函数暴露成 MCP Tool 难不难”，而是当你的能力越来越多时，系统还能不能保持整洁。&lt;/p&gt;
+&lt;p&gt;一个真实的 MCP 服务，通常不会只有一个工具。它往往会同时包含：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;一组工具：给模型执行动作&lt;/li&gt;
+&lt;li&gt;一组资源：给模型读取上下文&lt;/li&gt;
+&lt;li&gt;一组提示词模板：给模型构造交互模式&lt;/li&gt;
+&lt;li&gt;一套传输层：本地 stdio、SSE、HTTP，甚至嵌入式场景&lt;/li&gt;
+&lt;li&gt;一套会话机制：识别不同客户端、维护每个会话的状态&lt;/li&gt;
+&lt;li&gt;一套治理能力：恢复、日志、钩子、中间件、并发限制&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果你直接围绕协议报文去写，很快就会进入“每个功能都能做，但每个功能都写得很散”的状态。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;mcp-go&lt;/code&gt; 的价值，就在于它提供的是一种&lt;strong&gt;高层抽象&lt;/strong&gt;：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;你主要关注“我要暴露什么能力”。&lt;/li&gt;
+&lt;li&gt;协议细节、路由、消息格式、能力协商这些工作由库来兜底。&lt;/li&gt;
+&lt;li&gt;最终保留下来的代码，仍然很符合 Go 的习惯：显式、直白、少魔法。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;这个定位我很喜欢，因为它没有试图把开发者绑进一个重框架里。它更像是一个“协议层工具箱”，而不是一个“统治一切的应用框架”。&lt;/p&gt;
+&lt;h2 id=&#34;二详细介绍&#34;&gt;二、详细介绍&lt;/h2&gt;
+&lt;p&gt;从官方 README 和文档来看，&lt;code&gt;mcp-go&lt;/code&gt; 当前已经覆盖了 MCP 的几块核心能力：&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

@@ -34,10 +34,10 @@ minifyOutput = true
     [[params.profileMode.buttons]]
     name = "go"
     url = "go"
-	
+
     [[params.profileMode.buttons]]
-    name = "Posts"
-    url = "posts"
+    name = "AI"
+    url = "AI"
 
     [[params.profileMode.buttons]]
     name = "Tags"
