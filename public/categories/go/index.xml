@@ -235,5 +235,47 @@
 &lt;li&gt;
 &lt;p&gt;&lt;strong&gt;New&lt;/strong&gt;&lt;/p&gt;</description>
     </item>
+    <item>
+      <title>Go Wire 依赖注入</title>
+      <link>http://localhost:1313/go/wire/</link>
+      <pubDate>Sun, 09 Feb 2025 16:42:35 +0800</pubDate>
+      <guid>http://localhost:1313/go/wire/</guid>
+      <description>&lt;h1 id=&#34;go-wire-依赖注入&#34;&gt;Go Wire 依赖注入&lt;/h1&gt;
+&lt;p&gt;今天要学习的内容是依赖注入，主要的目的就是简化main文件的内容，以及避免过多的全局变量带来的维护困难。&lt;/p&gt;
+&lt;p&gt;对于main文件而言，在小项目里，手动 new 结构体、逐层传依赖，完全够用；但一旦项目从 &lt;code&gt;handler -&amp;gt; service -&amp;gt; repository -&amp;gt; db/cache/config/logger&lt;/code&gt; 逐渐扩展，初始化代码就会开始失控。你会发现：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;main.go&lt;/code&gt; 越来越长，启动代码像一条没有尽头的装配流水线&lt;/li&gt;
+&lt;li&gt;依赖关系只能靠人脑维护，改一个构造函数，常常要改一串调用点&lt;/li&gt;
+&lt;li&gt;测试时想替换一个实现，初始化过程变得很笨重&lt;/li&gt;
+&lt;li&gt;某个依赖漏初始化、顺序不对、错误没透传，排查起来很痛苦&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这时候，依赖注入的价值才真正体现出来。它不是为了“炫技”，而是为了把&lt;strong&gt;对象创建&lt;/strong&gt;和&lt;strong&gt;业务逻辑&lt;/strong&gt;拆开，让依赖关系变得显式、稳定、可维护。&lt;/p&gt;
+&lt;p&gt;而在 Go 生态里，&lt;code&gt;Wire&lt;/code&gt; 是一个非常典型的选择。&lt;/p&gt;
+&lt;h2 id=&#34;一什么是-wire&#34;&gt;一、什么是 Wire&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;Wire&lt;/code&gt; 是一个 &lt;strong&gt;编译期依赖注入工具&lt;/strong&gt;。它不靠运行时反射去动态组装对象，而是在编译前根据你声明的 provider 关系，生成一份普通 Go 代码。&lt;/p&gt;
+&lt;p&gt;Wire 走的是：&lt;strong&gt;你写依赖规则，Wire 帮你生成初始化代码，但最后运行的仍然是普通 Go 代码。&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;所以它的核心优势不是“神奇”，而是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;依赖关系清晰&lt;/li&gt;
+&lt;li&gt;编译期发现装配错误&lt;/li&gt;
+&lt;li&gt;不引入运行时容器&lt;/li&gt;
+&lt;li&gt;生成代码可读、可调试&lt;/li&gt;
+&lt;li&gt;保持 Go 风格的显式与简单&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;你可以把它理解成一句话：&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Wire 不是帮你“隐藏依赖”，而是帮你“自动生成手写装配代码”。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&#34;二先看没有-wire-时的问题&#34;&gt;二、先看没有 Wire 时的问题&lt;/h2&gt;
+&lt;p&gt;假设我们有一个很常见的 Web 服务：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Config&lt;/code&gt; 负责配置&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;DB&lt;/code&gt; 负责数据库连接&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;UserRepository&lt;/code&gt; 依赖 &lt;code&gt;DB&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;UserService&lt;/code&gt; 依赖 &lt;code&gt;UserRepository&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;UserHandler&lt;/code&gt; 依赖 &lt;code&gt;UserService&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;手写初始化大概是这样：&lt;/p&gt;</description>
+    </item>
   </channel>
 </rss>

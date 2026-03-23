@@ -78,5 +78,12 @@
       <guid>http://localhost:1313/tags/%E6%A1%86%E6%9E%B6/</guid>
       <description></description>
     </item>
+    <item>
+      <title>Wire</title>
+      <link>http://localhost:1313/tags/wire/</link>
+      <pubDate>Sun, 09 Feb 2025 16:42:35 +0800</pubDate>
+      <guid>http://localhost:1313/tags/wire/</guid>
+      <description></description>
+    </item>
   </channel>
 </rss>

@@ -82,5 +82,11 @@
   </url><url>
     <loc>http://localhost:1313/tags/%E6%A1%86%E6%9E%B6/</loc>
     <lastmod>2025-02-10T22:03:52+08:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/go/wire/</loc>
+    <lastmod>2025-02-09T16:42:35+08:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/wire/</loc>
+    <lastmod>2025-02-09T16:42:35+08:00</lastmod>
   </url>
 </urlset>

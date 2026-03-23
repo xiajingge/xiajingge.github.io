@@ -28,7 +28,18 @@ func main() { var x NewC fx.New( fx.Provide(NewA, NewB, NewC), fx.Populate(&amp;
 所以，我们使用 Provide 向fx注入构造函数时，注入顺序并不重要。
 函数签名 这里会列出fx的主要的函数和方法，并对作用做出简要解释。
 func New(opts ...Option) *App func Provide(constructors ...interface{}) Option func Supply(values ...interface{}) Option func Populate(targets ...interface{}) Option func Invoke(funcs ...interface{}) Option New
-...</p></div><footer class=entry-footer><span title='2025-02-10 22:03:52 +0800 CST'>February 10, 2025</span></footer><a class=entry-link aria-label="post link to fx 依赖注入" href=http://localhost:1313/go/uber-fx/></a></article></main><footer class=footer><span>&copy; 2026 <a href=http://localhost:1313/>cubxxw is blog</a></span> ·
+...</p></div><footer class=entry-footer><span title='2025-02-10 22:03:52 +0800 CST'>February 10, 2025</span></footer><a class=entry-link aria-label="post link to fx 依赖注入" href=http://localhost:1313/go/uber-fx/></a></article><article class=post-entry><header class=entry-header><h2 class=entry-hint-parent>Go Wire 依赖注入</h2></header><div class=entry-content><p>Go Wire 依赖注入 今天要学习的内容是依赖注入，主要的目的就是简化main文件的内容，以及避免过多的全局变量带来的维护困难。
+对于main文件而言，在小项目里，手动 new 结构体、逐层传依赖，完全够用；但一旦项目从 handler -> service -> repository -> db/cache/config/logger 逐渐扩展，初始化代码就会开始失控。你会发现：
+main.go 越来越长，启动代码像一条没有尽头的装配流水线 依赖关系只能靠人脑维护，改一个构造函数，常常要改一串调用点 测试时想替换一个实现，初始化过程变得很笨重 某个依赖漏初始化、顺序不对、错误没透传，排查起来很痛苦 这时候，依赖注入的价值才真正体现出来。它不是为了“炫技”，而是为了把对象创建和业务逻辑拆开，让依赖关系变得显式、稳定、可维护。
+而在 Go 生态里，Wire 是一个非常典型的选择。
+一、什么是 Wire Wire 是一个 编译期依赖注入工具。它不靠运行时反射去动态组装对象，而是在编译前根据你声明的 provider 关系，生成一份普通 Go 代码。
+Wire 走的是：你写依赖规则，Wire 帮你生成初始化代码，但最后运行的仍然是普通 Go 代码。
+所以它的核心优势不是“神奇”，而是：
+依赖关系清晰 编译期发现装配错误 不引入运行时容器 生成代码可读、可调试 保持 Go 风格的显式与简单 你可以把它理解成一句话：
+Wire 不是帮你“隐藏依赖”，而是帮你“自动生成手写装配代码”。
+二、先看没有 Wire 时的问题 假设我们有一个很常见的 Web 服务：
+Config 负责配置 DB 负责数据库连接 UserRepository 依赖 DB UserService 依赖 UserRepository UserHandler 依赖 UserService 手写初始化大概是这样：
+...</p></div><footer class=entry-footer><span title='2025-02-09 16:42:35 +0800 CST'>February 9, 2025</span></footer><a class=entry-link aria-label="post link to Go Wire 依赖注入" href=http://localhost:1313/go/wire/></a></article></main><footer class=footer><span>&copy; 2026 <a href=http://localhost:1313/>cubxxw is blog</a></span> ·
 <span>Powered by
 <a href=https://gohugo.io/ rel="noopener noreferrer" target=_blank>Hugo</a> &
 <a href=https://github.com/adityatelange/hugo-PaperMod/ rel=noopener target=_blank>PaperMod</a></span></footer><a href=#top aria-label="go to top" title="Go to Top (Alt + G)" class=top-link id=top-link accesskey=g><svg viewBox="0 0 12 6" fill="currentColor"><path d="M12 6H0l6-6z"/></svg>
