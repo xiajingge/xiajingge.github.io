@@ -106,5 +106,11 @@
   </url><url>
     <loc>http://localhost:1313/tags/wire/</loc>
     <lastmod>2025-02-09T16:42:35+08:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/go/http%E6%A0%87%E6%B3%A8%E5%BA%93%E8%AF%A6%E8%A7%A3/</loc>
+    <lastmod>2025-01-13T11:08:42+08:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/http/</loc>
+    <lastmod>2025-01-13T11:08:42+08:00</lastmod>
   </url>
 </urlset>
