@@ -1,0 +1,864 @@
+<!doctype html><html itemscope itemtype=http://schema.org/WebPage lang=zh-CN><head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=2"><meta name=robots content="noodp"><title>Eino源码学习(一)--Schema - zenthys's blog</title><meta name=author content="zenthys"><meta name=description content="1. 前言 当我们在接触AI应用开发时，面对langchain、eino等框架，也许有过这样的疑问：我直接调用OpenAI的api不就行了？为什么要使用一层框架。
+"><meta name=keywords content='Agent,AI'><meta itemprop=name content="Eino源码学习(一)--Schema"><meta itemprop=description content="1. 前言 当我们在接触AI应用开发时，面对langchain、eino等框架，也许有过这样的疑问：我直接调用OpenAI的api不就行了？为什么要使用一层框架。"><meta itemprop=datePublished content="2026-03-11T17:48:21+08:00"><meta itemprop=dateModified content="2026-03-11T17:48:21+08:00"><meta itemprop=wordCount content="6307"><meta itemprop=keywords content="Agent,AI"><meta property="og:url" content="http://localhost:1313/ai/eino%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E4%B8%80/"><meta property="og:site_name" content="zenthys's blog"><meta property="og:title" content="Eino源码学习(一)--Schema"><meta property="og:description" content="1. 前言 当我们在接触AI应用开发时，面对langchain、eino等框架，也许有过这样的疑问：我直接调用OpenAI的api不就行了？为什么要使用一层框架。"><meta property="og:locale" content="zh_CN"><meta property="og:type" content="article"><meta property="article:section" content="ai"><meta property="article:published_time" content="2026-03-11T17:48:21+08:00"><meta property="article:modified_time" content="2026-03-11T17:48:21+08:00"><meta property="article:tag" content="Agent"><meta property="article:tag" content="AI"><meta name=twitter:card content="summary"><meta name=twitter:title content="Eino源码学习(一)--Schema"><meta name=twitter:description content="1. 前言 当我们在接触AI应用开发时，面对langchain、eino等框架，也许有过这样的疑问：我直接调用OpenAI的api不就行了？为什么要使用一层框架。"><meta name=application-name content="FixIt"><meta name=apple-mobile-web-app-title content="FixIt"><meta name=theme-color data-light=#f8f8f8 data-dark=#252627 content="#f8f8f8"><meta name=msapplication-TileColor content="#da532c"><link rel="shortcut icon" type=image/x-icon href=/favicon.ico><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><link rel=canonical type=text/html href=http://localhost:1313/ai/eino%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E4%B8%80/ title="Eino源码学习(一)--Schema - zenthys's blog"><link rel=prev type=text/html href=http://localhost:1313/ai/agent%E8%AE%BE%E8%AE%A1%E6%9E%B6%E6%9E%84%E4%B8%89--reflection/ title=agent设计架构(三)--Reflection><link rel=next type=text/html href=http://localhost:1313/ai/eino%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E4%BA%8C/ title=Eino源码学习(二)--ChatModel和ChatTemplate><link rel=stylesheet href=/css/config.min.css><link rel=stylesheet href=/css/style.min.css><link rel=preload href=/lib/fontawesome-free/all.min.css as=style onload='this.removeAttribute("onload"),this.rel="stylesheet"'><noscript><link rel=stylesheet href=/lib/fontawesome-free/all.min.css></noscript><link rel=preload href=/lib/animate/animate.min.css as=style onload='this.removeAttribute("onload"),this.rel="stylesheet"'><noscript><link rel=stylesheet href=/lib/animate/animate.min.css></noscript><script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","headline":"Eino源码学习(一)--Schema","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"http:\/\/localhost:1313\/ai\/eino%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E4%B8%80\/"},"genre":"posts","keywords":"Agent, AI","wordcount":6307,"url":"http:\/\/localhost:1313\/ai\/eino%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E4%B8%80\/","datePublished":"2026-03-11T17:48:21+08:00","dateModified":"2026-03-11T17:48:21+08:00","publisher":{"@type":"Organization","name":""},"author":{"@type":"Person","name":"zenthys"},"description":""}</script><script src=/js/head/color-scheme.min.js></script></head><body data-instant-intensity=viewport data-header-desktop=sticky data-header-mobile=auto><div class=wrapper data-page-style=normal><header class="desktop animate__faster" id=header-desktop><div class=header-wrapper><div class=header-title><a href=/ title="zenthys's blog"><span class=header-title-text>zenthys's blog</span></a><span class=header-subtitle></span></div><nav><ul class=menu><li class=menu-item><a class=menu-link href=/archives/><i class="fa-solid fa-box-archive fa-sm" aria-hidden=true></i> 归档</a></li><li class=menu-item><a class=menu-link href=/categories/><i class="fa-solid fa-folder-tree fa-sm" aria-hidden=true></i> 分类</a></li><li class=menu-item><a class=menu-link href=/tags/><i class="fa-solid fa-tags fa-sm" aria-hidden=true></i> 标签</a></li><li class="menu-item delimiter"></li><li class="menu-item search" id=search-desktop><input type=text placeholder=搜索文章标题或内容…… id=search-input-desktop>
+<a href=javascript:void(0); class="search-button search-toggle" id=search-toggle-desktop title=搜索><i class="fa-solid fa-search" aria-hidden=true></i>
+</a><a href=javascript:void(0); class="search-button search-clear" id=search-clear-desktop title=清空><i class="fa-solid fa-times-circle" aria-hidden=true></i>
+</a><span class="search-button search-loading" id=search-loading-desktop><i class="fa-solid fa-spinner fa-spin" aria-hidden=true></i></span></li><li class="menu-item theme-switch" role=button aria-label=切换主题 title=切换主题><i class="fa-solid fa-adjust" aria-hidden=true></i></li></ul></nav></div></header><header class="mobile animate__faster" id=header-mobile><div class=header-container><div class=header-wrapper><div class=header-title><a href=/ title="zenthys's blog"><span class=header-title-text>zenthys's blog</span></a><span class=header-subtitle></span></div><div class=theme-switch role=button aria-label=切换主题><i class="fa-solid fa-adjust" aria-hidden=true></i></div><div class=menu-toggle id=menu-toggle-mobile role=button aria-labelledby=menu-mobile><span></span><span></span><span></span></div></div><nav><ul class=menu id=menu-mobile><li class=search-wrapper><div class="search mobile" id=search-mobile><input type=text placeholder=搜索文章标题或内容…… id=search-input-mobile>
+<a href=javascript:void(0); class="search-button search-toggle" id=search-toggle-mobile title=搜索><i class="fa-solid fa-search" aria-hidden=true></i>
+</a><a href=javascript:void(0); class="search-button search-clear" id=search-clear-mobile title=清空><i class="fa-solid fa-times-circle" aria-hidden=true></i>
+</a><span class="search-button search-loading" id=search-loading-mobile><i class="fa-solid fa-spinner fa-spin" aria-hidden=true></i></span></div><a href=javascript:void(0); class=search-cancel id=search-cancel-mobile>取消</a></li><li class=menu-item><a class=menu-link href=/archives/><i class="fa-solid fa-box-archive fa-sm" aria-hidden=true></i> 归档</a></li><li class=menu-item><a class=menu-link href=/categories/><i class="fa-solid fa-folder-tree fa-sm" aria-hidden=true></i> 分类</a></li><li class=menu-item><a class=menu-link href=/tags/><i class="fa-solid fa-tags fa-sm" aria-hidden=true></i> 标签</a></li><li class="menu-item menu-system"></li></ul></nav></div></header><div class="search-dropdown desktop"><div id=search-dropdown-desktop></div></div><div class="search-dropdown mobile"><div id=search-dropdown-mobile></div></div><main class=fi-container><aside class="aside-collection animate__animated animate__fadeIn animate__faster" aria-label=合集></aside><article class="page single"><div class=header><h1 class="single-title animate__animated animate__flipInX"><span>Eino源码学习(一)--Schema</span></h1></div><div class=post-meta><div class=post-meta-line><span class=post-author><a href=https://github.com/zenthys title=作者 target=_blank rel="external nofollow noopener noreferrer author" class=author><img class=avatar src=/images/avatar.png alt=zenthys height=16 width=16>&nbsp;zenthys</a></span><span class=post-included-in>&nbsp;收录于 <a href=/categories/ai/ class=post-category title="分类 - AI"><i class="fa-regular fa-folder" aria-hidden=true></i> AI</a></span></div><div class=post-meta-line><span title="发布于 2026-03-11 17:48:21"><i class="fa-solid fa-calendar-days me-1" aria-hidden=true></i><time datetime=2026-03-11>2026-03-11</time></span>&nbsp;<span title="6307 字"><i class="fa-solid fa-pencil-alt me-1" aria-hidden=true></i>约 6400 字</span>&nbsp;<span><i class="fa-regular fa-clock me-1" aria-hidden=true></i>预计阅读 13 分钟</span>&nbsp;</div></div><div class="details toc" id=toc-static data-kept=false><div class="details-summary toc-title"><span>目录</span>
+<span><i class="details-icon fa-solid fa-angle-right" aria-hidden=true></i></span></div><div class="details-content toc-content" id=toc-content-static><nav id=TableOfContents><ul><li><a href=#1-前言>1. 前言</a></li><li><a href=#2-技术优势>2. 技术优势</a><ul><li><a href=#21-对比langchainlanggraph>2.1 对比langchain\langgraph</a></li><li><a href=#22-代码架构>2.2 代码架构</a></li></ul></li><li><a href=#3-源码分析>3. 源码分析</a><ul><li><a href=#31-schema底层数据定义>3.1 schema底层数据定义</a><ul><li><a href=#311-message>3.1.1 Message</a></li><li><a href=#312-toolinfo>3.1.2 ToolInfo</a></li><li><a href=#313-streamreadert>3.1.3 StreamReader[T]</a></li><li><a href=#314-registernamet>3.1.4 RegisterName[T]</a></li></ul></li><li><a href=#32-小结>3.2 小结</a></li></ul></li></ul></nav></div></div><div class=content id=content><h2 class=heading-element id=1-前言><span>1. 前言</span>
+<a href=#1-%e5%89%8d%e8%a8%80 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h2><p>当我们在接触AI应用开发时，面对langchain、eino等框架，也许有过这样的疑问：<strong>我直接调用OpenAI的api不就行了？为什么要使用一层框架。</strong></p><p>这个问题其实不是AI独有的，比如grpc的kratos、go-zero等优秀的微服务框架，他们的作用其实是差不多的。<strong>在宏观层面上的核心理念确实是相通的。</strong></p><p>Kratos、Go-zero 属于<strong>微服务治理框架</strong>，而 LangChain、Eino 属于<strong>AI应用编排框架</strong>。它们虽然处理的数据不同（一个是数据库/HTTP请求，一个是Token/向量），但诞生的原因和要解决的<strong>工程痛点</strong>高度一致：</p><p>我们可以通过下面这个对比表，看得更清楚：</p><div class=table-wrapper><table><thead><tr><th style=text-align:left>对比维度</th><th style=text-align:left>微服务框架 (Kratos / Go-zero)</th><th style=text-align:left>AI编排框架 (LangChain / Eino)</th></tr></thead><tbody><tr><td style=text-align:left><strong>核心痛点</strong></td><td style=text-align:left>服务多了，不知道谁调谁、超时了怎么办、怎么熔断降级。</td><td style=text-align:left>调LLM的步骤多了，Prompt怎么拼、Tool调完怎么传回、流式输出怎么管理。</td></tr><tr><td style=text-align:left><strong>核心抽象</strong></td><td style=text-align:left><strong>接口定义语言（IDL）</strong> + <strong>中间件（Middleware）</strong></td><td style=text-align:left><strong>链（Chain）/ 图（Graph）</strong> + <strong>回调（Callback）</strong></td></tr><tr><td style=text-align:left><strong>解决的问题</strong></td><td style=text-align:left>标准化服务间通信，提供限流、熔断、负载均衡、可观测性。</td><td style=text-align:left>标准化人机交互流程，提供记忆管理、工具执行、RAG管道、Token监控。</td></tr><tr><td style=text-align:left><strong>换组件的便利性</strong></td><td style=text-align:left>换注册中心（如从Etcd换到Consul），业务代码基本不改。</td><td style=text-align:left>换大模型（如从OpenAI换到Claude或Qwen），业务逻辑基本不改。</td></tr><tr><td style=text-align:left><strong>学习曲线的来源</strong></td><td style=text-align:left>要理解服务发现、负载均衡等分布式概念。</td><td style=text-align:left>要理解Chain、Agent、VectorStore等AI工程化概念。</td></tr></tbody></table></div><h2 class=heading-element id=2-技术优势><span>2. 技术优势</span>
+<a href=#2-%e6%8a%80%e6%9c%af%e4%bc%98%e5%8a%bf class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h2><h3 class=heading-element id=21-对比langchainlanggraph><span>2.1 对比langchain\langgraph</span>
+<a href=#21-%e5%af%b9%e6%af%94langchainlanggraph class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h3><p>lagnchain\langgraph是python语言或者TS进行编写的，那从语言的角度来讲，<strong>为什么选 Go?</strong></p><div class=table-wrapper><table><thead><tr><th>维度</th><th>Go</th><th>Python</th><th>TypeScript</th></tr></thead><tbody><tr><td>泛型</td><td>1.18+（编译时类型安全）</td><td>无真泛型</td><td>有，但常被绕开</td></tr><tr><td>并发</td><td>goroutine（真并发）</td><td>GIL 限制</td><td>事件循环（单线程本质）</td></tr><tr><td>部署</td><td>单一二进制</td><td>需 Python 环境</td><td>需 Node/Bun 环境</td></tr><tr><td>性能</td><td>编译型，低延迟</td><td>解释型</td><td>JIT，中等</td></tr></tbody></table></div><p>其中在我看来，最大的关键就在于泛型。Go 的泛型让 Eino 能在编译时验证图的类型安全。</p><ul><li>Graph[I,O]不是运行时概念，是编译时的</li><li>Runnable[I,O]接口在编译器就检查类型匹配</li><li>错误在编译器暴露，不是在生产环境运行时</li></ul><p>对比langchain：Python的类型检查依赖运行时验证，生产环境充满隐患。</p><p>主要原因还是两个：</p><ul><li><strong>高性能优势</strong>：作为原生 Go 实现的框架，能利用协程并发优势，可以提高效率。</li><li><strong>类型检查</strong>： 可以利用 Go 的泛型机制，在上下文传递的时候更准确，更便于大型项目的开发。</li></ul><h3 class=heading-element id=22-代码架构><span>2.2 代码架构</span>
+<a href=#22-%e4%bb%a3%e7%a0%81%e6%9e%b6%e6%9e%84 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h3><p><img loading=lazy src=images/Eino架构总览.png alt=架构总览></p><ul><li>schema 层： 底层数据定义<ul><li>Message：消息类型xitong</li><li>ToolInfo：工具定义</li><li>StreamReader[T]：流式数据提取</li><li>&mldr;</li></ul></li><li>components层：基础组件接口<ul><li>model：大模型接口</li><li>tool：工具接口</li><li>retriever：检索接口</li><li>enbedding：向量接口</li><li>prompt：提示词接口</li><li>&mldr;</li></ul></li><li>compose层：编排引擎<ul><li>Graph[I,O]：有向无环图</li><li>Chain\workflow：预制编排模式</li><li>Interrupt-Resume：中断恢复</li><li>Checkpoint：状态序列化</li></ul></li><li>adk层：Agent开发套件<ul><li>ChatModelAgent：基于React的Agent</li><li>Runner：Agent运行器</li><li>DeepAgent/Supervisor/PlanExecute</li></ul></li></ul><h2 class=heading-element id=3-源码分析><span>3. 源码分析</span>
+<a href=#3-%e6%ba%90%e7%a0%81%e5%88%86%e6%9e%90 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h2><p>首先，我们来看官方的原文描述。</p><blockquote><p>我们认为，存在一个常见的组件列表，共同构成了大模型应用的常见组成部分。每类组件作为一个 interface，有完善、稳定的定义：具体的输入输出类型，明确的运行时 option，以及明确的流处理范式。</p></blockquote><p>在明确的组件定义基础之上，我认为，大模型应用开发存在通用的**基座性质//的能力：</p><ul><li>处理模型输出的流式编程能力；</li><li>支持横切面功能以及透出组件内部状态的 Callback 能力；</li><li>组件具体实现超出组件 interface 定义范围的 option 扩展能力。</li></ul><p>在组件定义和通用基座能力的基础上，大模型应用开发存在相对固定的编排范式：</p><ul><li>以 ChatModel（大模型）为核心，通过 ChatTemplate 注入用户输入和系统 prompt，通过 Retriever、Document Loader & Transformer 等注入上下文，经过 ChatModel 生成，输出 Tool Call 并执行，或输出最终结果。</li></ul><h3 class=heading-element id=31-schema底层数据定义><span>3.1 schema底层数据定义</span>
+<a href=#31-schema%e5%ba%95%e5%b1%82%e6%95%b0%e6%8d%ae%e5%ae%9a%e4%b9%89 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h3><p>重点说四个东西：Message、ToolInfo/ParamsOneof、StreamReader、RegisterName</p><p>先理解这四个东西，就理解了Eino整个类型系统的设计意图。</p><h4 class=heading-element id=311-message><span>3.1.1 Message</span>
+<a href=#311-message class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h4><p><strong>Message</strong>是整个框架最核心的数据结构，承载了一次对话中的所有内容.</p><p>先来看RoleType有哪四种角色：</p><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>type</span><span class=w> </span><span class=nx>RoleType</span><span class=w> </span><span class=kt>string</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>const</span><span class=w> </span><span class=p>(</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// Assistant is the role of an assistant, means the message is returned by ChatModel.</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>Assistant</span><span class=w> </span><span class=nx>RoleType</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=s>&#34;assistant&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// User is the role of a user, means the message is a user message.</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>User</span><span class=w> </span><span class=nx>RoleType</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=s>&#34;user&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// System is the role of a system, means the message is a system message.</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>System</span><span class=w> </span><span class=nx>RoleType</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=s>&#34;system&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// Tool is the role of a tool, means the message is a tool call output.</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>Tool</span><span class=w> </span><span class=nx>RoleType</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=s>&#34;tool&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>)</span></span></span></code></pre></td></tr></table></div></div></div><p>下面是Message的完整数据结构：</p><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>type</span><span class=w> </span><span class=nx>Message</span><span class=w> </span><span class=kd>struct</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>Role</span><span class=w> </span><span class=nx>RoleType</span><span class=w> </span><span class=s>`json:&#34;role&#34;`</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// Content 用于用户文本输入和模型文本输出。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>Content</span><span class=w> </span><span class=kt>string</span><span class=w> </span><span class=s>`json:&#34;content&#34;`</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 如果 MultiContent 不为空，则使用此字段而非 Content；</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 如果 MultiContent 为空，则使用 Content。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 已弃用：请使用 UserInputMultiContent 传递用户多模态输入，</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 使用 AssistantGenMultiContent 接收模型多模态输出。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>MultiContent</span><span class=w> </span><span class=p>[]</span><span class=nx>ChatMessagePart</span><span class=w> </span><span class=s>`json:&#34;multi_content,omitempty&#34;`</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// UserInputMultiContent 将用户提供的多模态内容传递给模型。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>UserInputMultiContent</span><span class=w> </span><span class=p>[]</span><span class=nx>MessageInputPart</span><span class=w> </span><span class=s>`json:&#34;user_input_multi_content,omitempty&#34;`</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// AssistantGenMultiContent 用于接收模型的多模态输出。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>AssistantGenMultiContent</span><span class=w> </span><span class=p>[]</span><span class=nx>MessageOutputPart</span><span class=w> </span><span class=s>`json:&#34;assistant_output_multi_content,omitempty&#34;`</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>Name</span><span class=w> </span><span class=kt>string</span><span class=w> </span><span class=s>`json:&#34;name,omitempty&#34;`</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 仅用于 AssistantMessage（助手消息）</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>ToolCalls</span><span class=w> </span><span class=p>[]</span><span class=nx>ToolCall</span><span class=w> </span><span class=s>`json:&#34;tool_calls,omitempty&#34;`</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 仅用于 ToolMessage（工具消息）</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>ToolCallID</span><span class=w> </span><span class=kt>string</span><span class=w> </span><span class=s>`json:&#34;tool_call_id,omitempty&#34;`</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 仅用于 ToolMessage（工具消息）</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>ToolName</span><span class=w> </span><span class=kt>string</span><span class=w> </span><span class=s>`json:&#34;tool_name,omitempty&#34;`</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// 模型响应元数据</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>ResponseMeta</span><span class=w> </span><span class=o>*</span><span class=nx>ResponseMeta</span><span class=w> </span><span class=s>`json:&#34;response_meta,omitempty&#34;`</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// ReasoningContent 是模型的思考过程，当模型返回推理内容时会包含此字段。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>ReasoningContent</span><span class=w> </span><span class=kt>string</span><span class=w> </span><span class=s>`json:&#34;reasoning_content,omitempty&#34;`</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 用于模型实现的自定义扩展信息</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>Extra</span><span class=w> </span><span class=kd>map</span><span class=p>[</span><span class=kt>string</span><span class=p>]</span><span class=kt>any</span><span class=w> </span><span class=s>`json:&#34;extra,omitempty&#34;`</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div><p>关于ToolCall表示消息中的函数调用。</p><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// FunctionCall 表示消息中的函数调用。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// 它用于 Assistant Message（助手消息）中。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>type</span><span class=w> </span><span class=nx>FunctionCall</span><span class=w> </span><span class=kd>struct</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// Name 是要调用的函数名称，可用于标识具体的函数。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>Name</span><span class=w> </span><span class=kt>string</span><span class=w> </span><span class=s>`json:&#34;name,omitempty&#34;`</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// Arguments 是调用函数时使用的参数，采用 JSON 格式。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>Arguments</span><span class=w> </span><span class=kt>string</span><span class=w> </span><span class=s>`json:&#34;arguments,omitempty&#34;`</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// ToolCall 表示消息中的工具调用。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// 当助手消息中包含需要执行的工具调用时使用此结构体。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>type</span><span class=w> </span><span class=nx>ToolCall</span><span class=w> </span><span class=kd>struct</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// Index 用于消息中存在多个工具调用的情况。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 在流式模式下，用于标识工具调用的分块以便合并。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>Index</span><span class=w> </span><span class=o>*</span><span class=kt>int</span><span class=w> </span><span class=s>`json:&#34;index,omitempty&#34;`</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// ID 是工具调用的唯一标识符，可用于识别具体的工具调用。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>ID</span><span class=w> </span><span class=kt>string</span><span class=w> </span><span class=s>`json:&#34;id&#34;`</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// Type 是工具调用的类型，默认为 &#34;function&#34;。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>Type</span><span class=w> </span><span class=kt>string</span><span class=w> </span><span class=s>`json:&#34;type&#34;`</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// Function 是要执行的具体函数调用详情。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>Function</span><span class=w> </span><span class=nx>FunctionCall</span><span class=w> </span><span class=s>`json:&#34;function&#34;`</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// Extra 用于存储工具调用的额外扩展信息。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>Extra</span><span class=w> </span><span class=kd>map</span><span class=p>[</span><span class=kt>string</span><span class=p>]</span><span class=kt>any</span><span class=w> </span><span class=s>`json:&#34;extra,omitempty&#34;`</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div><p>Eino框架提供了便携的构造函数，分别用于构造不同RoleType的Message.</p><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// SystemMessage represents a message with Role &#34;system&#34;.</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=nf>SystemMessage</span><span class=p>(</span><span class=nx>content</span><span class=w> </span><span class=kt>string</span><span class=p>)</span><span class=w> </span><span class=o>*</span><span class=nx>Message</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>return</span><span class=w> </span><span class=o>&amp;</span><span class=nx>Message</span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>Role</span><span class=p>:</span><span class=w>    </span><span class=nx>System</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>Content</span><span class=p>:</span><span class=w> </span><span class=nx>content</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// AssistantMessage represents a message with Role &#34;assistant&#34;.</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=nf>AssistantMessage</span><span class=p>(</span><span class=nx>content</span><span class=w> </span><span class=kt>string</span><span class=p>,</span><span class=w> </span><span class=nx>toolCalls</span><span class=w> </span><span class=p>[]</span><span class=nx>ToolCall</span><span class=p>)</span><span class=w> </span><span class=o>*</span><span class=nx>Message</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>return</span><span class=w> </span><span class=o>&amp;</span><span class=nx>Message</span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>Role</span><span class=p>:</span><span class=w>      </span><span class=nx>Assistant</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>Content</span><span class=p>:</span><span class=w>   </span><span class=nx>content</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>ToolCalls</span><span class=p>:</span><span class=w> </span><span class=nx>toolCalls</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// UserMessage represents a message with Role &#34;user&#34;.</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=nf>UserMessage</span><span class=p>(</span><span class=nx>content</span><span class=w> </span><span class=kt>string</span><span class=p>)</span><span class=w> </span><span class=o>*</span><span class=nx>Message</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>return</span><span class=w> </span><span class=o>&amp;</span><span class=nx>Message</span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>Role</span><span class=p>:</span><span class=w>    </span><span class=nx>User</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>Content</span><span class=p>:</span><span class=w> </span><span class=nx>content</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// ToolMessage represents a message with Role &#34;tool&#34;.</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=nf>ToolMessage</span><span class=p>(</span><span class=nx>content</span><span class=w> </span><span class=kt>string</span><span class=p>,</span><span class=w> </span><span class=nx>toolCallID</span><span class=w> </span><span class=kt>string</span><span class=p>,</span><span class=w> </span><span class=nx>opts</span><span class=w> </span><span class=o>...</span><span class=nx>ToolMessageOption</span><span class=p>)</span><span class=w> </span><span class=o>*</span><span class=nx>Message</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>o</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=o>&amp;</span><span class=nx>toolMessageOptions</span><span class=p>{}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>for</span><span class=w> </span><span class=nx>_</span><span class=p>,</span><span class=w> </span><span class=nx>opt</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=k>range</span><span class=w> </span><span class=nx>opts</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nf>opt</span><span class=p>(</span><span class=nx>o</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>return</span><span class=w> </span><span class=o>&amp;</span><span class=nx>Message</span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>Role</span><span class=p>:</span><span class=w>       </span><span class=nx>Tool</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>Content</span><span class=p>:</span><span class=w>    </span><span class=nx>content</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>ToolCallID</span><span class=p>:</span><span class=w> </span><span class=nx>toolCallID</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>ToolName</span><span class=p>:</span><span class=w>   </span><span class=nx>o</span><span class=p>.</span><span class=nx>toolName</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div><p>ToolMessage支持通过Options设置工具名称。</p><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>type</span><span class=w> </span><span class=nx>toolMessageOptions</span><span class=w> </span><span class=kd>struct</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>toolName</span><span class=w> </span><span class=kt>string</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// ToolMessageOption defines a option for ToolMessage</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>type</span><span class=w> </span><span class=nx>ToolMessageOption</span><span class=w> </span><span class=kd>func</span><span class=p>(</span><span class=o>*</span><span class=nx>toolMessageOptions</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// WithToolName returns a ToolMessageOption that sets the tool call name.</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=nf>WithToolName</span><span class=p>(</span><span class=nx>name</span><span class=w> </span><span class=kt>string</span><span class=p>)</span><span class=w> </span><span class=nx>ToolMessageOption</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>return</span><span class=w> </span><span class=kd>func</span><span class=p>(</span><span class=nx>o</span><span class=w> </span><span class=o>*</span><span class=nx>toolMessageOptions</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>o</span><span class=p>.</span><span class=nx>toolName</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=nx>name</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div><p>还有一个重要的内部函数叫<strong>ConcatMessages</strong>,用来做流式合并。</p><p>流式ChatModel是一个token一个token输出，每个chunk都是一个不完整的Message，这个函数把chunk序列合并成完整message，主要应用是在compose层用来做流式同步的自动转换。</p><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=3 style=--fi-max-shown-lines:50;--fi-line-digit:3;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>  1
+</span><span class=lnt>  2
+</span><span class=lnt>  3
+</span><span class=lnt>  4
+</span><span class=lnt>  5
+</span><span class=lnt>  6
+</span><span class=lnt>  7
+</span><span class=lnt>  8
+</span><span class=lnt>  9
+</span><span class=lnt> 10
+</span><span class=lnt> 11
+</span><span class=lnt> 12
+</span><span class=lnt> 13
+</span><span class=lnt> 14
+</span><span class=lnt> 15
+</span><span class=lnt> 16
+</span><span class=lnt> 17
+</span><span class=lnt> 18
+</span><span class=lnt> 19
+</span><span class=lnt> 20
+</span><span class=lnt> 21
+</span><span class=lnt> 22
+</span><span class=lnt> 23
+</span><span class=lnt> 24
+</span><span class=lnt> 25
+</span><span class=lnt> 26
+</span><span class=lnt> 27
+</span><span class=lnt> 28
+</span><span class=lnt> 29
+</span><span class=lnt> 30
+</span><span class=lnt> 31
+</span><span class=lnt> 32
+</span><span class=lnt> 33
+</span><span class=lnt> 34
+</span><span class=lnt> 35
+</span><span class=lnt> 36
+</span><span class=lnt> 37
+</span><span class=lnt> 38
+</span><span class=lnt> 39
+</span><span class=lnt> 40
+</span><span class=lnt> 41
+</span><span class=lnt> 42
+</span><span class=lnt> 43
+</span><span class=lnt> 44
+</span><span class=lnt> 45
+</span><span class=lnt> 46
+</span><span class=lnt> 47
+</span><span class=lnt> 48
+</span><span class=lnt> 49
+</span><span class=lnt> 50
+</span><span class=lnt> 51
+</span><span class=lnt> 52
+</span><span class=lnt> 53
+</span><span class=lnt> 54
+</span><span class=lnt> 55
+</span><span class=lnt> 56
+</span><span class=lnt> 57
+</span><span class=lnt> 58
+</span><span class=lnt> 59
+</span><span class=lnt> 60
+</span><span class=lnt> 61
+</span><span class=lnt> 62
+</span><span class=lnt> 63
+</span><span class=lnt> 64
+</span><span class=lnt> 65
+</span><span class=lnt> 66
+</span><span class=lnt> 67
+</span><span class=lnt> 68
+</span><span class=lnt> 69
+</span><span class=lnt> 70
+</span><span class=lnt> 71
+</span><span class=lnt> 72
+</span><span class=lnt> 73
+</span><span class=lnt> 74
+</span><span class=lnt> 75
+</span><span class=lnt> 76
+</span><span class=lnt> 77
+</span><span class=lnt> 78
+</span><span class=lnt> 79
+</span><span class=lnt> 80
+</span><span class=lnt> 81
+</span><span class=lnt> 82
+</span><span class=lnt> 83
+</span><span class=lnt> 84
+</span><span class=lnt> 85
+</span><span class=lnt> 86
+</span><span class=lnt> 87
+</span><span class=lnt> 88
+</span><span class=lnt> 89
+</span><span class=lnt> 90
+</span><span class=lnt> 91
+</span><span class=lnt> 92
+</span><span class=lnt> 93
+</span><span class=lnt> 94
+</span><span class=lnt> 95
+</span><span class=lnt> 96
+</span><span class=lnt> 97
+</span><span class=lnt> 98
+</span><span class=lnt> 99
+</span><span class=lnt>100
+</span><span class=lnt>101
+</span><span class=lnt>102
+</span><span class=lnt>103
+</span><span class=lnt>104
+</span><span class=lnt>105
+</span><span class=lnt>106
+</span><span class=lnt>107
+</span><span class=lnt>108
+</span><span class=lnt>109
+</span><span class=lnt>110
+</span><span class=lnt>111
+</span><span class=lnt>112
+</span><span class=lnt>113
+</span><span class=lnt>114
+</span><span class=lnt>115
+</span><span class=lnt>116
+</span><span class=lnt>117
+</span><span class=lnt>118
+</span><span class=lnt>119
+</span><span class=lnt>120
+</span><span class=lnt>121
+</span><span class=lnt>122
+</span><span class=lnt>123
+</span><span class=lnt>124
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// ConcatMessages 核心作用：</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// 将大模型流式响应（SSE）产生的多个增量 Message 数据块（Chunks），</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// 拼接合并成一个完整、连贯的最终 Message 对象。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=nf>ConcatMessages</span><span class=p>(</span><span class=nx>msgs</span><span class=w> </span><span class=p>[]</span><span class=o>*</span><span class=nx>Message</span><span class=p>)</span><span class=w> </span><span class=p>(</span><span class=o>*</span><span class=nx>Message</span><span class=p>,</span><span class=w> </span><span class=kt>error</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// ==========================================</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 阶段 1：初始化与内存预分配</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// ==========================================</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=kd>var</span><span class=w> </span><span class=p>(</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>contents</span><span class=w>            </span><span class=p>[]</span><span class=kt>string</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>contentLen</span><span class=w>          </span><span class=kt>int</span><span class=w> </span><span class=c1>// 记录文本总长度，用于后续字符串高效拼接</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>reasoningContents</span><span class=w>   </span><span class=p>[]</span><span class=kt>string</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>reasoningContentLen</span><span class=w> </span><span class=kt>int</span><span class=w> </span><span class=c1>// 记录推理模型（如 o1/R1）思考过程的总长度</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>toolCalls</span><span class=w>                     </span><span class=p>[]</span><span class=nx>ToolCall</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>multiContentParts</span><span class=w>             </span><span class=p>[]</span><span class=nx>ChatMessagePart</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>assistantGenMultiContentParts</span><span class=w> </span><span class=p>[]</span><span class=nx>MessageOutputPart</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>userInputMultiContentParts</span><span class=w>    </span><span class=p>[]</span><span class=nx>MessageInputPart</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>ret</span><span class=w>       </span><span class=p>=</span><span class=w> </span><span class=nx>Message</span><span class=p>{}</span><span class=w> </span><span class=c1>// 最终要返回的完整 Message 对象</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>extraList</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=nb>make</span><span class=p>([]</span><span class=kd>map</span><span class=p>[</span><span class=kt>string</span><span class=p>]</span><span class=kt>any</span><span class=p>,</span><span class=w> </span><span class=mi>0</span><span class=p>,</span><span class=w> </span><span class=nb>len</span><span class=p>(</span><span class=nx>msgs</span><span class=p>))</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// ==========================================</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 阶段 2：遍历流式数据块，进行校验与数据收集</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// ==========================================</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>for</span><span class=w> </span><span class=nx>idx</span><span class=p>,</span><span class=w> </span><span class=nx>msg</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=k>range</span><span class=w> </span><span class=nx>msgs</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=c1>// 2.1 基础防御：防止流中出现空数据块导致 Panic</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=k>if</span><span class=w> </span><span class=nx>msg</span><span class=w> </span><span class=o>==</span><span class=w> </span><span class=kc>nil</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>			</span><span class=k>return</span><span class=w> </span><span class=kc>nil</span><span class=p>,</span><span class=w> </span><span class=nx>fmt</span><span class=p>.</span><span class=nf>Errorf</span><span class=p>(</span><span class=s>&#34;unexpected nil chunk in message stream, index: %d&#34;</span><span class=p>,</span><span class=w> </span><span class=nx>idx</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=c1>// 2.2 元数据一致性校验：</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=c1>// Role、Name、ToolCallID 等基础属性在同一个流式会话中必须保持一致。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=c1>// 逻辑：首次遇到则赋值，后续遇到若发生冲突则直接报错，防止数据错乱。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=k>if</span><span class=w> </span><span class=nx>msg</span><span class=p>.</span><span class=nx>Role</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=s>&#34;&#34;</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>			</span><span class=k>if</span><span class=w> </span><span class=nx>ret</span><span class=p>.</span><span class=nx>Role</span><span class=w> </span><span class=o>==</span><span class=w> </span><span class=s>&#34;&#34;</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>				</span><span class=nx>ret</span><span class=p>.</span><span class=nx>Role</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=nx>msg</span><span class=p>.</span><span class=nx>Role</span><span class=w> 
+</span></span></span><span class=line><span class=cl><span class=w>			</span><span class=p>}</span><span class=w> </span><span class=k>else</span><span class=w> </span><span class=k>if</span><span class=w> </span><span class=nx>ret</span><span class=p>.</span><span class=nx>Role</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=nx>msg</span><span class=p>.</span><span class=nx>Role</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>				</span><span class=k>return</span><span class=w> </span><span class=kc>nil</span><span class=p>,</span><span class=w> </span><span class=nx>fmt</span><span class=p>.</span><span class=nf>Errorf</span><span class=p>(</span><span class=s>&#34;cannot concat messages with different roles...&#34;</span><span class=p>)</span><span class=w> 
+</span></span></span><span class=line><span class=cl><span class=w>			</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=c1>// ... [省略] Name, ToolCallID, ToolName 的类似一致性校验逻辑 ...</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=c1>// 2.3 收集文本与推理内容，并累加长度</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=k>if</span><span class=w> </span><span class=nx>msg</span><span class=p>.</span><span class=nx>Content</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=s>&#34;&#34;</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>			</span><span class=nx>contents</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=nb>append</span><span class=p>(</span><span class=nx>contents</span><span class=p>,</span><span class=w> </span><span class=nx>msg</span><span class=p>.</span><span class=nx>Content</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>			</span><span class=nx>contentLen</span><span class=w> </span><span class=o>+=</span><span class=w> </span><span class=nb>len</span><span class=p>(</span><span class=nx>msg</span><span class=p>.</span><span class=nx>Content</span><span class=p>)</span><span class=w> </span><span class=c1>// 累加长度，为阶段3的内存预分配做准备</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=k>if</span><span class=w> </span><span class=nx>msg</span><span class=p>.</span><span class=nx>ReasoningContent</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=s>&#34;&#34;</span><span class=w> </span><span class=p>{</span><span class=w> 
+</span></span></span><span class=line><span class=cl><span class=w>			</span><span class=c1>// 专门适配 DeepSeek-R1 / OpenAI o1 等推理模型的“思维链/思考过程”</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>			</span><span class=nx>reasoningContents</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=nb>append</span><span class=p>(</span><span class=nx>reasoningContents</span><span class=p>,</span><span class=w> </span><span class=nx>msg</span><span class=p>.</span><span class=nx>ReasoningContent</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>			</span><span class=nx>reasoningContentLen</span><span class=w> </span><span class=o>+=</span><span class=w> </span><span class=nb>len</span><span class=p>(</span><span class=nx>msg</span><span class=p>.</span><span class=nx>ReasoningContent</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=c1>// 2.4 收集其他复杂字段（工具调用、额外信息、多模态内容等）</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=k>if</span><span class=w> </span><span class=nb>len</span><span class=p>(</span><span class=nx>msg</span><span class=p>.</span><span class=nx>ToolCalls</span><span class=p>)</span><span class=w> </span><span class=p>&gt;</span><span class=w> </span><span class=mi>0</span><span class=w> </span><span class=p>{</span><span class=w> </span><span class=nx>toolCalls</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=nb>append</span><span class=p>(</span><span class=nx>toolCalls</span><span class=p>,</span><span class=w> </span><span class=nx>msg</span><span class=p>.</span><span class=nx>ToolCalls</span><span class=o>...</span><span class=p>)</span><span class=w> </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=c1>// ... [省略] Extra, MultiContent 等切片的 append 逻辑 ...</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=c1>// 2.5 核心元数据 ResponseMeta 的特殊合并策略（深刻理解流式 API 的返回特性）</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=k>if</span><span class=w> </span><span class=nx>msg</span><span class=p>.</span><span class=nx>ResponseMeta</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=kc>nil</span><span class=w> </span><span class=o>&amp;&amp;</span><span class=w> </span><span class=nx>ret</span><span class=p>.</span><span class=nx>ResponseMeta</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=kc>nil</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>			
+</span></span></span><span class=line><span class=cl><span class=w>			</span><span class=c1>// 策略 A: FinishReason（结束原因）</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>			</span><span class=c1>// 潜规则：通常只在流的【最后一个 chunk】返回。因此采用“覆盖”策略，保留最后一个有效值。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>			</span><span class=k>if</span><span class=w> </span><span class=nx>msg</span><span class=p>.</span><span class=nx>ResponseMeta</span><span class=p>.</span><span class=nx>FinishReason</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=s>&#34;&#34;</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>				</span><span class=nx>ret</span><span class=p>.</span><span class=nx>ResponseMeta</span><span class=p>.</span><span class=nx>FinishReason</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=nx>msg</span><span class=p>.</span><span class=nx>ResponseMeta</span><span class=p>.</span><span class=nx>FinishReason</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>			</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>			</span><span class=c1>// 策略 B: Usage（Token 消耗统计）</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>			</span><span class=c1>// 潜规则：可能是增量返回，也可能只在最后返回。通过比较【保留最大值】，确保统计不丢失。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>			</span><span class=k>if</span><span class=w> </span><span class=nx>msg</span><span class=p>.</span><span class=nx>ResponseMeta</span><span class=p>.</span><span class=nx>Usage</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=kc>nil</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>				</span><span class=k>if</span><span class=w> </span><span class=nx>msg</span><span class=p>.</span><span class=nx>ResponseMeta</span><span class=p>.</span><span class=nx>Usage</span><span class=p>.</span><span class=nx>PromptTokens</span><span class=w> </span><span class=p>&gt;</span><span class=w> </span><span class=nx>ret</span><span class=p>.</span><span class=nx>ResponseMeta</span><span class=p>.</span><span class=nx>Usage</span><span class=p>.</span><span class=nx>PromptTokens</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>					</span><span class=nx>ret</span><span class=p>.</span><span class=nx>ResponseMeta</span><span class=p>.</span><span class=nx>Usage</span><span class=p>.</span><span class=nx>PromptTokens</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=nx>msg</span><span class=p>.</span><span class=nx>ResponseMeta</span><span class=p>.</span><span class=nx>Usage</span><span class=p>.</span><span class=nx>PromptTokens</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>				</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>				</span><span class=c1>// ... [省略] CompletionTokens, TotalTokens 等取最大值的比较逻辑 ...</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>			</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>			</span><span class=c1>// 策略 C: LogProbs（对数概率）</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>			</span><span class=c1>// 潜规则：逐 Token 返回。因此采用“追加”策略，拼接成完整的概率分布。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>			</span><span class=k>if</span><span class=w> </span><span class=nx>msg</span><span class=p>.</span><span class=nx>ResponseMeta</span><span class=p>.</span><span class=nx>LogProbs</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=kc>nil</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>				</span><span class=nx>ret</span><span class=p>.</span><span class=nx>ResponseMeta</span><span class=p>.</span><span class=nx>LogProbs</span><span class=p>.</span><span class=nx>Content</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=nb>append</span><span class=p>(</span><span class=nx>ret</span><span class=p>.</span><span class=nx>ResponseMeta</span><span class=p>.</span><span class=nx>LogProbs</span><span class=p>.</span><span class=nx>Content</span><span class=p>,</span><span class=w> </span><span class=nx>msg</span><span class=p>.</span><span class=nx>ResponseMeta</span><span class=p>.</span><span class=nx>LogProbs</span><span class=p>.</span><span class=nx>Content</span><span class=o>...</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>			</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// ==========================================</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 阶段 3：高效拼装与复杂对象合并</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// ==========================================</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 3.1 极致优化的字符串拼接：</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 利用阶段2计算的总长度，调用 Grow() 一次性申请足够的底层内存。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 避免了 Go 语言中直接使用 &#34;+&#34; 拼接字符串导致的频繁内存重新分配和拷贝。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>if</span><span class=w> </span><span class=nb>len</span><span class=p>(</span><span class=nx>contents</span><span class=p>)</span><span class=w> </span><span class=p>&gt;</span><span class=w> </span><span class=mi>0</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=kd>var</span><span class=w> </span><span class=nx>sb</span><span class=w> </span><span class=nx>strings</span><span class=p>.</span><span class=nx>Builder</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>sb</span><span class=p>.</span><span class=nf>Grow</span><span class=p>(</span><span class=nx>contentLen</span><span class=p>)</span><span class=w> </span><span class=c1>// 核心性能优化点</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=k>for</span><span class=w> </span><span class=nx>_</span><span class=p>,</span><span class=w> </span><span class=nx>content</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=k>range</span><span class=w> </span><span class=nx>contents</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>			</span><span class=nx>sb</span><span class=p>.</span><span class=nf>WriteString</span><span class=p>(</span><span class=nx>content</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>ret</span><span class=p>.</span><span class=nx>Content</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=nx>sb</span><span class=p>.</span><span class=nf>String</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// ... [省略] reasoningContents 的类似高效拼接逻辑 ...</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 3.2 委托辅助函数合并复杂结构：</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 流式返回的 ToolCall 参数（如 JSON 字符串）通常是分片返回的，</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 需要专门的逻辑根据 Index 或 ID 将 JSON 片段重组为完整的参数。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>if</span><span class=w> </span><span class=nb>len</span><span class=p>(</span><span class=nx>toolCalls</span><span class=p>)</span><span class=w> </span><span class=p>&gt;</span><span class=w> </span><span class=mi>0</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>merged</span><span class=p>,</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nf>concatToolCalls</span><span class=p>(</span><span class=nx>toolCalls</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=k>if</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=kc>nil</span><span class=w> </span><span class=p>{</span><span class=w> </span><span class=k>return</span><span class=w> </span><span class=kc>nil</span><span class=p>,</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>ret</span><span class=p>.</span><span class=nx>ToolCalls</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=nx>merged</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// ... [省略] Extra, AssistantGenMultiContent, UserInputMultiContent 的辅助函数合并逻辑 ...</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 3.3 直接赋值已废弃但为向后兼容保留的字段</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>if</span><span class=w> </span><span class=nb>len</span><span class=p>(</span><span class=nx>multiContentParts</span><span class=p>)</span><span class=w> </span><span class=p>&gt;</span><span class=w> </span><span class=mi>0</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>ret</span><span class=p>.</span><span class=nx>MultiContent</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=nx>multiContentParts</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>return</span><span class=w> </span><span class=o>&amp;</span><span class=nx>ret</span><span class=p>,</span><span class=w> </span><span class=kc>nil</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div><div class=code-expand-btn aria-label=展开或折叠代码块 role=button><i class="fa-solid fa-angles-down" aria-hidden=true></i></div></div></div><h4 class=heading-element id=312-toolinfo><span>3.1.2 ToolInfo</span>
+<a href=#312-toolinfo class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h4><p>ToolInfo 是工具的信息。描述了一个可以通过**[ToolCallingChatModel.WithTools]** 或 <strong>[ChatModel.BindTools]</strong> 传递给 ChatModel 的工具。</p><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// Name 应该在工具集中简洁且唯一。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// Desc 应该解释何时以及为何使用该工具；Desc 中的少样本示例可以显著提高模型的准确性。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// 对于不需要任何输入参数的工具，ParamsOneOf 可以为 nil。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>type</span><span class=w> </span><span class=nx>ToolInfo</span><span class=w> </span><span class=kd>struct</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 工具的唯一名称，应清晰传达其用途。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>Name</span><span class=w> </span><span class=kt>string</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 用于告诉模型如何/何时/为何使用该工具。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 你可以提供少样本示例作为描述的一部分。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>Desc</span><span class=w> </span><span class=kt>string</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// Extra 是工具的额外信息。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>Extra</span><span class=w> </span><span class=kd>map</span><span class=p>[</span><span class=kt>string</span><span class=p>]</span><span class=kt>any</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 函数接受的参数（不同模型可能需要不同的参数类型）。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 可以通过两种方式描述：</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>//  - 使用 params: schema.NewParamsOneOfByParams(params)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>//  - 使用 jsonschema: schema.NewParamsOneOfByJSONSchema(jsonschema)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 如果为 nil，表示该工具不需要任何输入参数</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=o>*</span><span class=nx>ParamsOneOf</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>type</span><span class=w> </span><span class=nx>ParamsOneOf</span><span class=w> </span><span class=kd>struct</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// use NewParamsOneOfByParams to set this field</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>params</span><span class=w> </span><span class=kd>map</span><span class=p>[</span><span class=kt>string</span><span class=p>]</span><span class=o>*</span><span class=nx>ParameterInfo</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>jsonschema</span><span class=w> </span><span class=o>*</span><span class=nx>jsonschema</span><span class=p>.</span><span class=nx>Schema</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div><p>参数说明有两种描述方式。</p><p>方式一：ParameterInfo</p><p>这是一种轻量级的表达方式。使用map数组来对参数进行描述。覆盖常见场景：标量、数组、嵌套对象、枚举.</p><p>eino会把它转为JSON Schema再传给模型。</p><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>type</span><span class=w> </span><span class=nx>ParameterInfo</span><span class=w> </span><span class=kd>struct</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 参数的数据类型。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>Type</span><span class=w> </span><span class=nx>DataType</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 参数的元素类型，仅当参数类型为数组（array）时有效。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>ElemInfo</span><span class=w> </span><span class=o>*</span><span class=nx>ParameterInfo</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 参数的子参数，仅当参数类型为对象（object）时有效。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>SubParams</span><span class=w> </span><span class=kd>map</span><span class=p>[</span><span class=kt>string</span><span class=p>]</span><span class=o>*</span><span class=nx>ParameterInfo</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 参数的描述信息。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>Desc</span><span class=w> </span><span class=kt>string</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 参数的枚举值，仅当参数类型为字符串（string）时有效。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>Enum</span><span class=w> </span><span class=p>[]</span><span class=kt>string</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=c1>// 标识该参数是否为必填项。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>Required</span><span class=w> </span><span class=kt>bool</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// NewParamsOneOfByParams 使用 map[string]*ParameterInfo 创建一个 ParamsOneOf。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=nf>NewParamsOneOfByParams</span><span class=p>(</span><span class=nx>params</span><span class=w> </span><span class=kd>map</span><span class=p>[</span><span class=kt>string</span><span class=p>]</span><span class=o>*</span><span class=nx>ParameterInfo</span><span class=p>)</span><span class=w> </span><span class=o>*</span><span class=nx>ParamsOneOf</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>return</span><span class=w> </span><span class=o>&amp;</span><span class=nx>ParamsOneOf</span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>params</span><span class=p>:</span><span class=w> </span><span class=nx>params</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div><p>使用方式：</p><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=nx>params</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>schema</span><span class=p>.</span><span class=nf>NewParamsOneOfByParams</span><span class=p>(</span><span class=kd>map</span><span class=p>[</span><span class=kt>string</span><span class=p>]</span><span class=o>*</span><span class=nx>schema</span><span class=p>.</span><span class=nx>ParameterInfo</span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=s>&#34;query&#34;</span><span class=p>:{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>Type</span><span class=p>:</span><span class=nx>schema</span><span class=p>.</span><span class=nx>String</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>Desc</span><span class=p>:</span><span class=s>&#34;搜索关键词&#34;</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>Required</span><span class=p>:</span><span class=kc>true</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>},</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=s>&#34;arr&#34;</span><span class=p>:{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>Type</span><span class=p>:</span><span class=w>     </span><span class=nx>schema</span><span class=p>.</span><span class=nx>Array</span><span class=p>,</span><span class=w> </span><span class=c1>// 声明该参数本身是一个数组</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>Desc</span><span class=p>:</span><span class=w>     </span><span class=s>&#34;文章的标签列表&#34;</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>Required</span><span class=p>:</span><span class=w> </span><span class=kc>true</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=c1>// ElemInfo 用于描述数组中“每一个元素”的数据类型和结构</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>ElemInfo</span><span class=p>:</span><span class=w> </span><span class=o>&amp;</span><span class=nx>schema</span><span class=p>.</span><span class=nx>ParameterInfo</span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=nx>Type</span><span class=p>:</span><span class=w> </span><span class=nx>schema</span><span class=p>.</span><span class=nx>String</span><span class=p>,</span><span class=w> </span><span class=c1>// 表示数组里的每个元素都是字符串类型</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=nx>Desc</span><span class=p>:</span><span class=w> </span><span class=s>&#34;具体的标签名称&#34;</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>},</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>},</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=s>&#34;obj&#34;</span><span class=p>:{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>Type</span><span class=p>:</span><span class=w>     </span><span class=nx>schema</span><span class=p>.</span><span class=nx>Object</span><span class=p>,</span><span class=w> </span><span class=c1>// 声明该参数本身是一个对象 (JSON Object)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>Desc</span><span class=p>:</span><span class=w>     </span><span class=s>&#34;用户的基本信息&#34;</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>Required</span><span class=p>:</span><span class=w> </span><span class=kc>true</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=c1>// SubParams 用于描述对象内部包含的“各个子属性（Key-Value）”</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>SubParams</span><span class=p>:</span><span class=w> </span><span class=kd>map</span><span class=p>[</span><span class=kt>string</span><span class=p>]</span><span class=o>*</span><span class=nx>schema</span><span class=p>.</span><span class=nx>ParameterInfo</span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=s>&#34;name&#34;</span><span class=p>:</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>Type</span><span class=p>:</span><span class=w>     </span><span class=nx>schema</span><span class=p>.</span><span class=nx>String</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>Desc</span><span class=p>:</span><span class=w>     </span><span class=s>&#34;用户姓名&#34;</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>Required</span><span class=p>:</span><span class=w> </span><span class=kc>true</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=p>},</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=s>&#34;age&#34;</span><span class=p>:</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>Type</span><span class=p>:</span><span class=w>     </span><span class=nx>schema</span><span class=p>.</span><span class=nx>Integer</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>Desc</span><span class=p>:</span><span class=w>     </span><span class=s>&#34;用户年龄&#34;</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>Required</span><span class=p>:</span><span class=w> </span><span class=kc>false</span><span class=p>,</span><span class=w> </span><span class=c1>// 年龄是非必填的</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=p>},</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>},</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>})</span></span></span></code></pre></td></tr></table></div></div></div><p>方式二：JSON Schema</p><p>直接传入Json schema格式。</p><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=1 style=--fi-max-shown-lines:50;--fi-line-digit:1;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// NewParamsOneOfByJSONSchema creates a ParamsOneOf with *jsonschema.Schema.</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=nf>NewParamsOneOfByJSONSchema</span><span class=p>(</span><span class=nx>s</span><span class=w> </span><span class=o>*</span><span class=nx>jsonschema</span><span class=p>.</span><span class=nx>Schema</span><span class=p>)</span><span class=w> </span><span class=o>*</span><span class=nx>ParamsOneOf</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>return</span><span class=w> </span><span class=o>&amp;</span><span class=nx>ParamsOneOf</span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>jsonschema</span><span class=p>:</span><span class=w> </span><span class=nx>s</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div><h4 class=heading-element id=313-streamreadert><span>3.1.3 StreamReader[T]</span>
+<a href=#313-streamreadert class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h4><p>eino的流式处理基于泛型StreamReader，有两个核心方法：</p><ul><li>Recv：读取下一个chunk，EOF表示结束</li><li>Close：必须关闭，否则goroutine泄露</li></ul><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span><span class=lnt>53
+</span><span class=lnt>54
+</span><span class=lnt>55
+</span><span class=lnt>56
+</span><span class=lnt>57
+</span><span class=lnt>58
+</span><span class=lnt>59
+</span><span class=lnt>60
+</span><span class=lnt>61
+</span><span class=lnt>62
+</span><span class=lnt>63
+</span><span class=lnt>64
+</span><span class=lnt>65
+</span><span class=lnt>66
+</span><span class=lnt>67
+</span><span class=lnt>68
+</span><span class=lnt>69
+</span><span class=lnt>70
+</span><span class=lnt>71
+</span><span class=lnt>72
+</span><span class=lnt>73
+</span><span class=lnt>74
+</span><span class=lnt>75
+</span><span class=lnt>76
+</span><span class=lnt>77
+</span><span class=lnt>78
+</span><span class=lnt>79
+</span><span class=lnt>80
+</span><span class=lnt>81
+</span><span class=lnt>82
+</span><span class=lnt>83
+</span><span class=lnt>84
+</span><span class=lnt>85
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// StreamReader 是 Eino 流（Stream）的消费者端。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>//
+</span></span></span><span class=line><span class=cl><span class=c1>// StreamReader 具有“一次性读取”特性：</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// 1. 仅允许一个 goroutine 调用 Recv 方法。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// 2. 无论循环正常结束还是通过 break/return 提前退出，都必须恰好关闭（Close）一次 reader。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>//
+</span></span></span><span class=line><span class=cl><span class=c1>// 典型用法：</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>//
+</span></span></span><span class=line><span class=cl><span class=c1>//	defer sr.Close() // 务必关闭，即使遇到 io.EOF 也要关闭</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>//	for {</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>//	    chunk, err := sr.Recv()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>//	    if errors.Is(err, io.EOF) {</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>//	        break</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>//	    }</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>//	    if err != nil {</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>//	        return err</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>//	    }</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>//	    process(chunk)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>//	}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>//
+</span></span></span><span class=line><span class=cl><span class=c1>// 若要将单个流扇出（fan-out）给 N 个独立的消费者，请在调用任何 Recv 之前调用 [StreamReader.Copy]；</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// 调用 Copy 后，原始的 reader 将变为不可用状态。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>//
+</span></span></span><span class=line><span class=cl><span class=c1>// StreamReader 由以下函数创建：[Pipe], [StreamReaderFromArray],</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// [MergeStreamReaders], [MergeNamedStreamReaders], 以及 [StreamReaderWithConvert]。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>type</span><span class=w> </span><span class=nx>StreamReader</span><span class=p>[</span><span class=nx>T</span><span class=w> </span><span class=kt>any</span><span class=p>]</span><span class=w> </span><span class=kd>struct</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>typ</span><span class=w> </span><span class=nx>readerType</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>st</span><span class=w> </span><span class=o>*</span><span class=nx>stream</span><span class=p>[</span><span class=nx>T</span><span class=p>]</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>ar</span><span class=w> </span><span class=o>*</span><span class=nx>arrayReader</span><span class=p>[</span><span class=nx>T</span><span class=p>]</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>msr</span><span class=w> </span><span class=o>*</span><span class=nx>multiStreamReader</span><span class=p>[</span><span class=nx>T</span><span class=p>]</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>srw</span><span class=w> </span><span class=o>*</span><span class=nx>streamReaderWithConvert</span><span class=p>[</span><span class=nx>T</span><span class=p>]</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>csr</span><span class=w> </span><span class=o>*</span><span class=nx>childStreamReader</span><span class=p>[</span><span class=nx>T</span><span class=p>]</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// Recv 从流中接收一个值。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// 示例：</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>//
+</span></span></span><span class=line><span class=cl><span class=c1>//	for {</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>//		chunk, err := sr.Recv()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>//		if errors.Is(err, io.EOF) {</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>//			break</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>//		}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>//		if err != nil {</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>//			panic(err)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>//		}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>//		fmt.Println(chunk)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>//	}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=p>(</span><span class=nx>sr</span><span class=w> </span><span class=o>*</span><span class=nx>StreamReader</span><span class=p>[</span><span class=nx>T</span><span class=p>])</span><span class=w> </span><span class=nf>Recv</span><span class=p>()</span><span class=w> </span><span class=p>(</span><span class=nx>T</span><span class=p>,</span><span class=w> </span><span class=kt>error</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>switch</span><span class=w> </span><span class=nx>sr</span><span class=p>.</span><span class=nx>typ</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>case</span><span class=w> </span><span class=nx>readerTypeStream</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=k>return</span><span class=w> </span><span class=nx>sr</span><span class=p>.</span><span class=nx>st</span><span class=p>.</span><span class=nf>recv</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>case</span><span class=w> </span><span class=nx>readerTypeArray</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=k>return</span><span class=w> </span><span class=nx>sr</span><span class=p>.</span><span class=nx>ar</span><span class=p>.</span><span class=nf>recv</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>case</span><span class=w> </span><span class=nx>readerTypeMultiStream</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=k>return</span><span class=w> </span><span class=nx>sr</span><span class=p>.</span><span class=nx>msr</span><span class=p>.</span><span class=nf>recv</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>case</span><span class=w> </span><span class=nx>readerTypeWithConvert</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=k>return</span><span class=w> </span><span class=nx>sr</span><span class=p>.</span><span class=nx>srw</span><span class=p>.</span><span class=nf>recv</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>case</span><span class=w> </span><span class=nx>readerTypeChild</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=k>return</span><span class=w> </span><span class=nx>sr</span><span class=p>.</span><span class=nx>csr</span><span class=p>.</span><span class=nf>recv</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>default</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nb>panic</span><span class=p>(</span><span class=s>&#34;impossible&#34;</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=p>(</span><span class=nx>sr</span><span class=w> </span><span class=o>*</span><span class=nx>StreamReader</span><span class=p>[</span><span class=nx>T</span><span class=p>])</span><span class=w> </span><span class=nf>Close</span><span class=p>()</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>switch</span><span class=w> </span><span class=nx>sr</span><span class=p>.</span><span class=nx>typ</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>case</span><span class=w> </span><span class=nx>readerTypeStream</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>sr</span><span class=p>.</span><span class=nx>st</span><span class=p>.</span><span class=nf>closeRecv</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>case</span><span class=w> </span><span class=nx>readerTypeArray</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>case</span><span class=w> </span><span class=nx>readerTypeMultiStream</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>sr</span><span class=p>.</span><span class=nx>msr</span><span class=p>.</span><span class=nb>close</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>case</span><span class=w> </span><span class=nx>readerTypeWithConvert</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>sr</span><span class=p>.</span><span class=nx>srw</span><span class=p>.</span><span class=nb>close</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>case</span><span class=w> </span><span class=nx>readerTypeChild</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>sr</span><span class=p>.</span><span class=nx>csr</span><span class=p>.</span><span class=nb>close</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>default</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nb>panic</span><span class=p>(</span><span class=s>&#34;impossible&#34;</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>	</span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div><div class=code-expand-btn aria-label=展开或折叠代码块 role=button><i class="fa-solid fa-angles-down" aria-hidden=true></i></div></div></div><p>StreamReader有以下重要操作：</p><div class=table-wrapper><table><thead><tr><th style=text-align:left>操作</th><th style=text-align:left>说明</th></tr></thead><tbody><tr><td style=text-align:left><strong>StreamReaderWithConvert[T, U]</strong></td><td style=text-align:left>在读取时动态转换类型，无需缓存整个流</td></tr><tr><td style=text-align:left><strong>StreamReaderFromArray</strong></td><td style=text-align:left>从切片构造流，常用于测试</td></tr><tr><td style=text-align:left><strong>ConcatMessageStream</strong></td><td style=text-align:left>把流式 Message 序列合并成一个完整 Message</td></tr></tbody></table></div><p>ErrorValue是当前chunk不输出内容的哨兵值。</p><h4 class=heading-element id=314-registernamet><span>3.1.4 RegisterName[T]</span>
+<a href=#314-registernamet class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h4><p>这个函数是Eino的checkpoint检查点机制的基础。</p><p>Eino的checkpoint用<code>encoding/gob</code>序列化，<code>gob</code>遇到<code>any</code>或<code>interface{}</code>类型的字段时，需要预先知道里面可能存什么具体类型，不注册运行时就会panic，而且panic信息不友好。</p><p>RegisterName规则：</p><ul><li><strong>必须注册的场景</strong>：任何想存入<code>state.extra</code>或<code>session</code>的自定义类型</li><li><strong>已注册的内置类型</strong>：<em>State</em>、<em>checkpoint</em>、<em>dagChannel</em>等已在各自的init()中注册</li><li><strong>命令约定</strong>：eino内置以<code>_eino_</code>开头，用户用<code>包名_类型名</code>格式，确保全局唯一。</li></ul><p>比如：</p><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=1 style=--fi-max-shown-lines:50;--fi-line-digit:1;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=nf>init</span><span class=p>(){</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>schema</span><span class=p>.</span><span class=nx>RegisterName</span><span class=p>[</span><span class=o>*</span><span class=nx>MyCustomState</span><span class=p>](</span><span class=s>&#34;my_package_my_custom_state&#34;</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div><h3 class=heading-element id=32-小结><span>3.2 小结</span>
+<a href=#32-%e5%b0%8f%e7%bb%93 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h3><p>schema层的核心是三件事：</p><ul><li>Message的四角色模型：User、Assistant、System、Tool</li><li>ToolInfo的两种参数描述：ParameterInfo轻量方式 vs JSON Schema完整方式</li><li>RegisterName的gob注册机制：checkpoint功能的入场券</li></ul></div><div class=post-footer id=post-footer><div class=post-info><div class=post-info-line><div class=post-info-mod><span title="更新于 2026-03-11 17:48:21">更新于 2026-03-11&nbsp;</span></div><div class=post-info-license><span><a rel="license external nofollow noopener noreferrer" href=https://creativecommons.org/licenses/by-nc-sa/4.0/ target=_blank>CC BY-NC-SA 4.0</a></span></div></div><div class=post-info-line><div class=post-info-md><span><a href=vscode://file/E:%5cleetcode%5chugo-blog%5ccontent%5cAI%5cEino%e6%ba%90%e7%a0%81%e5%ad%a6%e4%b9%a0%ef%bc%88%e4%b8%80%ef%bc%89.md title=在编辑器中打开 target=_blank rel="external nofollow noopener noreferrer" class=link-to-vscode>在编辑器中打开</a></span></div><div class=post-info-share><span></span></div></div></div><div class=post-info-more><section class=post-tags><i class="fa-solid fa-tags me-1" aria-hidden=true></i><a href=/tags/agent/ class=post-tag title="标签 - Agent">Agent</a><a href=/tags/ai/ class=post-tag title="标签 - AI">AI</a></section><section><span><a href=javascript:void(0); onclick=window.history.back()>返回</a></span>&nbsp;|&nbsp;<span><a href=/>主页</a></span></section></div><div class=post-nav><a href=/ai/agent%E8%AE%BE%E8%AE%A1%E6%9E%B6%E6%9E%84%E4%B8%89--reflection/ class=post-nav-item rel=prev title=Agent设计架构(三)--Reflection><i class="fa-solid fa-angle-left" aria-hidden=true></i>Agent设计架构(三)--Reflection</a><a href=/ai/eino%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E4%BA%8C/ class=post-nav-item rel=next title=Eino源码学习(二)--ChatModel和ChatTemplate>Eino源码学习(二)--ChatModel和ChatTemplate<i class="fa-solid fa-angle-right" aria-hidden=true></i></a></div></div></article><aside class=toc id=toc-auto aria-label=目录><h2 class=toc-title>目录&nbsp;<i class="toc-icon fa-solid fa-angle-down" aria-hidden=true></i></h2><div class=toc-content id=toc-content-auto></div></aside><dialog id=toc-dialog aria-labelledby=toc-dialog-title role=dialog><div class=toc><h2 class=toc-title>目录</h2><div class=toc-content id=toc-content-drawer><nav><ul><li><a href=#1-前言>1. 前言</a></li><li><a href=#2-技术优势>2. 技术优势</a><ul><li><a href=#21-对比langchainlanggraph>2.1 对比langchain\langgraph</a></li><li><a href=#22-代码架构>2.2 代码架构</a></li></ul></li><li><a href=#3-源码分析>3. 源码分析</a><ul><li><a href=#31-schema底层数据定义>3.1 schema底层数据定义</a><ul><li><a href=#311-message>3.1.1 Message</a></li><li><a href=#312-toolinfo>3.1.2 ToolInfo</a></li><li><a href=#313-streamreadert>3.1.3 StreamReader[T]</a></li><li><a href=#314-registernamet>3.1.4 RegisterName[T]</a></li></ul></li><li><a href=#32-小结>3.2 小结</a></li></ul></li></ul></nav></div></div></dialog></main><footer class=footer><div class=footer-container><div class="footer-line powered">由 <a href=https://gohugo.io/ target=_blank rel="external nofollow noopener noreferrer" title="Hugo 0.163.1"><img class=hugo-icon src=/images/hugo.min.svg alt="Hugo logo"> Hugo</a> 强力驱动 | 主题 - <a href=https://github.com/hugo-fixit/FixIt target=_blank rel=external title="FixIt v0.4.5"><img class=fixit-icon src=/images/fixit.min.svg alt="FixIt logo"> FixIt</a></div><div class="footer-line copyright" itemscope itemtype=http://schema.org/CreativeWork><i class="fa-regular fa-copyright" aria-hidden=true></i>
+<span itemprop=copyrightYear>2025 - 2026</span><span class=author itemprop=copyrightHolder>
+<a href=https://github.com/zenthys target=_blank rel="external nofollow noopener noreferrer">zenthys</a></span></div></div></footer></div><div class=widgets><div class=fixed-buttons><div class="fixed-button back-to-top animate__faster d-none" role=button aria-label=回到顶部><i class="fa-solid fa-arrow-up" aria-hidden=true></i></div><div id=toc-drawer-button class="fixed-button toc-drawer-button d-none" role=button aria-label=目录><i class="fa-solid fa-bars" aria-hidden=true></i></div></div><div id=mask></div><noscript><div class=noscript-warning>该网站在启用 JavaScript 的情况下效果最佳。</div></noscript></div><link rel=stylesheet href=/lib/cookieconsent/cookieconsent.min.css><script src=/lib/autocomplete/autocomplete.min.js defer></script><script src=/lib/fuse/fuse.min.js defer></script><script src=/lib/cookieconsent/cookieconsent.min.js defer></script><script src=/lib/cell-tooltip/cell-tooltip.umd.js defer></script><script src=/js/config/0ac69cc819d1ffcdba0911b9561d9c3f.js defer></script><script src=/js/theme.min.js defer></script></body></html>

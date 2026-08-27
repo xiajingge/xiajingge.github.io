@@ -7,8 +7,6 @@ categories = ["go","后端开发"]
 
 +++
 
-# Go 并发控制：sync.Cond
-
 ## 1. 简介	
 
 `sync.Cond` 是 Go 标准库中用于 **goroutine 间等待/通知** 的同步原语。一句话总结就是`一个等通知的锁`

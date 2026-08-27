@@ -3,11 +3,9 @@
 date = '2025-02-09T16:42:35+08:00'
 title = "Go Wire 依赖注入"
 tags = ["go", "wire"]
-categories = ["go","后端开发"]
+categories = ["go"]
 
 +++
-
-# Go Wire 依赖注入
 
 今天要学习的内容是依赖注入，主要的目的就是简化main文件的内容，以及避免过多的全局变量带来的维护困难。
 

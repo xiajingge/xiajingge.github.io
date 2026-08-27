@@ -1,0 +1,51 @@
+<article class="flex flex-col bg-white dark:bg-neutral-800 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden border border-neutral-200 dark:border-neutral-700 p-6">
+  <!-- 日期和主分类 -->
+  <div class="flex items-center gap-2 mb-3 text-sm text-neutral-500 dark:text-neutral-400">
+    {{ if .Date }}
+      <time datetime="{{ .Date.Format "2006-01-02" }}">
+        {{ .Date.Format "2006-01-02" }}
+      </time>
+    {{ end }}
+    {{ if .Params.categories }}
+      <span>&middot;</span>
+      <span class="text-primary-600 dark:text-primary-400 font-medium">
+        {{ index .Params.categories 0 }}
+      </span>
+    {{ end }}
+  </div>
+
+  <!-- 标题 -->
+  <h3 class="mb-4">
+    {{ with .Params.externalUrl }}
+      <a
+        class="text-lg font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
+        href="{{ . }}"
+        target="_blank"
+        rel="external"
+        >{{ $.Title | emojify }}</a
+      >
+    {{ else }}
+      <a
+        class="text-lg font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
+        href="{{ .Permalink }}"
+        >{{ .Title | emojify }}</a
+      >
+    {{ end }}
+  </h3>
+
+  <!-- 分类标签 -->
+  {{ if .Params.categories }}
+    <div class="flex flex-wrap gap-2">
+      {{ range .Params.categories }}
+        <span class="px-3 py-1 text-sm font-medium bg-green-500 text-white rounded hover:bg-green-600 transition-colors">
+          {{ . }}
+        </span>
+      {{ end }}
+      {{ range .Params.tags }}
+        <span class="px-3 py-1 text-sm font-medium bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors">
+          {{ . }}
+        </span>
+      {{ end }}
+    </div>
+  {{ end }}
+</article>

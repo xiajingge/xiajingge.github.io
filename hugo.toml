@@ -1,72 +1,161 @@
-baseURL = 'https://nsddd.top'
-languageCode = 'en-us'
-title = 'cubxxw is blog'
-theme = "PaperMod"
+# -- Site Configuration (FixIt theme) --
+# 主题文档: https://fixit.lruihao.cn/documentation/
+
+baseURL = "https://nsddd.top/"
+theme = "FixIt"
+title = "zenthys's blog"
+
+# 语言
+defaultContentLanguage = "zh-cn"
+languageCode = "zh-CN"
+languageName = "简体中文"
+hasCJKLanguage = true
 
 enableRobotsTXT = true
+enableEmoji = true
+# 站点 git 信息（content 文件未全部提交时关闭，避免构建告警）
+enableGitInfo = false
+summaryLength = 40
 buildDrafts = false
 buildFuture = false
 buildExpired = false
-googleAnalytics = "UA-123-45"
-pygmentsUseClasses = true
+
+# 首页 / 归档显示的主要内容区块（section 名为小写）
+mainSections = ["go", "ai", "middleware", "k8s", "posts"]
+
+# 让所有文章页（go、ai、middleware、k8s 等 section）统一使用 FixIt 的 posts 单页模板，
+# 从而获得右侧目录导航（TOC）、文章元信息（日期/字数/阅读时长）等功能。
+# 仅作用于普通文章页（kind=page），不影响首页、列表页与分类/标签页。
+[[cascade]]
+  type = "posts"
+  [cascade._target]
+    kind = "page"
+
+[pagination]
+  pagerSize = 10
+
+# 首页输出：archives 生成 /archives/ 归档页，search 生成 fuse 搜索索引
+[outputs]
+  home = ["html", "rss", "archives", "search"]
 
 [minify]
-disableXML = true
-minifyOutput = true
+  disableXML = true
+  minifyOutput = true
 
+# -- 语法高亮 (必须放在站点配置中，FixIt 代码块头部依赖 class 模式渲染) --
+# noClasses=false 让 Chroma 输出 class="chroma"，FixIt 才能注入代码块头部与行号
+[markup]
+  [markup.highlight]
+    codeFences = true
+    noClasses = false
+    guessSyntax = true
+    lineNos = true
+    lineNumbersInTable = true
+    tabWidth = 4
+
+[taxonomies]
+  category = "categories"
+  tag = "tags"
+
+# -- 菜单 --
+[menu]
+  [[menu.main]]
+    identifier = "archives"
+    name = "归档"
+    url = "/archives/"
+    weight = 10
+    [menu.main.params]
+      icon = "fa-solid fa-box-archive"
+  [[menu.main]]
+    identifier = "categories"
+    name = "分类"
+    url = "/categories/"
+    weight = 20
+    [menu.main.params]
+      icon = "fa-solid fa-folder-tree"
+  [[menu.main]]
+    identifier = "tags"
+    name = "标签"
+    url = "/tags/"
+    weight = 30
+    [menu.main.params]
+      icon = "fa-solid fa-tags"
+
+# -- 主题参数 (FixIt) --
 [params]
+  version = "0.4.X"
+  description = "记录 Go、AI、中间件与后端开发的技术博客"
+  keywords = ["Go", "AI", "中间件", "后端开发", "Kubernetes"]
+  defaultTheme = "auto"
+  dateFormat = "2006-01-02"
 
-# 明暗转换
-  [params.label]
-  text = "Home"
-  icon = "/apple-touch-icon.png"
-  iconHeight = 35
-# 启用时显示个人资料卡片
-  [params.profileMode]
-  enabled = true
-  title = "ExampleSite"
-  subtitle = "This is subtitle"
-  imageUrl = "images/avatar.png"
-  imageWidth = 120
-  imageHeight = 120
-  imageTitle = "my image"
-# 仅在 Profile Mode 禁用时显示
-    [[params.profileMode.buttons]]
-    name = "go"
-    url = "go"
+  [params.author]
+    name = "zenthys"
+    link = "https://github.com/zenthys"
+    avatar = "/images/avatar.png"
 
-    [[params.profileMode.buttons]]
-    name = "AI"
-    url = "ai"
+  # 首页个人资料
+  [params.home]
+    [params.home.profile]
+      enable = true
+      avatarURL = "/images/avatar.png"
+      title = "zenthys's blog"
+      subtitle = "热爱开源，专注 Go、分布式系统与 AI 工程实践。"
+      typeit = true
+      social = true
+    [params.home.posts]
+      enable = false
+      paginate = 10
 
-    [[params.profileMode.buttons]]
-    name = "Tags"
-    url = "tags"
+  # 社交链接
+  [params.social]
+    GitHub = "zenthys"
 
-  [params.homeInfoParams]
-  Title = "Hi there 👋"
-  Content = "Welcome to my blog"
+  # 页头
+  [params.header]
+    desktopMode = "sticky"
+    mobileMode = "auto"
+    [params.header.title]
+      name = "zenthys's blog"
 
+  # 页脚
+  [params.footer]
+    enable = true
+    copyright = true
+    author = true
+    since = 2025
+    [params.footer.powered]
+      enable = true
 
-  [[params.socialIcons]]
-  name = "github"
-  url = "https://github.com/"
+  # 搜索
+  [params.search]
+    enable = true
+    type = "fuse"
+    contentLength = 4000
+    maxResultLength = 10
 
+  # 文章页
+  [params.page]
+    [params.page.toc]
+      enable = true
+      auto = true
+    [params.page.code]
+      copy = true
+      maxShownLines = 50
+    [params.page.share]
+      enable = false
+    [params.page.comment]
+      enable = false
 
-[[menu.main]]
-identifier = "categories"
-name = "categories"
-url = "/categories/"
-weight = 10
-
-[[menu.main]]
-identifier = "tags"
-name = "tags"
-url = "/tags/"
-weight = 20
-
-[[menu.main]]
-identifier = "example"
-name = "example.org"
-url = "https://example.org"
-weight = 30
+  # 代码块样式（FixIt classic 头部：语言标签 + 折叠箭头 + 编辑/复制按钮）
+  [params.codeblock]
+    wrapper = true
+    mode = "classic"
+    maxShownLines = 50
+    shadow = "never"
+    copyable = true
+    editable = true
+    lineNosToggler = true
+    lineWrapToggler = true
+    downloadable = false
+    fullscreen = false

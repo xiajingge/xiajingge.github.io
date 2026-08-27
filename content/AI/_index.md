@@ -1,14 +1,7 @@
 ---
-title: "Artificial Intelligence"
+title: "人工智能"
 date: 2026-03-23
+description: "AI 工程、Agent 与大模型应用实践"
 ---
 
-# Welcome to the AI Section
-
-This section covers various topics related to Artificial Intelligence, including but not limited to:
-- Machine Learning
-- Neural Networks
-- Natural Language Processing
-- Computer Vision
-
-Stay tuned for insights, tutorials, and discussions on the latest developments in AI.
+人工智能相关的工程实践，涵盖大模型应用、Agent、MCP 协议、工具调用与 LLM 集成等主题。

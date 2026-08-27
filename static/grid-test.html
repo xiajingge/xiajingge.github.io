@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>双列布局测试</title>
+    <link rel="stylesheet" href="http://localhost:1313/css/main.bundle.min.7e844aa69b846e1ee7d317894a6eb82eb13b71d1e7364577070f7c9146b03105.css">
+    <style>
+        body { padding: 2rem; }
+        .test-card { 
+            border: 2px solid #22c55e; 
+            padding: 1rem; 
+            background: #f0f0f0;
+            min-height: 100px;
+        }
+    </style>
+</head>
+<body>
+    <h1>双列布局测试页面</h1>
+    <p>窗口宽度: <span id="width"></span>px</p>
+    <p>如果宽度 >= 768px，下面应该显示为2列</p>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <div class="test-card">卡片 1</div>
+        <div class="test-card">卡片 2</div>
+        <div class="test-card">卡片 3</div>
+        <div class="test-card">卡片 4</div>
+    </div>
+    
+    <script>
+        function updateWidth() {
+            document.getElementById('width').textContent = window.innerWidth;
+        }
+        updateWidth();
+        window.addEventListener('resize', updateWidth);
+    </script>
+</body>
+</html>

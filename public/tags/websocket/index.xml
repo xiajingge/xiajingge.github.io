@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>WebSocket - 标签 - zenthys&#39;s blog</title>
+    <link>http://localhost:1313/tags/websocket/</link>
+    <description>记录 Go、AI、中间件与后端开发的技术博客</description>
+    <generator>Hugo 0.163.1 &amp; FixIt v0.4.5</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Tue, 25 Nov 2025 16:45:35 +0800</lastBuildDate>
+    <atom:link href="http://localhost:1313/tags/websocket/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>WebSocket详解</title>
+      <link>http://localhost:1313/go/websocket%E8%AF%A6%E8%A7%A3/</link>
+      <pubDate>Tue, 25 Nov 2025 16:45:35 +0800</pubDate>
+      <guid>http://localhost:1313/go/websocket%E8%AF%A6%E8%A7%A3/</guid>
+      <category domain="http://localhost:1313/categories/go/">Go</category>
+      <description>&lt;h2 class=&#34;heading-element&#34; id=&#34;1-什么是-websocket&#34;&gt;&lt;span&gt;1. 什么是 WebSocket&lt;/span&gt;&#xA;  &lt;a href=&#34;#1-%e4%bb%80%e4%b9%88%e6%98%af-websocket&#34; class=&#34;heading-mark&#34;&gt;&#xA;    &lt;svg class=&#34;octicon octicon-link&#34; viewBox=&#34;0 0 16 16&#34; version=&#34;1.1&#34; width=&#34;16&#34; height=&#34;16&#34; aria-hidden=&#34;true&#34;&gt;&lt;path d=&#34;m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z&#34;&gt;&lt;/path&gt;&lt;/svg&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h2&gt;&lt;p&gt;首先需要对WebSocket有一个准确的角色认知。它是和HTTP一样的&lt;strong&gt;通信协议&lt;/strong&gt;。是用来规定两台机器应该怎么进行通信。&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

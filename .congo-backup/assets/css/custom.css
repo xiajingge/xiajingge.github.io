@@ -1,0 +1,88 @@
+/* 卡片样式增强 */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 强制双列网格布局 */
+.grid {
+  display: grid;
+}
+
+.grid-cols-1 {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.gap-6 {
+  gap: 1.5rem;
+}
+
+.mt-6 {
+  margin-top: 1.5rem;
+}
+
+/* 响应式双列布局 - 桌面端 */
+@media (min-width: 768px) {
+  .md\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* 卡片悬停效果 - 轻微上移 */
+.grid > article:hover {
+  transform: translateY(-2px);
+  transition: transform 0.2s ease;
+}
+
+/* 确保卡片高度一致 */
+.grid > article {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* 绿色标签样式 */
+.bg-green-500 {
+  background-color: #22c55e;
+}
+
+.bg-green-600 {
+  background-color: #16a34a;
+}
+
+.hover\:bg-green-600:hover {
+  background-color: #16a34a;
+}
+
+/* 紫色标签样式 */
+.bg-purple-600 {
+  background-color: #9333ea;
+}
+
+.bg-purple-700 {
+  background-color: #7e22ce;
+}
+
+.hover\:bg-purple-700:hover {
+  background-color: #7e22ce;
+}
+
+/* 深色模式下的标签样式调整 */
+@media (prefers-color-scheme: dark) {
+  .bg-green-500 {
+    background-color: #16a34a;
+  }
+
+  .bg-purple-600 {
+    background-color: #7e22ce;
+  }
+}

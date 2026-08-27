@@ -1,44 +1,92 @@
-<!doctype html><html lang=en dir=auto data-theme=auto><head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset=utf-8><meta http-equiv=X-UA-Compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta name=robots content="noindex, nofollow"><title>模型上下文协议（MCP）的 Go 实现，实现了 LLM 应用程序与外部数据源和工具之间的无缝集成 | cubxxw is blog</title><meta name=keywords content="AI,mcp,go"><meta name=description content="模型上下文协议（MCP）的 Go 实现，实现了 LLM 应用程序与外部数据源和工具之间的无缝集成
-如果你最近在看 AI 应用、Agent、工具调用或者 LLM 集成，大概率已经绕不过一个词：MCP。
-MCP，全称 Model Context Protocol，本质上是在定义一套标准接口，让模型能够以更统一、更可控的方式访问外部世界。工具、资源、提示词模板、会话上下文，这些原本散落在不同系统里的能力，开始可以用一套更稳定的协议来描述和暴露。
-问题在于，协议本身只是开始。真正落地的时候，你还得处理一堆工程细节：
-
-JSON-RPC 消息怎么组织
-工具参数怎么描述
-资源怎么暴露
-多种传输方式怎么接
-会话状态怎么管理
-长任务怎么异步返回
-错误、恢复、钩子、中间件怎么做
-
-如果这些都手写，你会很快发现：写的不是业务，而是在重复造一层协议框架。
-这也是我觉得 mark3labs/mcp-go 值得写一篇文章的原因。它不是在 Go 里“又造了一个神秘框架”，而是在一个非常务实的位置上，把 MCP 服务端和客户端开发里的重复劳动，整理成了可用、可读、可维护的 API。
-一、概要
-很多人第一次接触 MCP SDK，会先去找一个 hello world，然后很快得出一个结论：不就是把工具包装成几个 handler 吗？
-这个理解只对了一半。
-真正的问题不是“把一个函数暴露成 MCP Tool 难不难”，而是当你的能力越来越多时，系统还能不能保持整洁。
-一个真实的 MCP 服务，通常不会只有一个工具。它往往会同时包含：
-
-一组工具：给模型执行动作
-一组资源：给模型读取上下文
-一组提示词模板：给模型构造交互模式
-一套传输层：本地 stdio、SSE、HTTP，甚至嵌入式场景
-一套会话机制：识别不同客户端、维护每个会话的状态
-一套治理能力：恢复、日志、钩子、中间件、并发限制
-
-如果你直接围绕协议报文去写，很快就会进入“每个功能都能做，但每个功能都写得很散”的状态。
-mcp-go 的价值，就在于它提供的是一种高层抽象：
-
-你主要关注“我要暴露什么能力”。
-协议细节、路由、消息格式、能力协商这些工作由库来兜底。
-最终保留下来的代码，仍然很符合 Go 的习惯：显式、直白、少魔法。
-
-这个定位我很喜欢，因为它没有试图把开发者绑进一个重框架里。它更像是一个“协议层工具箱”，而不是一个“统治一切的应用框架”。
-二、详细介绍
-从官方 README 和文档来看，mcp-go 当前已经覆盖了 MCP 的几块核心能力："><meta name=author content><link rel=canonical href=http://localhost:1313/ai/go-mcp/><link crossorigin=anonymous href=/assets/css/stylesheet.a29c24210eb31d9ce56f669c66a35c9c51b17376b7764e336a49af7dec914cf0.css integrity="sha256-opwkIQ6zHZzlb2acZqNcnFGxc3a3dk4zakmvfeyRTPA=" rel="preload stylesheet" as=style><link rel=icon href=http://localhost:1313/favicon.ico><link rel=icon type=image/png sizes=16x16 href=http://localhost:1313/favicon-16x16.png><link rel=icon type=image/png sizes=32x32 href=http://localhost:1313/favicon-32x32.png><link rel=apple-touch-icon href=http://localhost:1313/apple-touch-icon.png><link rel=mask-icon href=http://localhost:1313/safari-pinned-tab.svg><meta name=theme-color content="#2e2e33"><meta name=msapplication-TileColor content="#2e2e33"><link rel=alternate hreflang=en href=http://localhost:1313/ai/go-mcp/><noscript><style>#theme-toggle,.top-link{display:none}</style><style>@media(prefers-color-scheme:dark){:root{--theme:rgb(29, 30, 32);--entry:rgb(46, 46, 51);--primary:rgb(218, 218, 219);--secondary:rgb(155, 156, 157);--tertiary:rgb(65, 66, 68);--content:rgb(196, 196, 197);--code-block-bg:rgb(46, 46, 51);--code-bg:rgb(55, 56, 62);--border:rgb(51, 51, 51);color-scheme:dark}.list{background:var(--theme)}.toc{background:var(--entry)}}@media(prefers-color-scheme:light){.list::-webkit-scrollbar-thumb{border-color:var(--code-bg)}}</style></noscript><script>localStorage.getItem("pref-theme")==="dark"?document.querySelector("html").dataset.theme="dark":localStorage.getItem("pref-theme")==="light"?document.querySelector("html").dataset.theme="light":window.matchMedia("(prefers-color-scheme: dark)").matches?document.querySelector("html").dataset.theme="dark":document.querySelector("html").dataset.theme="light"</script></head><body id=top><header class=header><nav class=nav><div class=logo><a href=http://localhost:1313/ accesskey=h title="Home (Alt + H)"><img src=http://localhost:1313/apple-touch-icon.png alt aria-label=logo height=35>Home</a><div class=logo-switches><button id=theme-toggle accesskey=t title="(Alt + T)" aria-label="Toggle theme">
-<svg id="moon" width="24" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
-<svg id="sun" width="24" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></button></div></div><ul id=menu><li><a href=http://localhost:1313/categories/ title=categories><span>categories</span></a></li><li><a href=http://localhost:1313/tags/ title=tags><span>tags</span></a></li><li><a href=https://example.org title=example.org><span>example.org</span>&nbsp;
-<svg fill="none" shape-rendering="geometricPrecision" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24" height="12" width="12"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg></a></li></ul></nav></header><main class=main><article class=post-single><header class=post-header><h1 class="post-title entry-hint-parent">模型上下文协议（MCP）的 Go 实现，实现了 LLM 应用程序与外部数据源和工具之间的无缝集成</h1><div class=post-meta><span title='2025-11-29 17:36:22 +0800 CST'>November 29, 2025</span></div></header><div class=post-content><h1 id=模型上下文协议mcp的-go-实现实现了-llm-应用程序与外部数据源和工具之间的无缝集成>模型上下文协议（MCP）的 Go 实现，实现了 LLM 应用程序与外部数据源和工具之间的无缝集成<a hidden class=anchor aria-hidden=true href=#模型上下文协议mcp的-go-实现实现了-llm-应用程序与外部数据源和工具之间的无缝集成>#</a></h1><p>如果你最近在看 AI 应用、Agent、工具调用或者 LLM 集成，大概率已经绕不过一个词：<code>MCP</code>。</p><p>MCP，全称 <code>Model Context Protocol</code>，本质上是在定义一套标准接口，让模型能够以更统一、更可控的方式访问外部世界。工具、资源、提示词模板、会话上下文，这些原本散落在不同系统里的能力，开始可以用一套更稳定的协议来描述和暴露。</p><p>问题在于，协议本身只是开始。真正落地的时候，你还得处理一堆工程细节：</p><ul><li>JSON-RPC 消息怎么组织</li><li>工具参数怎么描述</li><li>资源怎么暴露</li><li>多种传输方式怎么接</li><li>会话状态怎么管理</li><li>长任务怎么异步返回</li><li>错误、恢复、钩子、中间件怎么做</li></ul><p>如果这些都手写，你会很快发现：写的不是业务，而是在重复造一层协议框架。</p><p>这也是我觉得 <a href=https://github.com/mark3labs/mcp-go><code>mark3labs/mcp-go</code></a> 值得写一篇文章的原因。它不是在 Go 里“又造了一个神秘框架”，而是在一个非常务实的位置上，把 MCP 服务端和客户端开发里的重复劳动，整理成了可用、可读、可维护的 API。</p><h2 id=一概要>一、概要<a hidden class=anchor aria-hidden=true href=#一概要>#</a></h2><p>很多人第一次接触 MCP SDK，会先去找一个 hello world，然后很快得出一个结论：不就是把工具包装成几个 handler 吗？</p><p>这个理解只对了一半。</p><p>真正的问题不是“把一个函数暴露成 MCP Tool 难不难”，而是当你的能力越来越多时，系统还能不能保持整洁。</p><p>一个真实的 MCP 服务，通常不会只有一个工具。它往往会同时包含：</p><ul><li>一组工具：给模型执行动作</li><li>一组资源：给模型读取上下文</li><li>一组提示词模板：给模型构造交互模式</li><li>一套传输层：本地 stdio、SSE、HTTP，甚至嵌入式场景</li><li>一套会话机制：识别不同客户端、维护每个会话的状态</li><li>一套治理能力：恢复、日志、钩子、中间件、并发限制</li></ul><p>如果你直接围绕协议报文去写，很快就会进入“每个功能都能做，但每个功能都写得很散”的状态。</p><p><code>mcp-go</code> 的价值，就在于它提供的是一种<strong>高层抽象</strong>：</p><ol><li>你主要关注“我要暴露什么能力”。</li><li>协议细节、路由、消息格式、能力协商这些工作由库来兜底。</li><li>最终保留下来的代码，仍然很符合 Go 的习惯：显式、直白、少魔法。</li></ol><p>这个定位我很喜欢，因为它没有试图把开发者绑进一个重框架里。它更像是一个“协议层工具箱”，而不是一个“统治一切的应用框架”。</p><h2 id=二详细介绍>二、详细介绍<a hidden class=anchor aria-hidden=true href=#二详细介绍>#</a></h2><p>从官方 README 和文档来看，<code>mcp-go</code> 当前已经覆盖了 MCP 的几块核心能力：</p><ul><li><code>Tools</code></li><li><code>Resources</code></li><li><code>Prompts</code></li><li>多传输层支持</li><li>客户端实现</li><li>会话管理</li><li>请求钩子</li><li>Tool Handler Middleware</li><li>长任务工具</li></ul><p>这几个关键词看起来很普通，但组合起来，意味着它已经不只是一个“给 demo 用的 SDK”。</p><h3 id=1-toolsresourcesprompts-三件套>1. Tools、Resources、Prompts 三件套<a hidden class=anchor aria-hidden=true href=#1-toolsresourcesprompts-三件套>#</a></h3><p>很多库会先把 Tool 做起来，因为 Tool 最容易展示效果：模型调用函数，函数返回结果，闭环就成立了。</p><p>但如果你真的要做一个靠谱的 MCP 服务，只支持 Tool 远远不够。你还需要：</p><ul><li><code>Resource</code>：让模型读取结构化或半结构化内容</li><li><code>Prompt</code>：让模型在特定任务里复用一致的交互模板</li></ul><p>这意味着你不是在暴露“单个函数”，而是在暴露一套<strong>可被模型消费的能力系统</strong>。</p><p>比如在一个代码助手场景里：</p><ul><li>Tool 可以是“读取 PR 数据”“执行静态检查”“触发构建”</li><li>Resource 可以是“项目规范”“接口文档”“最近构建日志”</li><li>Prompt 可以是“代码审查模板”“回归分析模板”“发布前检查模板”</li></ul><p>当你同时具备这三种能力时，MCP 服务才真正从“工具接口”变成“上下文能力层”。</p><p>下面这段示例把三者放在同一个 <code>MCP Server</code> 里，比较适合理解它们各自的职责边界：</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kn>package</span><span class=w> </span><span class=nx>main</span><span class=w>
+<!doctype html><html itemscope itemtype=http://schema.org/WebPage lang=zh-CN><head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=2"><meta name=robots content="noodp"><title>模型上下文协议(MCP) - zenthys's blog</title><meta name=author content="zenthys"><meta name=description content="如果你最近在看 AI 应用、Agent、工具调用或者 LLM 集成，大概率已经绕不过一个词：MCP。
+"><meta name=keywords content='AI,mcp,go'><meta itemprop=name content="模型上下文协议(MCP)"><meta itemprop=description content="如果你最近在看 AI 应用、Agent、工具调用或者 LLM 集成，大概率已经绕不过一个词：MCP。"><meta itemprop=datePublished content="2025-11-29T17:36:22+08:00"><meta itemprop=dateModified content="2025-11-29T17:36:22+08:00"><meta itemprop=wordCount content="5862"><meta itemprop=keywords content="AI,Mcp,Go"><meta property="og:url" content="http://localhost:1313/ai/go-mcp/"><meta property="og:site_name" content="zenthys's blog"><meta property="og:title" content="模型上下文协议(MCP)"><meta property="og:description" content="如果你最近在看 AI 应用、Agent、工具调用或者 LLM 集成，大概率已经绕不过一个词：MCP。"><meta property="og:locale" content="zh_CN"><meta property="og:type" content="article"><meta property="article:section" content="ai"><meta property="article:published_time" content="2025-11-29T17:36:22+08:00"><meta property="article:modified_time" content="2025-11-29T17:36:22+08:00"><meta property="article:tag" content="AI"><meta property="article:tag" content="Mcp"><meta property="article:tag" content="Go"><meta name=twitter:card content="summary"><meta name=twitter:title content="模型上下文协议(MCP)"><meta name=twitter:description content="如果你最近在看 AI 应用、Agent、工具调用或者 LLM 集成，大概率已经绕不过一个词：MCP。"><meta name=application-name content="FixIt"><meta name=apple-mobile-web-app-title content="FixIt"><meta name=theme-color data-light=#f8f8f8 data-dark=#252627 content="#f8f8f8"><meta name=msapplication-TileColor content="#da532c"><link rel="shortcut icon" type=image/x-icon href=/favicon.ico><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><link rel=canonical type=text/html href=http://localhost:1313/ai/go-mcp/ title="模型上下文协议(MCP) - zenthys's blog"><link rel=prev type=text/html href=http://localhost:1313/go/websocket%E8%AF%A6%E8%A7%A3/ title=WebSocket详解><link rel=next type=text/html href=http://localhost:1313/ai/agent%E8%AE%BE%E8%AE%A1%E6%9E%B6%E6%9E%84%E4%B8%80--react/ title=agent设计架构(一)--ReAct><link rel=stylesheet href=/css/config.min.css><link rel=stylesheet href=/css/style.min.css><link rel=preload href=/lib/fontawesome-free/all.min.css as=style onload='this.removeAttribute("onload"),this.rel="stylesheet"'><noscript><link rel=stylesheet href=/lib/fontawesome-free/all.min.css></noscript><link rel=preload href=/lib/animate/animate.min.css as=style onload='this.removeAttribute("onload"),this.rel="stylesheet"'><noscript><link rel=stylesheet href=/lib/animate/animate.min.css></noscript><script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","headline":"模型上下文协议(MCP)","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"http:\/\/localhost:1313\/ai\/go-mcp\/"},"genre":"posts","keywords":"AI, mcp, go","wordcount":5862,"url":"http:\/\/localhost:1313\/ai\/go-mcp\/","datePublished":"2025-11-29T17:36:22+08:00","dateModified":"2025-11-29T17:36:22+08:00","publisher":{"@type":"Organization","name":""},"author":{"@type":"Person","name":"zenthys"},"description":""}</script><script src=/js/head/color-scheme.min.js></script></head><body data-instant-intensity=viewport data-header-desktop=sticky data-header-mobile=auto><div class=wrapper data-page-style=normal><header class="desktop animate__faster" id=header-desktop><div class=header-wrapper><div class=header-title><a href=/ title="zenthys's blog"><span class=header-title-text>zenthys's blog</span></a><span class=header-subtitle></span></div><nav><ul class=menu><li class=menu-item><a class=menu-link href=/archives/><i class="fa-solid fa-box-archive fa-sm" aria-hidden=true></i> 归档</a></li><li class=menu-item><a class=menu-link href=/categories/><i class="fa-solid fa-folder-tree fa-sm" aria-hidden=true></i> 分类</a></li><li class=menu-item><a class=menu-link href=/tags/><i class="fa-solid fa-tags fa-sm" aria-hidden=true></i> 标签</a></li><li class="menu-item delimiter"></li><li class="menu-item search" id=search-desktop><input type=text placeholder=搜索文章标题或内容…… id=search-input-desktop>
+<a href=javascript:void(0); class="search-button search-toggle" id=search-toggle-desktop title=搜索><i class="fa-solid fa-search" aria-hidden=true></i>
+</a><a href=javascript:void(0); class="search-button search-clear" id=search-clear-desktop title=清空><i class="fa-solid fa-times-circle" aria-hidden=true></i>
+</a><span class="search-button search-loading" id=search-loading-desktop><i class="fa-solid fa-spinner fa-spin" aria-hidden=true></i></span></li><li class="menu-item theme-switch" role=button aria-label=切换主题 title=切换主题><i class="fa-solid fa-adjust" aria-hidden=true></i></li></ul></nav></div></header><header class="mobile animate__faster" id=header-mobile><div class=header-container><div class=header-wrapper><div class=header-title><a href=/ title="zenthys's blog"><span class=header-title-text>zenthys's blog</span></a><span class=header-subtitle></span></div><div class=theme-switch role=button aria-label=切换主题><i class="fa-solid fa-adjust" aria-hidden=true></i></div><div class=menu-toggle id=menu-toggle-mobile role=button aria-labelledby=menu-mobile><span></span><span></span><span></span></div></div><nav><ul class=menu id=menu-mobile><li class=search-wrapper><div class="search mobile" id=search-mobile><input type=text placeholder=搜索文章标题或内容…… id=search-input-mobile>
+<a href=javascript:void(0); class="search-button search-toggle" id=search-toggle-mobile title=搜索><i class="fa-solid fa-search" aria-hidden=true></i>
+</a><a href=javascript:void(0); class="search-button search-clear" id=search-clear-mobile title=清空><i class="fa-solid fa-times-circle" aria-hidden=true></i>
+</a><span class="search-button search-loading" id=search-loading-mobile><i class="fa-solid fa-spinner fa-spin" aria-hidden=true></i></span></div><a href=javascript:void(0); class=search-cancel id=search-cancel-mobile>取消</a></li><li class=menu-item><a class=menu-link href=/archives/><i class="fa-solid fa-box-archive fa-sm" aria-hidden=true></i> 归档</a></li><li class=menu-item><a class=menu-link href=/categories/><i class="fa-solid fa-folder-tree fa-sm" aria-hidden=true></i> 分类</a></li><li class=menu-item><a class=menu-link href=/tags/><i class="fa-solid fa-tags fa-sm" aria-hidden=true></i> 标签</a></li><li class="menu-item menu-system"></li></ul></nav></div></header><div class="search-dropdown desktop"><div id=search-dropdown-desktop></div></div><div class="search-dropdown mobile"><div id=search-dropdown-mobile></div></div><main class=fi-container><aside class="aside-collection animate__animated animate__fadeIn animate__faster" aria-label=合集></aside><article class="page single"><div class=header><h1 class="single-title animate__animated animate__flipInX"><span>模型上下文协议(MCP)</span></h1></div><div class=post-meta><div class=post-meta-line><span class=post-author><a href=https://github.com/zenthys title=作者 target=_blank rel="external nofollow noopener noreferrer author" class=author><img class=avatar src=/images/avatar.png alt=zenthys height=16 width=16>&nbsp;zenthys</a></span><span class=post-included-in>&nbsp;收录于 <a href=/categories/ai/ class=post-category title="分类 - AI"><i class="fa-regular fa-folder" aria-hidden=true></i> AI</a></span></div><div class=post-meta-line><span title="发布于 2025-11-29 17:36:22"><i class="fa-solid fa-calendar-days me-1" aria-hidden=true></i><time datetime=2025-11-29>2025-11-29</time></span>&nbsp;<span title="5862 字"><i class="fa-solid fa-pencil-alt me-1" aria-hidden=true></i>约 5900 字</span>&nbsp;<span><i class="fa-regular fa-clock me-1" aria-hidden=true></i>预计阅读 12 分钟</span>&nbsp;</div></div><div class="details toc" id=toc-static data-kept=false><div class="details-summary toc-title"><span>目录</span>
+<span><i class="details-icon fa-solid fa-angle-right" aria-hidden=true></i></span></div><div class="details-content toc-content" id=toc-content-static><nav id=TableOfContents><ul><li><a href=#一概要>一、概要</a></li><li><a href=#二详细介绍>二、详细介绍</a><ul><li><a href=#1-toolsresourcesprompts-三件套>1. Tools、Resources、Prompts 三件套</a></li><li><a href=#2-服务端与客户端>2. 服务端与客户端</a></li><li><a href=#3-传输层>3. 传输层</a></li><li><a href=#4-扩展能力>4. 扩展能力</a><ul><li><a href=#1-session-management-会话管理>1. Session Management 会话管理</a></li><li><a href=#2-长任务工具>2. 长任务工具</a></li><li><a href=#3-hooks-和-middleware-的治理能力>3. Hooks 和 Middleware 的治理能力</a></li></ul></li></ul></li><li><a href=#三自我想法>三、自我想法</a></li><li><a href=#四适合场景>四、适合场景</a><ul><li><a href=#1-你要快速把已有-go-服务能力暴露成-mcp>1. 你要快速把已有 Go 服务能力暴露成 MCP</a></li><li><a href=#2-你要在-go-里写自己的-mcp-host-或桥接程序>2. 你要在 Go 里写自己的 MCP Host 或桥接程序</a></li><li><a href=#3-你需要的不只是-demo而是可运维的-mcp-服务>3. 你需要的不只是 demo，而是可运维的 MCP 服务</a></li></ul></li><li><a href=#五注意事项>五、注意事项</a><ul><li><a href=#1-mcp-规范本身就在持续演进>1. MCP 规范本身就在持续演进</a></li><li><a href=#2-sdk-解决的是协议层不是你的领域建模>2. SDK 解决的是协议层，不是你的领域建模</a></li><li><a href=#3-数量问题>3. 数量问题</a></li></ul></li><li><a href=#参考资料>参考资料</a></li></ul></nav></div></div><div class=content id=content><p>如果你最近在看 AI 应用、Agent、工具调用或者 LLM 集成，大概率已经绕不过一个词：<code>MCP</code>。</p><p>MCP，全称 <code>Model Context Protocol</code>，本质上是在定义一套标准接口，让模型能够以更统一、更可控的方式访问外部世界。工具、资源、提示词模板、会话上下文，这些原本散落在不同系统里的能力，开始可以用一套更稳定的协议来描述和暴露。</p><p>问题在于，协议本身只是开始。真正落地的时候，你还得处理一堆工程细节：</p><ul><li>JSON-RPC 消息怎么组织</li><li>工具参数怎么描述</li><li>资源怎么暴露</li><li>多种传输方式怎么接</li><li>会话状态怎么管理</li><li>长任务怎么异步返回</li><li>错误、恢复、钩子、中间件怎么做</li></ul><p>这也是我觉得 <a href=https://github.com/mark3labs/mcp-go target=_blank rel="external nofollow noopener noreferrer"><code>mark3labs/mcp-go</code></a> 值得写一篇文章的原因。它不是在 Go 里“又造了一个神秘框架”，而是在一个非常务实的位置上，把 MCP 服务端和客户端开发里的重复劳动，整理成了可用、可读、可维护的 API。</p><h2 class=heading-element id=一概要><span>一、概要</span>
+<a href=#%e4%b8%80%e6%a6%82%e8%a6%81 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h2><p>很多人第一次接触 MCP SDK，会先去找一个 hello world，然后很快得出一个结论：不就是把工具包装成几个 handler 吗？</p><p>这个理解只对了一半。</p><p>真正的问题不是“把一个函数暴露成 MCP Tool 难不难”，而是当你的能力越来越多时，系统还能不能保持整洁。</p><p>一个真实的 MCP 服务，通常不会只有一个工具。它往往会同时包含：</p><ul><li>一组工具：给模型执行动作</li><li>一组资源：给模型读取上下文</li><li>一组提示词模板：给模型构造交互模式</li><li>一套传输层：本地 stdio、SSE、HTTP，甚至嵌入式场景</li><li>一套会话机制：识别不同客户端、维护每个会话的状态</li><li>一套治理能力：恢复、日志、钩子、中间件、并发限制</li></ul><p>如果你直接围绕协议报文去写，很快就会进入“每个功能都能做，但每个功能都写得很散”的状态。</p><p><code>mcp-go</code> 的价值，就在于它提供的是一种<strong>高层抽象</strong>：</p><ol><li>你主要关注“我要暴露什么能力”。</li><li>协议细节、路由、消息格式、能力协商这些工作由库来兜底。</li><li>最终保留下来的代码，仍然很符合 Go 的习惯：显式、直白、少魔法。</li></ol><p>这个定位我很喜欢，因为它没有试图把开发者绑进一个重框架里。它更像是一个“协议层工具箱”，而不是一个“统治一切的应用框架”。</p><h2 class=heading-element id=二详细介绍><span>二、详细介绍</span>
+<a href=#%e4%ba%8c%e8%af%a6%e7%bb%86%e4%bb%8b%e7%bb%8d class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h2><p>从官方 README 和文档来看，<code>mcp-go</code> 当前已经覆盖了 MCP 的几块核心能力：</p><ul><li><code>Tools</code></li><li><code>Resources</code></li><li><code>Prompts</code></li><li>多传输层支持</li><li>客户端实现</li><li>会话管理</li><li>请求钩子</li><li>Tool Handler Middleware</li><li>长任务工具</li></ul><p>这几个关键词看起来很普通，但组合起来，意味着它已经不只是一个“给 demo 用的 SDK”。</p><h3 class=heading-element id=1-toolsresourcesprompts-三件套><span>1. Tools、Resources、Prompts 三件套</span>
+<a href=#1-toolsresourcesprompts-%e4%b8%89%e4%bb%b6%e5%a5%97 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h3><p>很多库会先把 Tool 做起来，因为 Tool 最容易展示效果：模型调用函数，函数返回结果，闭环就成立了。</p><p>但如果你真的要做一个靠谱的 MCP 服务，只支持 Tool 远远不够。你还需要：</p><ul><li><code>Resource</code>：让模型读取结构化或半结构化内容</li><li><code>Prompt</code>：让模型在特定任务里复用一致的交互模板</li></ul><p>这意味着你不是在暴露“单个函数”，而是在暴露一套<strong>可被模型消费的能力系统</strong>。</p><p>比如在一个代码助手场景里：</p><ul><li>Tool 可以是“读取 PR 数据”“执行静态检查”“触发构建”</li><li>Resource 可以是“项目规范”“接口文档”“最近构建日志”</li><li>Prompt 可以是“代码审查模板”“回归分析模板”“发布前检查模板”</li></ul><p>当你同时具备这三种能力时，MCP 服务才真正从“工具接口”变成“上下文能力层”。</p><p>下面这段示例把三者放在同一个 <code>MCP Server</code> 里，比较适合理解它们各自的职责边界：</p><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span><span class=lnt>53
+</span><span class=lnt>54
+</span><span class=lnt>55
+</span><span class=lnt>56
+</span><span class=lnt>57
+</span><span class=lnt>58
+</span><span class=lnt>59
+</span><span class=lnt>60
+</span><span class=lnt>61
+</span><span class=lnt>62
+</span><span class=lnt>63
+</span><span class=lnt>64
+</span><span class=lnt>65
+</span><span class=lnt>66
+</span><span class=lnt>67
+</span><span class=lnt>68
+</span><span class=lnt>69
+</span><span class=lnt>70
+</span><span class=lnt>71
+</span><span class=lnt>72
+</span><span class=lnt>73
+</span><span class=lnt>74
+</span><span class=lnt>75
+</span><span class=lnt>76
+</span><span class=lnt>77
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kn>package</span><span class=w> </span><span class=nx>main</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>
 </span></span></span><span class=line><span class=cl><span class=kn>import</span><span class=w> </span><span class=p>(</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>	</span><span class=s>&#34;context&#34;</span><span class=w>
@@ -114,8 +162,75 @@ mcp-go 的价值，就在于它提供的是一种高层抽象：
 </span></span></span><span class=line><span class=cl><span class=w>	</span><span class=p>)</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>_</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=nx>s</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
-</span></span></span></code></pre></div><h3 id=2-服务端与客户端>2. 服务端与客户端<a hidden class=anchor aria-hidden=true href=#2-服务端与客户端>#</a></h3><p>这是 <code>mcp-go</code> 很容易被低估的一点。</p><p>很多人提到 MCP SDK，只会想到“我怎么用它暴露一个服务”。但在真实系统里，客户端能力同样重要。你可能需要：</p><ul><li>在 Go 程序里连接别人的 MCP Server</li><li>动态发现对方提供了哪些工具和资源</li><li>代替 LLM Host 主动发起调用</li><li>在测试里用 in-process 方式直接连本地 Server</li></ul><p><code>mcp-go</code> 官方文档明确把客户端建设列成独立模块，而且给了 <code>stdio</code>、<code>StreamableHTTP</code>、<code>SSE</code>、<code>In-Process</code> 几类客户端方式。</p><p>这意味着你既可以用它“提供能力”，也就是Server，也可以用它“消费能力”，就是Client。</p><p>如果你想快速理解这件事，最简单的方式就是直接用 <code>In-Process</code> client 在同一个进程里调用本地 server：</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kn>package</span><span class=w> </span><span class=nx>main</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div><div class=code-expand-btn aria-label=展开或折叠代码块 role=button><i class="fa-solid fa-angles-down" aria-hidden=true></i></div></div></div><h3 class=heading-element id=2-服务端与客户端><span>2. 服务端与客户端</span>
+<a href=#2-%e6%9c%8d%e5%8a%a1%e7%ab%af%e4%b8%8e%e5%ae%a2%e6%88%b7%e7%ab%af class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h3><p>这是 <code>mcp-go</code> 很容易被低估的一点。</p><p>很多人提到 MCP SDK，只会想到“我怎么用它暴露一个服务”。但在真实系统里，客户端能力同样重要。你可能需要：</p><ul><li>在 Go 程序里连接别人的 MCP Server</li><li>动态发现对方提供了哪些工具和资源</li><li>代替 LLM Host 主动发起调用</li><li>在测试里用 in-process 方式直接连本地 Server</li></ul><p><code>mcp-go</code> 官方文档明确把客户端建设列成独立模块，而且给了 <code>stdio</code>、<code>StreamableHTTP</code>、<code>SSE</code>、<code>In-Process</code> 几类客户端方式。</p><p>这意味着你既可以用它“提供能力”，也就是Server，也可以用它“消费能力”，就是Client。</p><p>如果你想快速理解这件事，最简单的方式就是直接用 <code>In-Process</code> client 在同一个进程里调用本地 server：</p><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span><span class=lnt>53
+</span><span class=lnt>54
+</span><span class=lnt>55
+</span><span class=lnt>56
+</span><span class=lnt>57
+</span><span class=lnt>58
+</span><span class=lnt>59
+</span><span class=lnt>60
+</span><span class=lnt>61
+</span><span class=lnt>62
+</span><span class=lnt>63
+</span><span class=lnt>64
+</span><span class=lnt>65
+</span><span class=lnt>66
+</span><span class=lnt>67
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kn>package</span><span class=w> </span><span class=nx>main</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>
 </span></span></span><span class=line><span class=cl><span class=kn>import</span><span class=w> </span><span class=p>(</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>	</span><span class=s>&#34;context&#34;</span><span class=w>
@@ -181,8 +296,39 @@ mcp-go 的价值，就在于它提供的是一种高层抽象：
 </span></span></span><span class=line><span class=cl><span class=w>	</span><span class=p>}</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>fmt</span><span class=p>.</span><span class=nf>Printf</span><span class=p>(</span><span class=s>&#34;工具返回：%+v\n&#34;</span><span class=p>,</span><span class=w> </span><span class=nx>result</span><span class=p>.</span><span class=nx>Content</span><span class=p>)</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
-</span></span></span></code></pre></div><h3 id=3-传输层>3. 传输层<a hidden class=anchor aria-hidden=true href=#3-传输层>#</a></h3><p>MCP 不是只跑在一种环境里。本地桌面工具、CLI 插件、云端服务、浏览器侧应用，它们适合的传输方式完全不同。</p><p><code>mcp-go</code> 当前支持的几种方式基本覆盖了常见部署路径：</p><ul><li><code>stdio</code>：最适合本地工具、CLI 集成、单客户端场景</li><li><code>StreamableHTTP</code>：更适合服务化部署、网关接入、负载均衡</li><li><code>SSE</code>：更适合实时通知和长连接式交互</li><li><code>In-Process</code>：很适合测试、嵌入式集成和本地组合</li></ul><p>这里最关键的不是“支持得多”，而是它让你可以在<strong>同一套能力定义</strong>上切换不同传输方式，而不是每种传输重写一套服务逻辑。</p><p>这对 Go 工程很重要，因为 Go 项目天然喜欢把核心逻辑和外层接入层解耦。<code>mcp-go</code> 这个设计方向是顺着 Go 开发者直觉走的。</p><p>这一点可以直接体现在启动代码上。能力定义不动，只切换 transport：</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kn>package</span><span class=w> </span><span class=nx>main</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div><div class=code-expand-btn aria-label=展开或折叠代码块 role=button><i class="fa-solid fa-angles-down" aria-hidden=true></i></div></div></div><h3 class=heading-element id=3-传输层><span>3. 传输层</span>
+<a href=#3-%e4%bc%a0%e8%be%93%e5%b1%82 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h3><p>MCP 不是只跑在一种环境里。本地桌面工具、CLI 插件、云端服务、浏览器侧应用，它们适合的传输方式完全不同。</p><p><code>mcp-go</code> 当前支持的几种方式基本覆盖了常见部署路径：</p><ul><li><code>stdio</code>：最适合本地工具、CLI 集成、单客户端场景</li><li><code>StreamableHTTP</code>：更适合服务化部署、网关接入、负载均衡</li><li><code>SSE</code>：更适合实时通知和长连接式交互</li><li><code>In-Process</code>：很适合测试、嵌入式集成和本地组合</li></ul><p>这里最关键的不是“支持得多”，而是它让你可以在<strong>同一套能力定义</strong>上切换不同传输方式，而不是每种传输重写一套服务逻辑。</p><p>这对 Go 工程很重要，因为 Go 项目天然喜欢把核心逻辑和外层接入层解耦。<code>mcp-go</code> 这个设计方向是顺着 Go 开发者直觉走的。</p><p>这一点可以直接体现在启动代码上。能力定义不动，只切换 transport：</p><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kn>package</span><span class=w> </span><span class=nx>main</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>
 </span></span></span><span class=line><span class=cl><span class=kn>import</span><span class=w> </span><span class=p>(</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>	</span><span class=s>&#34;log&#34;</span><span class=w>
@@ -212,8 +358,23 @@ mcp-go 的价值，就在于它提供的是一种高层抽象：
 </span></span></span><span class=line><span class=cl><span class=w>		</span><span class=s>&#34;1.0.0&#34;</span><span class=p>,</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>server</span><span class=p>.</span><span class=nf>WithToolCapabilities</span><span class=p>(</span><span class=kc>true</span><span class=p>),</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>	</span><span class=p>)</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
-</span></span></span></code></pre></div><h3 id=4-扩展能力>4. 扩展能力<a hidden class=anchor aria-hidden=true href=#4-扩展能力>#</a></h3><p>如果一个 SDK 只能跑 hello world，它通常在暴露问题时就很难发现并定位问题。而 <code>mcp-go</code> 真正让我觉得“它不是停留在展示层”的，是下面这些能力。</p><p>先看一个总览式写法。你会发现这些扩展能力本质上都围绕 <code>server.NewMCPServer(...)</code> 的 option 组合展开：</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=nx>hooks</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=o>&amp;</span><span class=nx>server</span><span class=p>.</span><span class=nx>Hooks</span><span class=p>{}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div><h3 class=heading-element id=4-扩展能力><span>4. 扩展能力</span>
+<a href=#4-%e6%89%a9%e5%b1%95%e8%83%bd%e5%8a%9b class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h3><p>如果一个 SDK 只能跑 hello world，它通常在暴露问题时就很难发现并定位问题。而 <code>mcp-go</code> 真正让我觉得“它不是停留在展示层”的，是下面这些能力。</p><p>先看一个总览式写法。你会发现这些扩展能力本质上都围绕 <code>server.NewMCPServer(...)</code> 的 option 组合展开：</p><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=nx>hooks</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=o>&amp;</span><span class=nx>server</span><span class=p>.</span><span class=nx>Hooks</span><span class=p>{}</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=nx>hooks</span><span class=p>.</span><span class=nf>AddBeforeAny</span><span class=p>(</span><span class=kd>func</span><span class=p>(</span><span class=nx>ctx</span><span class=w> </span><span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>,</span><span class=w> </span><span class=nx>id</span><span class=w> </span><span class=kt>any</span><span class=p>,</span><span class=w> </span><span class=nx>method</span><span class=w> </span><span class=nx>mcp</span><span class=p>.</span><span class=nx>MCPMethod</span><span class=p>,</span><span class=w> </span><span class=nx>message</span><span class=w> </span><span class=kt>any</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>log</span><span class=p>.</span><span class=nf>Printf</span><span class=p>(</span><span class=s>&#34;method=%s id=%v&#34;</span><span class=p>,</span><span class=w> </span><span class=nx>method</span><span class=p>,</span><span class=w> </span><span class=nx>id</span><span class=p>)</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=p>})</span><span class=w>
@@ -227,8 +388,71 @@ mcp-go 的价值，就在于它提供的是一种高层抽象：
 </span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>server</span><span class=p>.</span><span class=nf>WithToolHandlerMiddleware</span><span class=p>(</span><span class=nx>loggingMiddleware</span><span class=p>),</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>server</span><span class=p>.</span><span class=nf>WithRecovery</span><span class=p>(),</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>server</span><span class=p>.</span><span class=nf>WithMaxConcurrentTasks</span><span class=p>(</span><span class=mi>8</span><span class=p>),</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=p>)</span><span class=w>
-</span></span></span></code></pre></div><h4 id=1-session-management-会话管理>1. Session Management 会话管理<a hidden class=anchor aria-hidden=true href=#1-session-management-会话管理>#</a></h4><p>官方文档里专门给了 Session Management 的章节，支持：</p><ul><li>为不同客户端维护独立状态</li><li>注册和跟踪 session</li><li>向特定客户端发送通知</li><li>按 session 定制工具</li></ul><p>这个能力在实际场景里非常关键。</p><p>比如你做一个企业内部助手，不同用户看到的工具权限、资源范围、租户数据都可能不同。如果没有 session 维度，你最后只能把权限判断全部塞进 handler；这样当然能写，但会越写越乱。</p><p>而支持“按 session 挂工具”“按 session 发通知”，就说明这个库已经意识到：MCP 不只是工具调用，还有连接上下文和用户边界的问题。</p><p>下面这个示例演示了两件事：注册一个自定义 session，以及给特定 session 挂一把专属工具：</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kn>package</span><span class=w> </span><span class=nx>main</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>)</span></span></span></code></pre></td></tr></table></div></div></div><h4 class=heading-element id=1-session-management-会话管理><span>1. Session Management 会话管理</span>
+<a href=#1-session-management-%e4%bc%9a%e8%af%9d%e7%ae%a1%e7%90%86 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h4><p>官方文档里专门给了 Session Management 的章节，支持：</p><ul><li>为不同客户端维护独立状态</li><li>注册和跟踪 session</li><li>向特定客户端发送通知</li><li>按 session 定制工具</li></ul><p>这个能力在实际场景里非常关键。</p><p>比如你做一个企业内部助手，不同用户看到的工具权限、资源范围、租户数据都可能不同。如果没有 session 维度，你最后只能把权限判断全部塞进 handler；这样当然能写，但会越写越乱。</p><p>而支持“按 session 挂工具”“按 session 发通知”，就说明这个库已经意识到：MCP 不只是工具调用，还有连接上下文和用户边界的问题。</p><p>下面这个示例演示了两件事：注册一个自定义 session，以及给特定 session 挂一把专属工具：</p><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span><span class=lnt>53
+</span><span class=lnt>54
+</span><span class=lnt>55
+</span><span class=lnt>56
+</span><span class=lnt>57
+</span><span class=lnt>58
+</span><span class=lnt>59
+</span><span class=lnt>60
+</span><span class=lnt>61
+</span><span class=lnt>62
+</span><span class=lnt>63
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kn>package</span><span class=w> </span><span class=nx>main</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>
 </span></span></span><span class=line><span class=cl><span class=kn>import</span><span class=w> </span><span class=p>(</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>	</span><span class=s>&#34;context&#34;</span><span class=w>
@@ -290,8 +514,54 @@ mcp-go 的价值，就在于它提供的是一种高层抽象：
 </span></span></span><span class=line><span class=cl><span class=w>	</span><span class=p>);</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=kc>nil</span><span class=w> </span><span class=p>{</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>log</span><span class=p>.</span><span class=nf>Fatal</span><span class=p>(</span><span class=nx>err</span><span class=p>)</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>	</span><span class=p>}</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
-</span></span></span></code></pre></div><h4 id=2-长任务工具>2. 长任务工具<a hidden class=anchor aria-hidden=true href=#2-长任务工具>#</a></h4><p>MCP Tool 并不总是瞬时返回。</p><p>真实系统里经常有这种调用：</p><ul><li>跑批处理</li><li>调用外部 API 并等待</li><li>生成文件</li><li>发起异步分析任务</li><li>执行长时间扫描</li></ul><p><code>mcp-go</code> 对这类场景提供了 <code>task-augmented tools</code>。从官方 README 来看，它支持：</p><ul><li>禁止任务模式</li><li>可选同步 / 异步双模式</li><li>强制异步任务模式</li></ul><p>并且支持：</p><ul><li>立即返回任务 ID</li><li>后台执行</li><li>轮询结果</li><li>任务完成通知</li><li>并发任务数量限制</li></ul><p>这件事的工程意义很大。因为很多 demo 型 SDK 一旦遇到长任务，就会让你自己在外面另起一套任务系统；而 <code>mcp-go</code> 至少已经把协议层和任务交互的入口铺好了。</p><p>一个典型写法是把长耗时处理注册成 <code>AddTaskTool</code>，并开启 task capabilities：</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kn>package</span><span class=w> </span><span class=nx>main</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div><div class=code-expand-btn aria-label=展开或折叠代码块 role=button><i class="fa-solid fa-angles-down" aria-hidden=true></i></div></div></div><h4 class=heading-element id=2-长任务工具><span>2. 长任务工具</span>
+<a href=#2-%e9%95%bf%e4%bb%bb%e5%8a%a1%e5%b7%a5%e5%85%b7 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h4><p>MCP Tool 并不总是瞬时返回。</p><p>真实系统里经常有这种调用：</p><ul><li>跑批处理</li><li>调用外部 API 并等待</li><li>生成文件</li><li>发起异步分析任务</li><li>执行长时间扫描</li></ul><p><code>mcp-go</code> 对这类场景提供了 <code>task-augmented tools</code>。从官方 README 来看，它支持：</p><ul><li>禁止任务模式</li><li>可选同步 / 异步双模式</li><li>强制异步任务模式</li></ul><p>并且支持：</p><ul><li>立即返回任务 ID</li><li>后台执行</li><li>轮询结果</li><li>任务完成通知</li><li>并发任务数量限制</li></ul><p>这件事的工程意义很大。因为很多 demo 型 SDK 一旦遇到长任务，就会让你自己在外面另起一套任务系统；而 <code>mcp-go</code> 至少已经把协议层和任务交互的入口铺好了。</p><p>一个典型写法是把长耗时处理注册成 <code>AddTaskTool</code>，并开启 task capabilities：</p><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kn>package</span><span class=w> </span><span class=nx>main</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>
 </span></span></span><span class=line><span class=cl><span class=kn>import</span><span class=w> </span><span class=p>(</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>	</span><span class=s>&#34;context&#34;</span><span class=w>
@@ -336,8 +606,55 @@ mcp-go 的价值，就在于它提供的是一种高层抽象：
 </span></span></span><span class=line><span class=cl><span class=w>	</span><span class=p>})</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>_</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=nx>s</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
-</span></span></span></code></pre></div><h4 id=3-hooks-和-middleware-的治理能力>3. Hooks 和 Middleware 的治理能力<a hidden class=anchor aria-hidden=true href=#3-hooks-和-middleware-的治理能力>#</a></h4><p>一个库能不能进生产，很多时候不是看它能不能“完成功能”，而是看它能不能“被治理”。</p><p><code>mcp-go</code> 的文档里给了 request hooks、lifecycle hooks、tool handler middleware 这些机制。对工程团队来说，这意味着你可以比较优雅地挂这些横切能力：</p><ul><li>日志</li><li>审计</li><li>指标</li><li>权限校验</li><li>tracing</li><li>panic recovery</li><li>请求前后观测</li></ul><p>这才是 SDK 从“可玩”走向“可管”的分水岭。</p><p>这一块比较实用的组合是：<code>Hooks</code> 负责观测请求生命周期，<code>Middleware</code> 负责包装 tool handler：</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kn>package</span><span class=w> </span><span class=nx>main</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div><h4 class=heading-element id=3-hooks-和-middleware-的治理能力><span>3. Hooks 和 Middleware 的治理能力</span>
+<a href=#3-hooks-%e5%92%8c-middleware-%e7%9a%84%e6%b2%bb%e7%90%86%e8%83%bd%e5%8a%9b class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h4><p>一个库能不能进生产，很多时候不是看它能不能“完成功能”，而是看它能不能“被治理”。</p><p><code>mcp-go</code> 的文档里给了 request hooks、lifecycle hooks、tool handler middleware 这些机制。对工程团队来说，这意味着你可以比较优雅地挂这些横切能力：</p><ul><li>日志</li><li>审计</li><li>指标</li><li>权限校验</li><li>tracing</li><li>panic recovery</li><li>请求前后观测</li></ul><p>这才是 SDK 从“可玩”走向“可管”的分水岭。</p><p>这一块比较实用的组合是：<code>Hooks</code> 负责观测请求生命周期，<code>Middleware</code> 负责包装 tool handler：</p><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kn>package</span><span class=w> </span><span class=nx>main</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>
 </span></span></span><span class=line><span class=cl><span class=kn>import</span><span class=w> </span><span class=p>(</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>	</span><span class=s>&#34;context&#34;</span><span class=w>
@@ -383,8 +700,52 @@ mcp-go 的价值，就在于它提供的是一种高层抽象：
 </span></span></span><span class=line><span class=cl><span class=w>	</span><span class=p>)</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>	</span><span class=nx>_</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=nx>s</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
-</span></span></span></code></pre></div><h2 id=三自我想法>三、自我想法<a hidden class=anchor aria-hidden=true href=#三自我想法>#</a></h2><p><code>mcp-go</code> 的设计我觉得比较稳的一点是：它提供了高层抽象，但没有强行制造太多神秘机制。</p><p>比如构建一个 Tool，大体就是：</p><ol><li>创建一个 <code>MCP Server</code></li><li>定义工具名、描述、参数 Schema</li><li>给它挂一个 Go handler</li><li>启动对应 transport</li></ol><p>这个流程的搭建非常直观。下面是一个基于官方 API 风格改写的极简示例：</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kn>package</span><span class=w> </span><span class=nx>main</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div><h2 class=heading-element id=三自我想法><span>三、自我想法</span>
+<a href=#%e4%b8%89%e8%87%aa%e6%88%91%e6%83%b3%e6%b3%95 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h2><p><code>mcp-go</code> 的设计我觉得比较稳的一点是：它提供了高层抽象，但没有强行制造太多神秘机制。</p><p>比如构建一个 Tool，大体就是：</p><ol><li>创建一个 <code>MCP Server</code></li><li>定义工具名、描述、参数 Schema</li><li>给它挂一个 Go handler</li><li>启动对应 transport</li></ol><p>这个流程的搭建非常直观。下面是一个基于官方 API 风格改写的极简示例：</p><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kn>package</span><span class=w> </span><span class=nx>main</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>
 </span></span></span><span class=line><span class=cl><span class=kn>import</span><span class=w> </span><span class=p>(</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>	</span><span class=s>&#34;context&#34;</span><span class=w>
@@ -427,9 +788,15 @@ mcp-go 的价值，就在于它提供的是一种高层抽象：
 </span></span></span><span class=line><span class=cl><span class=w>	</span><span class=k>if</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>server</span><span class=p>.</span><span class=nf>ServeStdio</span><span class=p>(</span><span class=nx>s</span><span class=p>);</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=kc>nil</span><span class=w> </span><span class=p>{</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>		</span><span class=nx>log</span><span class=p>.</span><span class=nf>Fatal</span><span class=p>(</span><span class=nx>err</span><span class=p>)</span><span class=w>
 </span></span></span><span class=line><span class=cl><span class=w>	</span><span class=p>}</span><span class=w>
-</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
-</span></span></span></code></pre></div><p>这个例子最重要的不是“它很短”，而是它把 MCP Server 的核心思路表达得很清楚：</p><ul><li>能力定义和 handler 很贴近</li><li>参数是显式 schema，不是随手塞 <code>map[string]any</code></li><li>错误处理仍然是 Go 风格</li><li>transport 和业务能力没有缠在一起</li></ul><h2 id=四适合场景>四、适合场景<a hidden class=anchor aria-hidden=true href=#四适合场景>#</a></h2><p>我觉得 <code>mcp-go</code> 最适合下面几类项目。</p><h3 id=1-你要快速把已有-go-服务能力暴露成-mcp>1. 你要快速把已有 Go 服务能力暴露成 MCP<a hidden class=anchor aria-hidden=true href=#1-你要快速把已有-go-服务能力暴露成-mcp>#</a></h3><p>这是最直接的场景。</p><p>如果你的系统里已经有很多现成能力，比如：</p><ul><li>文件处理</li><li>数据查询</li><li>内部 API 封装</li><li>工作流触发</li><li>代码分析</li><li>企业内部服务编排</li></ul><p>那么 <code>mcp-go</code> 很适合作为一层 MCP 暴露层，直接把已有逻辑包装成 Tool / Resource / Prompt。</p><h3 id=2-你要在-go-里写自己的-mcp-host-或桥接程序>2. 你要在 Go 里写自己的 MCP Host 或桥接程序<a hidden class=anchor aria-hidden=true href=#2-你要在-go-里写自己的-mcp-host-或桥接程序>#</a></h3><p>因为它连 client 侧也做了，所以你完全可以拿它来做：</p><ul><li>MCP 聚合器</li><li>多服务桥接器</li><li>测试用 Host</li><li>内部 Agent Runtime 的连接层</li></ul><h3 id=3-你需要的不只是-demo而是可运维的-mcp-服务>3. 你需要的不只是 demo，而是可运维的 MCP 服务<a hidden class=anchor aria-hidden=true href=#3-你需要的不只是-demo而是可运维的-mcp-服务>#</a></h3><p>如果你的诉求包括：</p><ul><li>错误恢复</li><li>会话隔离</li><li>钩子埋点</li><li>中间件治理</li><li>异步长任务</li><li>HTTP / SSE / stdio 多种接入方式</li></ul><p>那 <code>mcp-go</code> 明显比“自己手搓一个 JSON-RPC 服务”更现实。</p><h2 id=五注意事项>五、注意事项<a hidden class=anchor aria-hidden=true href=#五注意事项>#</a></h2><p>一篇认真的技术文章，不该只讲优点。</p><p>从官方 README 和文档的表述来看，<code>mcp-go</code> 仍然有几个边界值得提前说明。</p><h3 id=1-mcp-规范本身就在持续演进>1. MCP 规范本身就在持续演进<a hidden class=anchor aria-hidden=true href=#1-mcp-规范本身就在持续演进>#</a></h3><p>README 里明确提到：项目仍在活跃开发，MCP 规范本身也在变化。</p><p>这意味着什么？</p><p>意味着你在选型时，要把它当成一个<strong>高速演进中的协议生态组件</strong>，而不是一个十年不动的稳定底层库。好消息是它当前已经支持 <strong>2025-11-25</strong> 版规范，并对 <strong>2025-06-18、2025-03-26、2024-11-05</strong> 保持向后兼容；坏消息是，未来升级时你仍然需要关注 release note。</p><h3 id=2-sdk-解决的是协议层不是你的领域建模>2. SDK 解决的是协议层，不是你的领域建模<a hidden class=anchor aria-hidden=true href=#2-sdk-解决的是协议层不是你的领域建模>#</a></h3><p><code>mcp-go</code> 能帮你优雅地暴露工具和资源，但它不会替你做好这些事情：</p><ul><li>权限模型</li><li>多租户边界</li><li>业务幂等</li><li>任务补偿</li><li>领域错误分类</li><li>外部依赖限流</li></ul><p>如果这些问题本身没设计好，再好的 MCP SDK 也只是把混乱包装得更体面一点。</p><h3 id=3-数量问题>3. 数量问题<a hidden class=anchor aria-hidden=true href=#3-数量问题>#</a></h3><p>这类库一旦用顺手，很容易出现一个副作用：团队开始把任何内部能力都想暴露成 MCP Tool。</p><p>真正适合 MCP 的，通常是：</p><ul><li>对模型有明确价值的能力</li><li>参数边界清晰的能力</li><li>可审计、可解释、可治理的能力</li></ul><p>这一点可以看<code>langchain</code>的介绍，我记得说过tool的封装不要太多，最多是30个左右，但是实践中10个一下是最好的。</p><p>因为<code>mcp</code>的信息本身还是会存在在上下文信息中给<code>LLM</code>调用</p><h2 id=参考资料>参考资料<a hidden class=anchor aria-hidden=true href=#参考资料>#</a></h2><ul><li>官方仓库：<a href=https://github.com/mark3labs/mcp-go>https://github.com/mark3labs/mcp-go</a></li><li>官方文档 Getting Started：<a href=https://mcp-go.dev/getting-started/>https://mcp-go.dev/getting-started/</a></li><li>官方文档 Building MCP Clients：<a href=https://mcp-go.dev/clients/>https://mcp-go.dev/clients/</a></li><li>GitHub Releases：<a href=https://github.com/mark3labs/mcp-go/releases>https://github.com/mark3labs/mcp-go/releases</a></li></ul></div><footer class=post-footer><ul class=post-tags><li><a href=http://localhost:1313/tags/ai/>AI</a></li><li><a href=http://localhost:1313/tags/mcp/>Mcp</a></li><li><a href=http://localhost:1313/tags/go/>Go</a></li></ul></footer></article></main><footer class=footer><span>&copy; 2026 <a href=http://localhost:1313/>cubxxw is blog</a></span> ·
-<span>Powered by
-<a href=https://gohugo.io/ rel="noopener noreferrer" target=_blank>Hugo</a> &
-<a href=https://github.com/adityatelange/hugo-PaperMod/ rel=noopener target=_blank>PaperMod</a></span></footer><a href=#top aria-label="go to top" title="Go to Top (Alt + G)" class=top-link id=top-link accesskey=g><svg viewBox="0 0 12 6" fill="currentColor"><path d="M12 6H0l6-6z"/></svg>
-</a><script>let menu=document.getElementById("menu");if(menu){const e=localStorage.getItem("menu-scroll-position");e&&(menu.scrollLeft=parseInt(e,10)),menu.onscroll=function(){localStorage.setItem("menu-scroll-position",menu.scrollLeft)}}document.querySelectorAll('a[href^="#"]').forEach(e=>{e.addEventListener("click",function(e){e.preventDefault();var t=this.getAttribute("href").substr(1);window.matchMedia("(prefers-reduced-motion: reduce)").matches?document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView():document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView({behavior:"smooth"}),t==="top"?history.replaceState(null,null," "):history.pushState(null,null,`#${t}`)})})</script><script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script><script>document.getElementById("theme-toggle").addEventListener("click",()=>{const e=document.querySelector("html");e.dataset.theme==="dark"?(e.dataset.theme="light",localStorage.setItem("pref-theme","light")):(e.dataset.theme="dark",localStorage.setItem("pref-theme","dark"))})</script></body></html>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div><p>这个例子最重要的不是“它很短”，而是它把 MCP Server 的核心思路表达得很清楚：</p><ul><li>能力定义和 handler 很贴近</li><li>参数是显式 schema，不是随手塞 <code>map[string]any</code></li><li>错误处理仍然是 Go 风格</li><li>transport 和业务能力没有缠在一起</li></ul><h2 class=heading-element id=四适合场景><span>四、适合场景</span>
+<a href=#%e5%9b%9b%e9%80%82%e5%90%88%e5%9c%ba%e6%99%af class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h2><p>我觉得 <code>mcp-go</code> 最适合下面几类项目。</p><h3 class=heading-element id=1-你要快速把已有-go-服务能力暴露成-mcp><span>1. 你要快速把已有 Go 服务能力暴露成 MCP</span>
+<a href=#1-%e4%bd%a0%e8%a6%81%e5%bf%ab%e9%80%9f%e6%8a%8a%e5%b7%b2%e6%9c%89-go-%e6%9c%8d%e5%8a%a1%e8%83%bd%e5%8a%9b%e6%9a%b4%e9%9c%b2%e6%88%90-mcp class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h3><p>这是最直接的场景。</p><p>如果你的系统里已经有很多现成能力，比如：</p><ul><li>文件处理</li><li>数据查询</li><li>内部 API 封装</li><li>工作流触发</li><li>代码分析</li><li>企业内部服务编排</li></ul><p>那么 <code>mcp-go</code> 很适合作为一层 MCP 暴露层，直接把已有逻辑包装成 Tool / Resource / Prompt。</p><h3 class=heading-element id=2-你要在-go-里写自己的-mcp-host-或桥接程序><span>2. 你要在 Go 里写自己的 MCP Host 或桥接程序</span>
+<a href=#2-%e4%bd%a0%e8%a6%81%e5%9c%a8-go-%e9%87%8c%e5%86%99%e8%87%aa%e5%b7%b1%e7%9a%84-mcp-host-%e6%88%96%e6%a1%a5%e6%8e%a5%e7%a8%8b%e5%ba%8f class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h3><p>因为它连 client 侧也做了，所以你完全可以拿它来做：</p><ul><li>MCP 聚合器</li><li>多服务桥接器</li><li>测试用 Host</li><li>内部 Agent Runtime 的连接层</li></ul><h3 class=heading-element id=3-你需要的不只是-demo而是可运维的-mcp-服务><span>3. 你需要的不只是 demo，而是可运维的 MCP 服务</span>
+<a href=#3-%e4%bd%a0%e9%9c%80%e8%a6%81%e7%9a%84%e4%b8%8d%e5%8f%aa%e6%98%af-demo%e8%80%8c%e6%98%af%e5%8f%af%e8%bf%90%e7%bb%b4%e7%9a%84-mcp-%e6%9c%8d%e5%8a%a1 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h3><p>如果你的诉求包括：</p><ul><li>错误恢复</li><li>会话隔离</li><li>钩子埋点</li><li>中间件治理</li><li>异步长任务</li><li>HTTP / SSE / stdio 多种接入方式</li></ul><p>那 <code>mcp-go</code> 明显比“自己手搓一个 JSON-RPC 服务”更现实。</p><h2 class=heading-element id=五注意事项><span>五、注意事项</span>
+<a href=#%e4%ba%94%e6%b3%a8%e6%84%8f%e4%ba%8b%e9%a1%b9 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h2><p>一篇认真的技术文章，不该只讲优点。</p><p>从官方 README 和文档的表述来看，<code>mcp-go</code> 仍然有几个边界值得提前说明。</p><h3 class=heading-element id=1-mcp-规范本身就在持续演进><span>1. MCP 规范本身就在持续演进</span>
+<a href=#1-mcp-%e8%a7%84%e8%8c%83%e6%9c%ac%e8%ba%ab%e5%b0%b1%e5%9c%a8%e6%8c%81%e7%bb%ad%e6%bc%94%e8%bf%9b class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h3><p>README 里明确提到：项目仍在活跃开发，MCP 规范本身也在变化。</p><p>这意味着什么？</p><p>意味着你在选型时，要把它当成一个<strong>高速演进中的协议生态组件</strong>，而不是一个十年不动的稳定底层库。好消息是它当前已经支持 <strong>2025-11-25</strong> 版规范，并对 <strong>2025-06-18、2025-03-26、2024-11-05</strong> 保持向后兼容；坏消息是，未来升级时你仍然需要关注 release note。</p><h3 class=heading-element id=2-sdk-解决的是协议层不是你的领域建模><span>2. SDK 解决的是协议层，不是你的领域建模</span>
+<a href=#2-sdk-%e8%a7%a3%e5%86%b3%e7%9a%84%e6%98%af%e5%8d%8f%e8%ae%ae%e5%b1%82%e4%b8%8d%e6%98%af%e4%bd%a0%e7%9a%84%e9%a2%86%e5%9f%9f%e5%bb%ba%e6%a8%a1 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h3><p><code>mcp-go</code> 能帮你优雅地暴露工具和资源，但它不会替你做好这些事情：</p><ul><li>权限模型</li><li>多租户边界</li><li>业务幂等</li><li>任务补偿</li><li>领域错误分类</li><li>外部依赖限流</li></ul><p>如果这些问题本身没设计好，再好的 MCP SDK 也只是把混乱包装得更体面一点。</p><h3 class=heading-element id=3-数量问题><span>3. 数量问题</span>
+<a href=#3-%e6%95%b0%e9%87%8f%e9%97%ae%e9%a2%98 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h3><p>这类库一旦用顺手，很容易出现一个副作用：团队开始把任何内部能力都想暴露成 MCP Tool。</p><p>真正适合 MCP 的，通常是：</p><ul><li>对模型有明确价值的能力</li><li>参数边界清晰的能力</li><li>可审计、可解释、可治理的能力</li></ul><p>这一点可以看<code>langchain</code>的介绍，我记得说过tool的封装不要太多，最多是30个左右，但是实践中10个一下是最好的。</p><p>因为<code>mcp</code>的信息本身还是会存在在上下文信息中给<code>LLM</code>调用</p><h2 class=heading-element id=参考资料><span>参考资料</span>
+<a href=#%e5%8f%82%e8%80%83%e8%b5%84%e6%96%99 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h2><ul><li>官方仓库：<a href=https://github.com/mark3labs/mcp-go target=_blank rel="external nofollow noopener noreferrer">https://github.com/mark3labs/mcp-go</a></li><li>官方文档 Getting Started：<a href=https://mcp-go.dev/getting-started/ target=_blank rel="external nofollow noopener noreferrer">https://mcp-go.dev/getting-started/</a></li><li>官方文档 Building MCP Clients：<a href=https://mcp-go.dev/clients/ target=_blank rel="external nofollow noopener noreferrer">https://mcp-go.dev/clients/</a></li><li>GitHub Releases：<a href=https://github.com/mark3labs/mcp-go/releases target=_blank rel="external nofollow noopener noreferrer">https://github.com/mark3labs/mcp-go/releases</a></li></ul></div><div class=post-footer id=post-footer><div class=post-info><div class=post-info-line><div class=post-info-mod><span title="更新于 2025-11-29 17:36:22">更新于 2025-11-29&nbsp;</span></div><div class=post-info-license><span><a rel="license external nofollow noopener noreferrer" href=https://creativecommons.org/licenses/by-nc-sa/4.0/ target=_blank>CC BY-NC-SA 4.0</a></span></div></div><div class=post-info-line><div class=post-info-md><span><a href=vscode://file/E:%5cleetcode%5chugo-blog%5ccontent%5cAI%5cgo-mcp.md title=在编辑器中打开 target=_blank rel="external nofollow noopener noreferrer" class=link-to-vscode>在编辑器中打开</a></span></div><div class=post-info-share><span></span></div></div></div><div class=post-info-more><section class=post-tags><i class="fa-solid fa-tags me-1" aria-hidden=true></i><a href=/tags/ai/ class=post-tag title="标签 - AI">AI</a><a href=/tags/mcp/ class=post-tag title="标签 - Mcp">Mcp</a><a href=/tags/go/ class=post-tag title="标签 - Go">Go</a></section><section><span><a href=javascript:void(0); onclick=window.history.back()>返回</a></span>&nbsp;|&nbsp;<span><a href=/>主页</a></span></section></div><div class=post-nav><a href=/go/websocket%E8%AF%A6%E8%A7%A3/ class=post-nav-item rel=prev title=WebSocket详解><i class="fa-solid fa-angle-left" aria-hidden=true></i>WebSocket详解</a><a href=/ai/agent%E8%AE%BE%E8%AE%A1%E6%9E%B6%E6%9E%84%E4%B8%80--react/ class=post-nav-item rel=next title=Agent设计架构(一)--ReAct>Agent设计架构(一)--ReAct<i class="fa-solid fa-angle-right" aria-hidden=true></i></a></div></div></article><aside class=toc id=toc-auto aria-label=目录><h2 class=toc-title>目录&nbsp;<i class="toc-icon fa-solid fa-angle-down" aria-hidden=true></i></h2><div class=toc-content id=toc-content-auto></div></aside><dialog id=toc-dialog aria-labelledby=toc-dialog-title role=dialog><div class=toc><h2 class=toc-title>目录</h2><div class=toc-content id=toc-content-drawer><nav><ul><li><a href=#一概要>一、概要</a></li><li><a href=#二详细介绍>二、详细介绍</a><ul><li><a href=#1-toolsresourcesprompts-三件套>1. Tools、Resources、Prompts 三件套</a></li><li><a href=#2-服务端与客户端>2. 服务端与客户端</a></li><li><a href=#3-传输层>3. 传输层</a></li><li><a href=#4-扩展能力>4. 扩展能力</a><ul><li><a href=#1-session-management-会话管理>1. Session Management 会话管理</a></li><li><a href=#2-长任务工具>2. 长任务工具</a></li><li><a href=#3-hooks-和-middleware-的治理能力>3. Hooks 和 Middleware 的治理能力</a></li></ul></li></ul></li><li><a href=#三自我想法>三、自我想法</a></li><li><a href=#四适合场景>四、适合场景</a><ul><li><a href=#1-你要快速把已有-go-服务能力暴露成-mcp>1. 你要快速把已有 Go 服务能力暴露成 MCP</a></li><li><a href=#2-你要在-go-里写自己的-mcp-host-或桥接程序>2. 你要在 Go 里写自己的 MCP Host 或桥接程序</a></li><li><a href=#3-你需要的不只是-demo而是可运维的-mcp-服务>3. 你需要的不只是 demo，而是可运维的 MCP 服务</a></li></ul></li><li><a href=#五注意事项>五、注意事项</a><ul><li><a href=#1-mcp-规范本身就在持续演进>1. MCP 规范本身就在持续演进</a></li><li><a href=#2-sdk-解决的是协议层不是你的领域建模>2. SDK 解决的是协议层，不是你的领域建模</a></li><li><a href=#3-数量问题>3. 数量问题</a></li></ul></li><li><a href=#参考资料>参考资料</a></li></ul></nav></div></div></dialog></main><footer class=footer><div class=footer-container><div class="footer-line powered">由 <a href=https://gohugo.io/ target=_blank rel="external nofollow noopener noreferrer" title="Hugo 0.163.1"><img class=hugo-icon src=/images/hugo.min.svg alt="Hugo logo"> Hugo</a> 强力驱动 | 主题 - <a href=https://github.com/hugo-fixit/FixIt target=_blank rel=external title="FixIt v0.4.5"><img class=fixit-icon src=/images/fixit.min.svg alt="FixIt logo"> FixIt</a></div><div class="footer-line copyright" itemscope itemtype=http://schema.org/CreativeWork><i class="fa-regular fa-copyright" aria-hidden=true></i>
+<span itemprop=copyrightYear>2025 - 2026</span><span class=author itemprop=copyrightHolder>
+<a href=https://github.com/zenthys target=_blank rel="external nofollow noopener noreferrer">zenthys</a></span></div></div></footer></div><div class=widgets><div class=fixed-buttons><div class="fixed-button back-to-top animate__faster d-none" role=button aria-label=回到顶部><i class="fa-solid fa-arrow-up" aria-hidden=true></i></div><div id=toc-drawer-button class="fixed-button toc-drawer-button d-none" role=button aria-label=目录><i class="fa-solid fa-bars" aria-hidden=true></i></div></div><div id=mask></div><noscript><div class=noscript-warning>该网站在启用 JavaScript 的情况下效果最佳。</div></noscript></div><link rel=stylesheet href=/lib/cookieconsent/cookieconsent.min.css><script src=/lib/autocomplete/autocomplete.min.js defer></script><script src=/lib/fuse/fuse.min.js defer></script><script src=/lib/cookieconsent/cookieconsent.min.js defer></script><script src=/lib/cell-tooltip/cell-tooltip.umd.js defer></script><script src=/js/config/1fba16db96b0d0afbc372dcd9ee213d2.js defer></script><script src=/js/theme.min.js defer></script></body></html>

@@ -2,11 +2,8 @@
 date = '2025-02-10T22:03:52+08:00'
 title = "fx 依赖注入"
 tags = ["go", "依赖注入", "框架"]
-categories = ["go","后端开发"]
-
+categories = ["go"]
 +++
-
-# fx依赖注入
 
 ## 简介
 

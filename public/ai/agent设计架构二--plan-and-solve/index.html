@@ -1,0 +1,342 @@
+<!doctype html><html itemscope itemtype=http://schema.org/WebPage lang=zh-CN><head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=2"><meta name=robots content="noodp"><title>Agent设计架构(二)--Plan-and-Solve - zenthys's blog</title><meta name=author content="zenthys"><meta name=description content="在agent设计架构(一)&ndash;ReAct掌握了 ReAct 这种反应式的、步进决策的智能体范式后，接下来将探讨一种风格迥异但同样强大的方法，Plan-and-Solve。顾名思义，这种范式将任务处理明确地分为两个阶段：先规划 (Plan)，后执行 (Solve)。
+"><meta name=keywords content='Agent,AI'><meta itemprop=name content="agent设计架构(二)--Plan-and-Solve"><meta itemprop=description content="在agent设计架构(一)–ReAct掌握了 ReAct 这种反应式的、步进决策的智能体范式后，接下来将探讨一种风格迥异但同样强大的方法，Plan-and-Solve。顾名思义，这种范式将任务处理明确地分为两个阶段：先规划 (Plan)，后执行 (Solve)。"><meta itemprop=datePublished content="2026-02-12T22:23:44+08:00"><meta itemprop=dateModified content="2026-02-12T22:23:44+08:00"><meta itemprop=wordCount content="3982"><meta itemprop=keywords content="Agent,AI"><meta property="og:url" content="http://localhost:1313/ai/agent%E8%AE%BE%E8%AE%A1%E6%9E%B6%E6%9E%84%E4%BA%8C--plan-and-solve/"><meta property="og:site_name" content="zenthys's blog"><meta property="og:title" content="agent设计架构(二)--Plan-and-Solve"><meta property="og:description" content="在agent设计架构(一)–ReAct掌握了 ReAct 这种反应式的、步进决策的智能体范式后，接下来将探讨一种风格迥异但同样强大的方法，Plan-and-Solve。顾名思义，这种范式将任务处理明确地分为两个阶段：先规划 (Plan)，后执行 (Solve)。"><meta property="og:locale" content="zh_CN"><meta property="og:type" content="article"><meta property="article:section" content="ai"><meta property="article:published_time" content="2026-02-12T22:23:44+08:00"><meta property="article:modified_time" content="2026-02-12T22:23:44+08:00"><meta property="article:tag" content="Agent"><meta property="article:tag" content="AI"><meta name=twitter:card content="summary"><meta name=twitter:title content="agent设计架构(二)--Plan-and-Solve"><meta name=twitter:description content="在agent设计架构(一)–ReAct掌握了 ReAct 这种反应式的、步进决策的智能体范式后，接下来将探讨一种风格迥异但同样强大的方法，Plan-and-Solve。顾名思义，这种范式将任务处理明确地分为两个阶段：先规划 (Plan)，后执行 (Solve)。"><meta name=application-name content="FixIt"><meta name=apple-mobile-web-app-title content="FixIt"><meta name=theme-color data-light=#f8f8f8 data-dark=#252627 content="#f8f8f8"><meta name=msapplication-TileColor content="#da532c"><link rel="shortcut icon" type=image/x-icon href=/favicon.ico><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><link rel=canonical type=text/html href=http://localhost:1313/ai/agent%E8%AE%BE%E8%AE%A1%E6%9E%B6%E6%9E%84%E4%BA%8C--plan-and-solve/ title="agent设计架构(二)--Plan-and-Solve - zenthys's blog"><link rel=prev type=text/html href=http://localhost:1313/ai/agent%E8%AE%BE%E8%AE%A1%E6%9E%B6%E6%9E%84%E4%B8%80--react/ title=agent设计架构(一)--ReAct><link rel=next type=text/html href=http://localhost:1313/ai/agent%E8%AE%BE%E8%AE%A1%E6%9E%B6%E6%9E%84%E4%B8%89--reflection/ title=agent设计架构(三)--Reflection><link rel=stylesheet href=/css/config.min.css><link rel=stylesheet href=/css/style.min.css><link rel=preload href=/lib/fontawesome-free/all.min.css as=style onload='this.removeAttribute("onload"),this.rel="stylesheet"'><noscript><link rel=stylesheet href=/lib/fontawesome-free/all.min.css></noscript><link rel=preload href=/lib/animate/animate.min.css as=style onload='this.removeAttribute("onload"),this.rel="stylesheet"'><noscript><link rel=stylesheet href=/lib/animate/animate.min.css></noscript><script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","headline":"agent设计架构(二)--Plan-and-Solve","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"http:\/\/localhost:1313\/ai\/agent%E8%AE%BE%E8%AE%A1%E6%9E%B6%E6%9E%84%E4%BA%8C--plan-and-solve\/"},"genre":"posts","keywords":"Agent, AI","wordcount":3982,"url":"http:\/\/localhost:1313\/ai\/agent%E8%AE%BE%E8%AE%A1%E6%9E%B6%E6%9E%84%E4%BA%8C--plan-and-solve\/","datePublished":"2026-02-12T22:23:44+08:00","dateModified":"2026-02-12T22:23:44+08:00","publisher":{"@type":"Organization","name":""},"author":{"@type":"Person","name":"zenthys"},"description":""}</script><script src=/js/head/color-scheme.min.js></script></head><body data-instant-intensity=viewport data-header-desktop=sticky data-header-mobile=auto><div class=wrapper data-page-style=normal><header class="desktop animate__faster" id=header-desktop><div class=header-wrapper><div class=header-title><a href=/ title="zenthys's blog"><span class=header-title-text>zenthys's blog</span></a><span class=header-subtitle></span></div><nav><ul class=menu><li class=menu-item><a class=menu-link href=/archives/><i class="fa-solid fa-box-archive fa-sm" aria-hidden=true></i> 归档</a></li><li class=menu-item><a class=menu-link href=/categories/><i class="fa-solid fa-folder-tree fa-sm" aria-hidden=true></i> 分类</a></li><li class=menu-item><a class=menu-link href=/tags/><i class="fa-solid fa-tags fa-sm" aria-hidden=true></i> 标签</a></li><li class="menu-item delimiter"></li><li class="menu-item search" id=search-desktop><input type=text placeholder=搜索文章标题或内容…… id=search-input-desktop>
+<a href=javascript:void(0); class="search-button search-toggle" id=search-toggle-desktop title=搜索><i class="fa-solid fa-search" aria-hidden=true></i>
+</a><a href=javascript:void(0); class="search-button search-clear" id=search-clear-desktop title=清空><i class="fa-solid fa-times-circle" aria-hidden=true></i>
+</a><span class="search-button search-loading" id=search-loading-desktop><i class="fa-solid fa-spinner fa-spin" aria-hidden=true></i></span></li><li class="menu-item theme-switch" role=button aria-label=切换主题 title=切换主题><i class="fa-solid fa-adjust" aria-hidden=true></i></li></ul></nav></div></header><header class="mobile animate__faster" id=header-mobile><div class=header-container><div class=header-wrapper><div class=header-title><a href=/ title="zenthys's blog"><span class=header-title-text>zenthys's blog</span></a><span class=header-subtitle></span></div><div class=theme-switch role=button aria-label=切换主题><i class="fa-solid fa-adjust" aria-hidden=true></i></div><div class=menu-toggle id=menu-toggle-mobile role=button aria-labelledby=menu-mobile><span></span><span></span><span></span></div></div><nav><ul class=menu id=menu-mobile><li class=search-wrapper><div class="search mobile" id=search-mobile><input type=text placeholder=搜索文章标题或内容…… id=search-input-mobile>
+<a href=javascript:void(0); class="search-button search-toggle" id=search-toggle-mobile title=搜索><i class="fa-solid fa-search" aria-hidden=true></i>
+</a><a href=javascript:void(0); class="search-button search-clear" id=search-clear-mobile title=清空><i class="fa-solid fa-times-circle" aria-hidden=true></i>
+</a><span class="search-button search-loading" id=search-loading-mobile><i class="fa-solid fa-spinner fa-spin" aria-hidden=true></i></span></div><a href=javascript:void(0); class=search-cancel id=search-cancel-mobile>取消</a></li><li class=menu-item><a class=menu-link href=/archives/><i class="fa-solid fa-box-archive fa-sm" aria-hidden=true></i> 归档</a></li><li class=menu-item><a class=menu-link href=/categories/><i class="fa-solid fa-folder-tree fa-sm" aria-hidden=true></i> 分类</a></li><li class=menu-item><a class=menu-link href=/tags/><i class="fa-solid fa-tags fa-sm" aria-hidden=true></i> 标签</a></li><li class="menu-item menu-system"></li></ul></nav></div></header><div class="search-dropdown desktop"><div id=search-dropdown-desktop></div></div><div class="search-dropdown mobile"><div id=search-dropdown-mobile></div></div><main class=fi-container><aside class="aside-collection animate__animated animate__fadeIn animate__faster" aria-label=合集></aside><article class="page single"><div class=header><h1 class="single-title animate__animated animate__flipInX"><span>Agent设计架构(二)--Plan-and-Solve</span></h1></div><div class=post-meta><div class=post-meta-line><span class=post-author><a href=https://github.com/zenthys title=作者 target=_blank rel="external nofollow noopener noreferrer author" class=author><img class=avatar src=/images/avatar.png alt=zenthys height=16 width=16>&nbsp;zenthys</a></span><span class=post-included-in>&nbsp;收录于 <a href=/categories/ai/ class=post-category title="分类 - AI"><i class="fa-regular fa-folder" aria-hidden=true></i> AI</a></span></div><div class=post-meta-line><span title="发布于 2026-02-12 22:23:44"><i class="fa-solid fa-calendar-days me-1" aria-hidden=true></i><time datetime=2026-02-12>2026-02-12</time></span>&nbsp;<span title="3982 字"><i class="fa-solid fa-pencil-alt me-1" aria-hidden=true></i>约 4000 字</span>&nbsp;<span><i class="fa-regular fa-clock me-1" aria-hidden=true></i>预计阅读 8 分钟</span>&nbsp;</div></div><div class="details toc" id=toc-static data-kept=false><div class="details-summary toc-title"><span>目录</span>
+<span><i class="details-icon fa-solid fa-angle-right" aria-hidden=true></i></span></div><div class="details-content toc-content" id=toc-content-static><nav id=TableOfContents><ul><li><a href=#1-工作原理>1. 工作原理</a></li><li><a href=#2-规划阶段>2. 规划阶段</a></li><li><a href=#3-执行阶段>3. 执行阶段</a></li><li><a href=#4-智能体构造>4. 智能体构造</a></li><li><a href=#5-运行实例与分析>5. 运行实例与分析</a></li></ul></nav></div></div><div class=content id=content><p>在<a href=agent%e8%ae%be%e8%ae%a1%e6%9e%b6%e6%9e%84%28%e4%b8%80%29--react.md>agent设计架构(一)&ndash;ReAct</a>掌握了 ReAct 这种反应式的、步进决策的智能体范式后，接下来将探讨一种风格迥异但同样强大的方法，Plan-and-Solve。顾名思义，这种范式将任务处理明确地分为两个阶段：先规划 (Plan)，后执行 (Solve)。</p><h2 class=heading-element id=1-工作原理><span>1. 工作原理</span>
+<a href=#1-%e5%b7%a5%e4%bd%9c%e5%8e%9f%e7%90%86 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h2><p>Plan-and-Solve Prompting 由 Lei Wang 在2023年提出。其核心动机是为了解决思维链在处理多步骤、复杂问题时容易“偏离轨道”的问题。</p><p>与 ReAct 将思考和行动融合在每一步不同，Plan-and-Solve 将整个流程解耦为两个核心阶段。</p><ol><li><strong>规划阶段 (Planning Phase)：</strong> 首先，智能体会接收用户的完整问题。它的第一个任务不是直接去解决问题或调用工具，而是将问题分解，并制定出一个清晰、分步骤的行动计划。这个计划本身就是一次大语言模型的调用产物。</li><li><strong>执行阶段 (Solving Phase)：</strong> 在获得完整的计划后，智能体进入执行阶段。它会严格按照计划中的步骤，逐一执行。每一步的执行都可能是一次独立的 LLM 调用，或者是对上一步结果的加工处理，直到计划中的所有步骤都完成，最终得出答案。</li></ol><p><img loading=lazy src=/ai/images/plan-and-solve.png alt="Plan-and-Solve 范式的两阶段工作流"></p><p>Plan-and-Solve 尤其适用于那些结构性强、可以被清晰分解的复杂任务，例如：</p><ul><li><strong>多步数学应用题</strong>：需要先列出计算步骤，再逐一求解。</li><li><strong>需要整合多个信息源的报告撰写</strong>：需要先规划好报告结构（引言、数据来源A、数据来源B、总结），再逐一填充内容。</li><li><strong>代码生成任务</strong>：需要先构思好函数、类和模块的结构，再逐一实现。</li></ul><h2 class=heading-element id=2-规划阶段><span>2. 规划阶段</span>
+<a href=#2-%e8%a7%84%e5%88%92%e9%98%b6%e6%ae%b5 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h2><p>为了凸显 Plan-and-Solve 范式在结构化推理任务上的优势，我们将不使用工具的方式，而是通过提示词的设计，完成一个推理任务。</p><p>这类任务的特点是，答案无法通过单次查询或计算得出，必须先将问题分解为一系列逻辑连贯的子步骤，然后按顺序求解。这恰好能发挥 Plan-and-Solve “先规划，后执行”的核心能力。</p><p>我们的目标问题是：“一个水果店周一卖出了15个苹果。周二卖出的苹果数量是周一的两倍。周三卖出的数量比周二少了5个。请问这三天总共卖出了多少个苹果？”</p><p>这个问题对于大语言模型来说并不算特别困难，但它包含了一个清晰的逻辑链条可供参考。在某些实际的逻辑难题上，如果大模型不能高质量的推理出准确的答案，可以参考这个设计模式来设计自己的Agent完成任务。智能体需要：</p><ol><li><strong>规划阶段</strong>：首先，将问题分解为三个独立的计算步骤（计算周二销量、计算周三销量、计算总销量）。</li><li><strong>执行阶段</strong>：然后，严格按照计划，一步步执行计算，并将每一步的结果作为下一步的输入，最终得出总和。</li></ol><p>规划阶段的目标是让大语言模型接收原始问题，并输出一个清晰、分步骤的行动计划。这个计划必须是结构化的，以便我们的代码可以轻松解析并逐一执行。因此，我们设计的提示词需要明确地告诉模型它的角色和任务，并给出一个输出格式的范例。</p><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-fallback"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback><span class=line><span class=cl>PLANNER_PROMPT_TEMPLATE = &#34;&#34;&#34;
+</span></span><span class=line><span class=cl>你是一个顶级的AI规划专家。你的任务是将用户提出的复杂问题分解成一个由多个简单步骤组成的行动计划。
+</span></span><span class=line><span class=cl>请确保计划中的每个步骤都是一个独立的、可执行的子任务，并且严格按照逻辑顺序排列。
+</span></span><span class=line><span class=cl>你的输出必须是一个Python列表，其中每个元素都是一个描述子任务的字符串。
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>问题: {question}
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>请严格按照以下格式输出你的计划,```python与```作为前后缀是必要的:
+</span></span><span class=line><span class=cl>```python
+</span></span><span class=line><span class=cl>[&#34;步骤1&#34;, &#34;步骤2&#34;, &#34;步骤3&#34;, ...]
+</span></span><span class=line><span class=cl>```
+</span></span><span class=line><span class=cl>&#34;&#34;&#34;</span></span></code></pre></td></tr></table></div></div></div><p>这个提示词通过以下几点确保了输出的质量和稳定性：</p><ul><li><strong>角色设定：</strong> “顶级的AI规划专家”，激发模型的专业能力。</li><li><strong>任务描述：</strong> 清晰地定义了“分解问题”的目标。</li><li><strong>格式约束：</strong> 强制要求输出为一个 Python 列表格式的字符串，这极大地简化了后续代码的解析工作，使其比解析自然语言更稳定、更可靠。</li></ul><p>接下来，我们将这个提示词逻辑封装成一个 Planner 类，这个类也是我们的规划器。</p><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-python"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=k>class</span> <span class=nc>Planner</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>    <span class=k>def</span> <span class=fm>__init__</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>llm_client</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=bp>self</span><span class=o>.</span><span class=n>llm_client</span> <span class=o>=</span> <span class=n>llm_client</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=k>def</span> <span class=nf>plan</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>question</span><span class=p>:</span> <span class=nb>str</span><span class=p>)</span> <span class=o>-&gt;</span> <span class=nb>list</span><span class=p>[</span><span class=nb>str</span><span class=p>]:</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;&#34;&#34;
+</span></span></span><span class=line><span class=cl><span class=s2>        根据用户问题生成一个行动计划。
+</span></span></span><span class=line><span class=cl><span class=s2>        &#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>        <span class=n>prompt</span> <span class=o>=</span> <span class=n>PLANNER_PROMPT_TEMPLATE</span><span class=o>.</span><span class=n>format</span><span class=p>(</span><span class=n>question</span><span class=o>=</span><span class=n>question</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        
+</span></span><span class=line><span class=cl>        <span class=c1># 为了生成计划，我们构建一个简单的消息列表</span>
+</span></span><span class=line><span class=cl>        <span class=n>messages</span> <span class=o>=</span> <span class=p>[{</span><span class=s2>&#34;role&#34;</span><span class=p>:</span> <span class=s2>&#34;user&#34;</span><span class=p>,</span> <span class=s2>&#34;content&#34;</span><span class=p>:</span> <span class=n>prompt</span><span class=p>}]</span>
+</span></span><span class=line><span class=cl>        
+</span></span><span class=line><span class=cl>        <span class=nb>print</span><span class=p>(</span><span class=s2>&#34;--- 正在生成计划 ---&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=c1># 使用流式输出来获取完整的计划</span>
+</span></span><span class=line><span class=cl>        <span class=n>response_text</span> <span class=o>=</span> <span class=bp>self</span><span class=o>.</span><span class=n>llm_client</span><span class=o>.</span><span class=n>think</span><span class=p>(</span><span class=n>messages</span><span class=o>=</span><span class=n>messages</span><span class=p>)</span> <span class=ow>or</span> <span class=s2>&#34;&#34;</span>
+</span></span><span class=line><span class=cl>        
+</span></span><span class=line><span class=cl>        <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;✅ 计划已生成:</span><span class=se>\n</span><span class=si>{</span><span class=n>response_text</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        
+</span></span><span class=line><span class=cl>        <span class=c1># 解析LLM输出的列表字符串</span>
+</span></span><span class=line><span class=cl>        <span class=k>try</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=c1># 找到```python和```之间的内容</span>
+</span></span><span class=line><span class=cl>            <span class=n>plan_str</span> <span class=o>=</span> <span class=n>response_text</span><span class=o>.</span><span class=n>split</span><span class=p>(</span><span class=s2>&#34;```python&#34;</span><span class=p>)[</span><span class=mi>1</span><span class=p>]</span><span class=o>.</span><span class=n>split</span><span class=p>(</span><span class=s2>&#34;```&#34;</span><span class=p>)[</span><span class=mi>0</span><span class=p>]</span><span class=o>.</span><span class=n>strip</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>            <span class=c1># 使用ast.literal_eval来安全地执行字符串，将其转换为Python列表</span>
+</span></span><span class=line><span class=cl>            <span class=n>plan</span> <span class=o>=</span> <span class=n>ast</span><span class=o>.</span><span class=n>literal_eval</span><span class=p>(</span><span class=n>plan_str</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=k>return</span> <span class=n>plan</span> <span class=k>if</span> <span class=nb>isinstance</span><span class=p>(</span><span class=n>plan</span><span class=p>,</span> <span class=nb>list</span><span class=p>)</span> <span class=k>else</span> <span class=p>[]</span>
+</span></span><span class=line><span class=cl>        <span class=k>except</span> <span class=p>(</span><span class=ne>ValueError</span><span class=p>,</span> <span class=ne>SyntaxError</span><span class=p>,</span> <span class=ne>IndexError</span><span class=p>)</span> <span class=k>as</span> <span class=n>e</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;❌ 解析计划时出错: </span><span class=si>{</span><span class=n>e</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;原始响应: </span><span class=si>{</span><span class=n>response_text</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=k>return</span> <span class=p>[]</span>
+</span></span><span class=line><span class=cl>        <span class=k>except</span> <span class=ne>Exception</span> <span class=k>as</span> <span class=n>e</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;❌ 解析计划时发生未知错误: </span><span class=si>{</span><span class=n>e</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=k>return</span> <span class=p>[]</span></span></span></code></pre></td></tr></table></div></div></div><h2 class=heading-element id=3-执行阶段><span>3. 执行阶段</span>
+<a href=#3-%e6%89%a7%e8%a1%8c%e9%98%b6%e6%ae%b5 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h2><p>在规划器 (Planner) 生成了清晰的行动蓝图后，我们就需要一个执行器 (Executor) 来逐一完成计划中的任务。执行器不仅负责调用大语言模型来解决每个子问题，还承担着一个至关重要的角色：状态管理。它必须记录每一步的执行结果，并将其作为上下文提供给后续步骤，确保信息在整个任务链条中顺畅流动</p><p>执行器的提示词与规划器不同。它的目标不是分解问题，而是在已有上下文的基础上，专注解决当前这一个步骤。</p><p>因此，提示词需要包含以下关键信息：</p><ul><li><strong>原始问题：</strong> 确保模型始终了解最终目标。</li><li><strong>完整计划：</strong> 让模型了解当前步骤在整个任务中的位置。</li><li><strong>历史步骤与结果：</strong> 提供至今为止已经完成的工作，作为当前步骤的直接输入。</li><li><strong>当前步骤：</strong> 明确指示模型现在需要解决哪一个具体任务。</li></ul><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-python"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=n>EXECUTOR_PROMPT_TEMPLATE</span> <span class=o>=</span> <span class=s2>&#34;&#34;&#34;
+</span></span></span><span class=line><span class=cl><span class=s2>你是一位顶级的AI执行专家。你的任务是严格按照给定的计划，一步步地解决问题。
+</span></span></span><span class=line><span class=cl><span class=s2>你将收到原始问题、完整的计划、以及到目前为止已经完成的步骤和结果。
+</span></span></span><span class=line><span class=cl><span class=s2>请你专注于解决“当前步骤”，并仅输出该步骤的最终答案，不要输出任何额外的解释或对话。
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2># 原始问题:
+</span></span></span><span class=line><span class=cl><span class=si>{question}</span><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2># 完整计划:
+</span></span></span><span class=line><span class=cl><span class=si>{plan}</span><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2># 历史步骤与结果:
+</span></span></span><span class=line><span class=cl><span class=si>{history}</span><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2># 当前步骤:
+</span></span></span><span class=line><span class=cl><span class=si>{current_step}</span><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>
+</span></span></span><span class=line><span class=cl><span class=s2>请仅输出针对“当前步骤”的回答:
+</span></span></span><span class=line><span class=cl><span class=s2>&#34;&#34;&#34;</span></span></span></code></pre></td></tr></table></div></div></div><p>我们将执行逻辑封装到 Executor 类中。这个类将循环遍历计划，调用 LLM，并维护一个历史记录（状态）。</p><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-python"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=k>class</span> <span class=nc>Executor</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>    <span class=k>def</span> <span class=fm>__init__</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>llm_client</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=bp>self</span><span class=o>.</span><span class=n>llm_client</span> <span class=o>=</span> <span class=n>llm_client</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=k>def</span> <span class=nf>execute</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>question</span><span class=p>:</span> <span class=nb>str</span><span class=p>,</span> <span class=n>plan</span><span class=p>:</span> <span class=nb>list</span><span class=p>[</span><span class=nb>str</span><span class=p>])</span> <span class=o>-&gt;</span> <span class=nb>str</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;&#34;&#34;
+</span></span></span><span class=line><span class=cl><span class=s2>        根据计划，逐步执行并解决问题。
+</span></span></span><span class=line><span class=cl><span class=s2>        &#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>        <span class=n>history</span> <span class=o>=</span> <span class=s2>&#34;&#34;</span> <span class=c1># 用于存储历史步骤和结果的字符串</span>
+</span></span><span class=line><span class=cl>        
+</span></span><span class=line><span class=cl>        <span class=nb>print</span><span class=p>(</span><span class=s2>&#34;</span><span class=se>\n</span><span class=s2>--- 正在执行计划 ---&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        
+</span></span><span class=line><span class=cl>        <span class=k>for</span> <span class=n>i</span><span class=p>,</span> <span class=n>step</span> <span class=ow>in</span> <span class=nb>enumerate</span><span class=p>(</span><span class=n>plan</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>            <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;</span><span class=se>\n</span><span class=s2>-&gt; 正在执行步骤 </span><span class=si>{</span><span class=n>i</span><span class=o>+</span><span class=mi>1</span><span class=si>}</span><span class=s2>/</span><span class=si>{</span><span class=nb>len</span><span class=p>(</span><span class=n>plan</span><span class=p>)</span><span class=si>}</span><span class=s2>: </span><span class=si>{</span><span class=n>step</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            
+</span></span><span class=line><span class=cl>            <span class=n>prompt</span> <span class=o>=</span> <span class=n>EXECUTOR_PROMPT_TEMPLATE</span><span class=o>.</span><span class=n>format</span><span class=p>(</span>
+</span></span><span class=line><span class=cl>                <span class=n>question</span><span class=o>=</span><span class=n>question</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>                <span class=n>plan</span><span class=o>=</span><span class=n>plan</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>                <span class=n>history</span><span class=o>=</span><span class=n>history</span> <span class=k>if</span> <span class=n>history</span> <span class=k>else</span> <span class=s2>&#34;无&#34;</span><span class=p>,</span> <span class=c1># 如果是第一步，则历史为空</span>
+</span></span><span class=line><span class=cl>                <span class=n>current_step</span><span class=o>=</span><span class=n>step</span>
+</span></span><span class=line><span class=cl>            <span class=p>)</span>
+</span></span><span class=line><span class=cl>            
+</span></span><span class=line><span class=cl>            <span class=n>messages</span> <span class=o>=</span> <span class=p>[{</span><span class=s2>&#34;role&#34;</span><span class=p>:</span> <span class=s2>&#34;user&#34;</span><span class=p>,</span> <span class=s2>&#34;content&#34;</span><span class=p>:</span> <span class=n>prompt</span><span class=p>}]</span>
+</span></span><span class=line><span class=cl>            
+</span></span><span class=line><span class=cl>            <span class=n>response_text</span> <span class=o>=</span> <span class=bp>self</span><span class=o>.</span><span class=n>llm_client</span><span class=o>.</span><span class=n>think</span><span class=p>(</span><span class=n>messages</span><span class=o>=</span><span class=n>messages</span><span class=p>)</span> <span class=ow>or</span> <span class=s2>&#34;&#34;</span>
+</span></span><span class=line><span class=cl>            
+</span></span><span class=line><span class=cl>            <span class=c1># 更新历史记录，为下一步做准备</span>
+</span></span><span class=line><span class=cl>            <span class=n>history</span> <span class=o>+=</span> <span class=sa>f</span><span class=s2>&#34;步骤 </span><span class=si>{</span><span class=n>i</span><span class=o>+</span><span class=mi>1</span><span class=si>}</span><span class=s2>: </span><span class=si>{</span><span class=n>step</span><span class=si>}</span><span class=se>\n</span><span class=s2>结果: </span><span class=si>{</span><span class=n>response_text</span><span class=si>}</span><span class=se>\n\n</span><span class=s2>&#34;</span>
+</span></span><span class=line><span class=cl>            
+</span></span><span class=line><span class=cl>            <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;✅ 步骤 </span><span class=si>{</span><span class=n>i</span><span class=o>+</span><span class=mi>1</span><span class=si>}</span><span class=s2> 已完成，结果: </span><span class=si>{</span><span class=n>response_text</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>        <span class=c1># 循环结束后，最后一步的响应就是最终答案</span>
+</span></span><span class=line><span class=cl>        <span class=n>final_answer</span> <span class=o>=</span> <span class=n>response_text</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>final_answer</span></span></span></code></pre></td></tr></table></div></div></div><h2 class=heading-element id=4-智能体构造><span>4. 智能体构造</span>
+<a href=#4-%e6%99%ba%e8%83%bd%e4%bd%93%e6%9e%84%e9%80%a0 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h2><p>现在已经分别构建了负责“规划”的 Planner 和负责“执行”的 Executor。最后一步是将这两个组件整合到一个统一的智能体 PlanAndSolveAgent 中，并赋予它解决问题的完整能力。我们将创建一个主类 PlanAndSolveAgent，它的职责非常清晰：接收一个 LLM 客户端，初始化内部的规划器和执行器，并提供一个简单的 run 方法来启动整个流程。</p><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-python"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=k>class</span> <span class=nc>PlanAndSolveAgent</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>    <span class=k>def</span> <span class=fm>__init__</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>llm_client</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;&#34;&#34;
+</span></span></span><span class=line><span class=cl><span class=s2>        初始化智能体，同时创建规划器和执行器实例。
+</span></span></span><span class=line><span class=cl><span class=s2>        &#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>        <span class=bp>self</span><span class=o>.</span><span class=n>llm_client</span> <span class=o>=</span> <span class=n>llm_client</span>
+</span></span><span class=line><span class=cl>        <span class=bp>self</span><span class=o>.</span><span class=n>planner</span> <span class=o>=</span> <span class=n>Planner</span><span class=p>(</span><span class=bp>self</span><span class=o>.</span><span class=n>llm_client</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=bp>self</span><span class=o>.</span><span class=n>executor</span> <span class=o>=</span> <span class=n>Executor</span><span class=p>(</span><span class=bp>self</span><span class=o>.</span><span class=n>llm_client</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=k>def</span> <span class=nf>run</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>question</span><span class=p>:</span> <span class=nb>str</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;&#34;&#34;
+</span></span></span><span class=line><span class=cl><span class=s2>        运行智能体的完整流程:先规划，后执行。
+</span></span></span><span class=line><span class=cl><span class=s2>        &#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>        <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;</span><span class=se>\n</span><span class=s2>--- 开始处理问题 ---</span><span class=se>\n</span><span class=s2>问题: </span><span class=si>{</span><span class=n>question</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        
+</span></span><span class=line><span class=cl>        <span class=c1># 1. 调用规划器生成计划</span>
+</span></span><span class=line><span class=cl>        <span class=n>plan</span> <span class=o>=</span> <span class=bp>self</span><span class=o>.</span><span class=n>planner</span><span class=o>.</span><span class=n>plan</span><span class=p>(</span><span class=n>question</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        
+</span></span><span class=line><span class=cl>        <span class=c1># 检查计划是否成功生成</span>
+</span></span><span class=line><span class=cl>        <span class=k>if</span> <span class=ow>not</span> <span class=n>plan</span><span class=p>:</span>
+</span></span><span class=line><span class=cl>            <span class=nb>print</span><span class=p>(</span><span class=s2>&#34;</span><span class=se>\n</span><span class=s2>--- 任务终止 --- </span><span class=se>\n</span><span class=s2>无法生成有效的行动计划。&#34;</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>            <span class=k>return</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>        <span class=c1># 2. 调用执行器执行计划</span>
+</span></span><span class=line><span class=cl>        <span class=n>final_answer</span> <span class=o>=</span> <span class=bp>self</span><span class=o>.</span><span class=n>executor</span><span class=o>.</span><span class=n>execute</span><span class=p>(</span><span class=n>question</span><span class=p>,</span> <span class=n>plan</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        
+</span></span><span class=line><span class=cl>        <span class=nb>print</span><span class=p>(</span><span class=sa>f</span><span class=s2>&#34;</span><span class=se>\n</span><span class=s2>--- 任务完成 ---</span><span class=se>\n</span><span class=s2>最终答案: </span><span class=si>{</span><span class=n>final_answer</span><span class=si>}</span><span class=s2>&#34;</span><span class=p>)</span></span></span></code></pre></td></tr></table></div></div></div><p>这个 PlanAndSolveAgent 类的设计体现了“组合优于继承”的原则。它本身不包含复杂的逻辑，而是作为一个协调者 (Orchestrator)，清晰地调用其内部组件来完成任务。</p><h2 class=heading-element id=5-运行实例与分析><span>5. 运行实例与分析</span>
+<a href=#5-%e8%bf%90%e8%a1%8c%e5%ae%9e%e4%be%8b%e4%b8%8e%e5%88%86%e6%9e%90 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h2><p>下面是一次真实的运行记录。</p><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-bash"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>--- 开始处理问题 ---
+</span></span><span class=line><span class=cl>问题: 一个水果店周一卖出了15个苹果。周二卖出的苹果数量是周一的两倍。周三卖出的数量比周二少了5个。请问这三天总共卖出了多少个苹果？
+</span></span><span class=line><span class=cl>--- 正在生成计划 ---
+</span></span><span class=line><span class=cl>🧠 正在调用 xxxx 模型...
+</span></span><span class=line><span class=cl>✅ 大语言模型响应成功:
+</span></span><span class=line><span class=cl><span class=sb>```</span>python
+</span></span><span class=line><span class=cl><span class=o>[</span><span class=s2>&#34;计算周一卖出的苹果数量： 15个&#34;</span>, <span class=s2>&#34;计算周二卖出的苹果数量： 周一数量 × 2 = 15 × 2 = 30个&#34;</span>, <span class=s2>&#34;计算周三卖出的苹果数量： 周二数量 - 5 = 30 - 5 = 25个&#34;</span>, <span class=s2>&#34;计算三天总销量： 周一 + 周二 + 周三 = 15 + 30 + 25 = 70个&#34;</span><span class=o>]</span>
+</span></span><span class=line><span class=cl><span class=sb>```</span>
+</span></span><span class=line><span class=cl>✅ 计划已生成:
+</span></span><span class=line><span class=cl><span class=sb>```</span>python
+</span></span><span class=line><span class=cl><span class=o>[</span><span class=s2>&#34;计算周一卖出的苹果数量： 15个&#34;</span>, <span class=s2>&#34;计算周二卖出的苹果数量： 周一数量 × 2 = 15 × 2 = 30个&#34;</span>, <span class=s2>&#34;计算周三卖出的苹果数量： 周二数量 - 5 = 30 - 5 = 25个&#34;</span>, <span class=s2>&#34;计算三天总销量： 周一 + 周二 + 周三 = 15 + 30 + 25 = 70个&#34;</span><span class=o>]</span>
+</span></span><span class=line><span class=cl><span class=sb>```</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>--- 正在执行计划 ---
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>-&gt; 正在执行步骤 1/4: 计算周一卖出的苹果数量: 15个
+</span></span><span class=line><span class=cl>🧠 正在调用 xxxx 模型...
+</span></span><span class=line><span class=cl>✅ 大语言模型响应成功:
+</span></span><span class=line><span class=cl><span class=m>15</span>
+</span></span><span class=line><span class=cl>✅ 步骤 <span class=m>1</span> 已完成，结果: <span class=m>15</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>-&gt; 正在执行步骤 2/4: 计算周二卖出的苹果数量: 周一数量 × <span class=nv>2</span> <span class=o>=</span> <span class=m>15</span> × <span class=nv>2</span> <span class=o>=</span> 30个
+</span></span><span class=line><span class=cl>🧠 正在调用 xxxx 模型...
+</span></span><span class=line><span class=cl>✅ 大语言模型响应成功:
+</span></span><span class=line><span class=cl><span class=m>30</span>
+</span></span><span class=line><span class=cl>✅ 步骤 <span class=m>2</span> 已完成，结果: <span class=m>30</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>-&gt; 正在执行步骤 3/4: 计算周三卖出的苹果数量: 周二数量 - <span class=nv>5</span> <span class=o>=</span> <span class=m>30</span> - <span class=nv>5</span> <span class=o>=</span> 25个
+</span></span><span class=line><span class=cl>🧠 正在调用 xxxx 模型...
+</span></span><span class=line><span class=cl>✅ 大语言模型响应成功:
+</span></span><span class=line><span class=cl><span class=m>25</span>
+</span></span><span class=line><span class=cl>✅ 步骤 <span class=m>3</span> 已完成，结果: <span class=m>25</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>-&gt; 正在执行步骤 4/4: 计算三天总销量: 周一 + 周二 + <span class=nv>周三</span> <span class=o>=</span> <span class=m>15</span> + <span class=m>30</span> + <span class=nv>25</span> <span class=o>=</span> 70个
+</span></span><span class=line><span class=cl>🧠 正在调用 xxxx 模型...
+</span></span><span class=line><span class=cl>✅ 大语言模型响应成功:
+</span></span><span class=line><span class=cl><span class=m>70</span>
+</span></span><span class=line><span class=cl>✅ 步骤 <span class=m>4</span> 已完成，结果: <span class=m>70</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>--- 任务完成 ---
+</span></span><span class=line><span class=cl>最终答案: <span class=m>70</span></span></span></code></pre></td></tr></table></div></div></div><p>从上面的输出日志中，我们可以清晰地看到 Plan-and-Solve 范式的工作流程：</p><ul><li><strong>规划阶段：</strong> 智能体首先调用 Planner，成功地将复杂的应用题分解成了一个包含四个逻辑步骤的 Python 列表。这个结构化的计划为后续的执行奠定了基础。</li><li><strong>执行阶段：</strong> Executor 严格按照生成的计划，一步一步地向下执行。在每一步中，它都将历史结果作为上下文，确保了信息的正确传递（例如，步骤2正确地使用了步骤1的结果“15个”，步骤3也正确使用了步骤2的结果“30个”）。</li><li><strong>结果</strong>：整个过程逻辑清晰，步骤明确，最终智能体准确地得出了正确答案“70个”。</li></ul></div><div class=post-footer id=post-footer><div class=post-info><div class=post-info-line><div class=post-info-mod><span title="更新于 2026-02-12 22:23:44">更新于 2026-02-12&nbsp;</span></div><div class=post-info-license><span><a rel="license external nofollow noopener noreferrer" href=https://creativecommons.org/licenses/by-nc-sa/4.0/ target=_blank>CC BY-NC-SA 4.0</a></span></div></div><div class=post-info-line><div class=post-info-md><span><a href=vscode://file/E:%5cleetcode%5chugo-blog%5ccontent%5cAI%5cagent%e8%ae%be%e8%ae%a1%e6%9e%b6%e6%9e%84%28%e4%ba%8c%29--Plan-and-Solve.md title=在编辑器中打开 target=_blank rel="external nofollow noopener noreferrer" class=link-to-vscode>在编辑器中打开</a></span></div><div class=post-info-share><span></span></div></div></div><div class=post-info-more><section class=post-tags><i class="fa-solid fa-tags me-1" aria-hidden=true></i><a href=/tags/agent/ class=post-tag title="标签 - Agent">Agent</a><a href=/tags/ai/ class=post-tag title="标签 - AI">AI</a></section><section><span><a href=javascript:void(0); onclick=window.history.back()>返回</a></span>&nbsp;|&nbsp;<span><a href=/>主页</a></span></section></div><div class=post-nav><a href=/ai/agent%E8%AE%BE%E8%AE%A1%E6%9E%B6%E6%9E%84%E4%B8%80--react/ class=post-nav-item rel=prev title=Agent设计架构(一)--ReAct><i class="fa-solid fa-angle-left" aria-hidden=true></i>Agent设计架构(一)--ReAct</a><a href=/ai/agent%E8%AE%BE%E8%AE%A1%E6%9E%B6%E6%9E%84%E4%B8%89--reflection/ class=post-nav-item rel=next title=Agent设计架构(三)--Reflection>Agent设计架构(三)--Reflection<i class="fa-solid fa-angle-right" aria-hidden=true></i></a></div></div></article><aside class=toc id=toc-auto aria-label=目录><h2 class=toc-title>目录&nbsp;<i class="toc-icon fa-solid fa-angle-down" aria-hidden=true></i></h2><div class=toc-content id=toc-content-auto></div></aside><dialog id=toc-dialog aria-labelledby=toc-dialog-title role=dialog><div class=toc><h2 class=toc-title>目录</h2><div class=toc-content id=toc-content-drawer><nav><ul><li><a href=#1-工作原理>1. 工作原理</a></li><li><a href=#2-规划阶段>2. 规划阶段</a></li><li><a href=#3-执行阶段>3. 执行阶段</a></li><li><a href=#4-智能体构造>4. 智能体构造</a></li><li><a href=#5-运行实例与分析>5. 运行实例与分析</a></li></ul></nav></div></div></dialog></main><footer class=footer><div class=footer-container><div class="footer-line powered">由 <a href=https://gohugo.io/ target=_blank rel="external nofollow noopener noreferrer" title="Hugo 0.163.1"><img class=hugo-icon src=/images/hugo.min.svg alt="Hugo logo"> Hugo</a> 强力驱动 | 主题 - <a href=https://github.com/hugo-fixit/FixIt target=_blank rel=external title="FixIt v0.4.5"><img class=fixit-icon src=/images/fixit.min.svg alt="FixIt logo"> FixIt</a></div><div class="footer-line copyright" itemscope itemtype=http://schema.org/CreativeWork><i class="fa-regular fa-copyright" aria-hidden=true></i>
+<span itemprop=copyrightYear>2025 - 2026</span><span class=author itemprop=copyrightHolder>
+<a href=https://github.com/zenthys target=_blank rel="external nofollow noopener noreferrer">zenthys</a></span></div></div></footer></div><div class=widgets><div class=fixed-buttons><div class="fixed-button back-to-top animate__faster d-none" role=button aria-label=回到顶部><i class="fa-solid fa-arrow-up" aria-hidden=true></i></div><div id=toc-drawer-button class="fixed-button toc-drawer-button d-none" role=button aria-label=目录><i class="fa-solid fa-bars" aria-hidden=true></i></div></div><div id=mask></div><noscript><div class=noscript-warning>该网站在启用 JavaScript 的情况下效果最佳。</div></noscript></div><link rel=stylesheet href=/lib/cookieconsent/cookieconsent.min.css><script src=/lib/autocomplete/autocomplete.min.js defer></script><script src=/lib/fuse/fuse.min.js defer></script><script src=/lib/cookieconsent/cookieconsent.min.js defer></script><script src=/lib/cell-tooltip/cell-tooltip.umd.js defer></script><script src=/js/config/079f5bdc8814b91bc0e237db4710a71f.js defer></script><script src=/js/theme.min.js defer></script></body></html>

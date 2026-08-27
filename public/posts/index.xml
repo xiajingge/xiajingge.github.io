@@ -1,19 +1,91 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Posts on cubxxw is blog</title>
+    <title>文章 - zenthys&#39;s blog</title>
     <link>http://localhost:1313/posts/</link>
-    <description>Recent content in Posts on cubxxw is blog</description>
-    <generator>Hugo -- 0.155.2</generator>
-    <language>en-us</language>
-    <lastBuildDate>Mon, 09 Feb 2026 15:57:24 +0800</lastBuildDate>
+    <description>记录 Go、AI、中间件与后端开发的技术博客</description>
+    <generator>Hugo 0.163.1 &amp; FixIt v0.4.5</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Sat, 16 May 2026 16:56:09 +0800</lastBuildDate>
     <atom:link href="http://localhost:1313/posts/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>My First Post</title>
+      <title>动态规划：子序列问题</title>
+      <link>http://localhost:1313/posts/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92%E5%AD%90%E5%BA%8F%E5%88%97%E9%97%AE%E9%A2%98/</link>
+      <pubDate>Sat, 16 May 2026 16:56:09 +0800</pubDate>
+      <guid>http://localhost:1313/posts/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92%E5%AD%90%E5%BA%8F%E5%88%97%E9%97%AE%E9%A2%98/</guid>
+      <category domain="http://localhost:1313/categories/%E6%95%B0%E6%8D%AE%E7%AE%97%E6%B3%95/">数据算法</category>
+      <description>&lt;h2 class=&#34;heading-element&#34; id=&#34;1-最长递增子序列&#34;&gt;&lt;span&gt;1. 最长递增子序列&lt;/span&gt;&#xA;  &lt;a href=&#34;#1-%e6%9c%80%e9%95%bf%e9%80%92%e5%a2%9e%e5%ad%90%e5%ba%8f%e5%88%97&#34; class=&#34;heading-mark&#34;&gt;&#xA;    &lt;svg class=&#34;octicon octicon-link&#34; viewBox=&#34;0 0 16 16&#34; version=&#34;1.1&#34; width=&#34;16&#34; height=&#34;16&#34; aria-hidden=&#34;true&#34;&gt;&lt;path d=&#34;m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z&#34;&gt;&lt;/path&gt;&lt;/svg&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h2&gt;&lt;h3 class=&#34;heading-element&#34; id=&#34;题目描述&#34;&gt;&lt;span&gt;题目描述&lt;/span&gt;&#xA;  &lt;a href=&#34;#%e9%a2%98%e7%9b%ae%e6%8f%8f%e8%bf%b0&#34; class=&#34;heading-mark&#34;&gt;&#xA;    &lt;svg class=&#34;octicon octicon-link&#34; viewBox=&#34;0 0 16 16&#34; version=&#34;1.1&#34; width=&#34;16&#34; height=&#34;16&#34; aria-hidden=&#34;true&#34;&gt;&lt;path d=&#34;m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z&#34;&gt;&lt;/path&gt;&lt;/svg&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h3&gt;&lt;ol start=&#34;300&#34;&gt;&#xA;&lt;li&gt;给你一个整数数组 nums ，找到其中最长严格递增子序列的长度。&lt;/li&gt;&#xA;&lt;/ol&gt;&#xA;&lt;p&gt;子序列是由数组派生而来的序列，删除（或不删除）数组中的元素而不改变其余元素的顺序。例如，[3,6,2,7] 是数组 [0,3,1,6,2,2,7] 的子序列。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>动态规划：买卖股票</title>
+      <link>http://localhost:1313/posts/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92%E4%B9%B0%E5%8D%96%E8%82%A1%E7%A5%A8/</link>
+      <pubDate>Fri, 15 May 2026 13:42:12 +0800</pubDate>
+      <guid>http://localhost:1313/posts/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92%E4%B9%B0%E5%8D%96%E8%82%A1%E7%A5%A8/</guid>
+      <category domain="http://localhost:1313/categories/%E6%95%B0%E6%8D%AE%E7%AE%97%E6%B3%95/">数据算法</category>
+      <description>&lt;h2 class=&#34;heading-element&#34; id=&#34;1-买卖股票的最佳时机&#34;&gt;&lt;span&gt;1. 买卖股票的最佳时机&lt;/span&gt;&#xA;  &lt;a href=&#34;#1-%e4%b9%b0%e5%8d%96%e8%82%a1%e7%a5%a8%e7%9a%84%e6%9c%80%e4%bd%b3%e6%97%b6%e6%9c%ba&#34; class=&#34;heading-mark&#34;&gt;&#xA;    &lt;svg class=&#34;octicon octicon-link&#34; viewBox=&#34;0 0 16 16&#34; version=&#34;1.1&#34; width=&#34;16&#34; height=&#34;16&#34; aria-hidden=&#34;true&#34;&gt;&lt;path d=&#34;m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z&#34;&gt;&lt;/path&gt;&lt;/svg&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h2&gt;&lt;h3 class=&#34;heading-element&#34; id=&#34;题目描述&#34;&gt;&lt;span&gt;题目描述&lt;/span&gt;&#xA;  &lt;a href=&#34;#%e9%a2%98%e7%9b%ae%e6%8f%8f%e8%bf%b0&#34; class=&#34;heading-mark&#34;&gt;&#xA;    &lt;svg class=&#34;octicon octicon-link&#34; viewBox=&#34;0 0 16 16&#34; version=&#34;1.1&#34; width=&#34;16&#34; height=&#34;16&#34; aria-hidden=&#34;true&#34;&gt;&lt;path d=&#34;m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z&#34;&gt;&lt;/path&gt;&lt;/svg&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h3&gt;&lt;p&gt;给定一个数组 prices ，它的第 i 个元素 prices[i] 表示一支给定股票第 i 天的价格。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>动态规划：打家劫舍</title>
+      <link>http://localhost:1313/posts/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92%E6%89%93%E5%AE%B6%E5%8A%AB%E8%88%8D/</link>
+      <pubDate>Fri, 15 May 2026 11:50:19 +0800</pubDate>
+      <guid>http://localhost:1313/posts/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92%E6%89%93%E5%AE%B6%E5%8A%AB%E8%88%8D/</guid>
+      <category domain="http://localhost:1313/categories/%E6%95%B0%E6%8D%AE%E7%AE%97%E6%B3%95/">数据算法</category>
+      <description>&lt;h2 class=&#34;heading-element&#34; id=&#34;1-打家劫舍&#34;&gt;&lt;span&gt;1. 打家劫舍&lt;/span&gt;&#xA;  &lt;a href=&#34;#1-%e6%89%93%e5%ae%b6%e5%8a%ab%e8%88%8d&#34; class=&#34;heading-mark&#34;&gt;&#xA;    &lt;svg class=&#34;octicon octicon-link&#34; viewBox=&#34;0 0 16 16&#34; version=&#34;1.1&#34; width=&#34;16&#34; height=&#34;16&#34; aria-hidden=&#34;true&#34;&gt;&lt;path d=&#34;m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z&#34;&gt;&lt;/path&gt;&lt;/svg&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h2&gt;&lt;h3 class=&#34;heading-element&#34; id=&#34;题目描述&#34;&gt;&lt;span&gt;题目描述&lt;/span&gt;&#xA;  &lt;a href=&#34;#%e9%a2%98%e7%9b%ae%e6%8f%8f%e8%bf%b0&#34; class=&#34;heading-mark&#34;&gt;&#xA;    &lt;svg class=&#34;octicon octicon-link&#34; viewBox=&#34;0 0 16 16&#34; version=&#34;1.1&#34; width=&#34;16&#34; height=&#34;16&#34; aria-hidden=&#34;true&#34;&gt;&lt;path d=&#34;m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z&#34;&gt;&lt;/path&gt;&lt;/svg&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h3&gt;&lt;ol start=&#34;198&#34;&gt;&#xA;&lt;li&gt;你是一个专业的小偷，计划偷窃沿街的房屋。每间房内都藏有一定的现金，影响你偷窃的唯一制约因素就是相邻的房屋装有相互连通的防盗系统，如果两间相邻的房屋在同一晚上被小偷闯入，系统会自动报警。&lt;/li&gt;&#xA;&lt;/ol&gt;&#xA;&lt;p&gt;给定一个代表每个房屋存放金额的非负整数数组，计算你 不触动警报装置的情况下 ，一夜之内能够偷窃到的最高金额。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>动态规划：完全背包</title>
+      <link>http://localhost:1313/posts/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92%E5%AE%8C%E5%85%A8%E8%83%8C%E5%8C%85%E5%BA%94%E7%94%A8/</link>
+      <pubDate>Thu, 14 May 2026 18:55:19 +0800</pubDate>
+      <guid>http://localhost:1313/posts/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92%E5%AE%8C%E5%85%A8%E8%83%8C%E5%8C%85%E5%BA%94%E7%94%A8/</guid>
+      <category domain="http://localhost:1313/categories/%E6%95%B0%E6%8D%AE%E7%AE%97%E6%B3%95/">数据算法</category>
+      <description>&lt;p&gt;这一节主要讲的是完全背包的应用场景。&lt;/p&gt;&#xA;&lt;h2 class=&#34;heading-element&#34; id=&#34;1-零钱兑换2&#34;&gt;&lt;span&gt;1. 零钱兑换2&lt;/span&gt;&#xA;  &lt;a href=&#34;#1-%e9%9b%b6%e9%92%b1%e5%85%91%e6%8d%a22&#34; class=&#34;heading-mark&#34;&gt;&#xA;    &lt;svg class=&#34;octicon octicon-link&#34; viewBox=&#34;0 0 16 16&#34; version=&#34;1.1&#34; width=&#34;16&#34; height=&#34;16&#34; aria-hidden=&#34;true&#34;&gt;&lt;path d=&#34;m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z&#34;&gt;&lt;/path&gt;&lt;/svg&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h2&gt;&lt;h3 class=&#34;heading-element&#34; id=&#34;题目描述&#34;&gt;&lt;span&gt;题目描述&lt;/span&gt;&#xA;  &lt;a href=&#34;#%e9%a2%98%e7%9b%ae%e6%8f%8f%e8%bf%b0&#34; class=&#34;heading-mark&#34;&gt;&#xA;    &lt;svg class=&#34;octicon octicon-link&#34; viewBox=&#34;0 0 16 16&#34; version=&#34;1.1&#34; width=&#34;16&#34; height=&#34;16&#34; aria-hidden=&#34;true&#34;&gt;&lt;path d=&#34;m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z&#34;&gt;&lt;/path&gt;&lt;/svg&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h3&gt;&lt;p&gt;给定不同面额的硬币和一个总金额。写出函数来计算可以凑成总金额的硬币组合数。假设每一种面额的硬币有无限个。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>动态规划：完全背包理论基础</title>
+      <link>http://localhost:1313/posts/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92%E5%AE%8C%E5%85%A8%E8%83%8C%E5%8C%85%E7%90%86%E8%AE%BA%E5%9F%BA%E7%A1%80/</link>
+      <pubDate>Thu, 14 May 2026 17:49:36 +0800</pubDate>
+      <guid>http://localhost:1313/posts/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92%E5%AE%8C%E5%85%A8%E8%83%8C%E5%8C%85%E7%90%86%E8%AE%BA%E5%9F%BA%E7%A1%80/</guid>
+      <category domain="http://localhost:1313/categories/%E6%95%B0%E6%8D%AE%E7%AE%97%E6%B3%95/">数据算法</category>
+      <description>&lt;p&gt;完全背包和01背包问题唯一不同的地方就是，每种物品有&lt;strong&gt;无限件&lt;/strong&gt;。&lt;/p&gt;&#xA;&lt;p&gt;在读本文之前，需要先看&lt;a href=&#34;./%e5%8a%a8%e6%80%81%e8%a7%84%e5%88%92%ef%bc%9a01%e8%83%8c%e5%8c%85%e7%90%86%e8%ae%ba%e5%9f%ba%e7%a1%80.md&#34;&gt;01背包&lt;/a&gt;的理论原理，这样才能更好的读取完全背包。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>动态规划：01背包</title>
+      <link>http://localhost:1313/posts/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%9201%E8%83%8C%E5%8C%85%E7%90%86%E8%AE%BA%E5%9F%BA%E7%A1%80/</link>
+      <pubDate>Mon, 11 May 2026 15:23:37 +0800</pubDate>
+      <guid>http://localhost:1313/posts/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%9201%E8%83%8C%E5%8C%85%E7%90%86%E8%AE%BA%E5%9F%BA%E7%A1%80/</guid>
+      <category domain="http://localhost:1313/categories/%E6%95%B0%E6%8D%AE%E7%AE%97%E6%B3%95/">数据算法</category>
+      <description>&lt;p&gt;这一节主要讲的是关于01背包问题的集合。&lt;/p&gt;&#xA;&lt;h2 class=&#34;heading-element&#34; id=&#34;二维dp理论基础&#34;&gt;&lt;span&gt;二维dp理论基础&lt;/span&gt;&#xA;  &lt;a href=&#34;#%e4%ba%8c%e7%bb%b4dp%e7%90%86%e8%ae%ba%e5%9f%ba%e7%a1%80&#34; class=&#34;heading-mark&#34;&gt;&#xA;    &lt;svg class=&#34;octicon octicon-link&#34; viewBox=&#34;0 0 16 16&#34; version=&#34;1.1&#34; width=&#34;16&#34; height=&#34;16&#34; aria-hidden=&#34;true&#34;&gt;&lt;path d=&#34;m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z&#34;&gt;&lt;/path&gt;&lt;/svg&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h2&gt;&lt;p&gt;假设现在有这样的一个问题：有一个重量容量为4的背包，可以装以下的物品，问背包能背的物品的最大价值是多少？&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>动态规划：01背包应用</title>
+      <link>http://localhost:1313/posts/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92%E6%80%9D%E6%83%B3%E7%90%86%E8%AE%BA/</link>
+      <pubDate>Sun, 10 May 2026 17:08:43 +0800</pubDate>
+      <guid>http://localhost:1313/posts/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92%E6%80%9D%E6%83%B3%E7%90%86%E8%AE%BA/</guid>
+      <category domain="http://localhost:1313/categories/%E6%95%B0%E6%8D%AE%E7%AE%97%E6%B3%95/">数据算法</category>
+      <description>&lt;h2 class=&#34;heading-element&#34; id=&#34;怎么判断是不是可以使用动态规划&#34;&gt;&lt;span&gt;怎么判断是不是可以使用动态规划&lt;/span&gt;&#xA;  &lt;a href=&#34;#%e6%80%8e%e4%b9%88%e5%88%a4%e6%96%ad%e6%98%af%e4%b8%8d%e6%98%af%e5%8f%af%e4%bb%a5%e4%bd%bf%e7%94%a8%e5%8a%a8%e6%80%81%e8%a7%84%e5%88%92&#34; class=&#34;heading-mark&#34;&gt;&#xA;    &lt;svg class=&#34;octicon octicon-link&#34; viewBox=&#34;0 0 16 16&#34; version=&#34;1.1&#34; width=&#34;16&#34; height=&#34;16&#34; aria-hidden=&#34;true&#34;&gt;&lt;path d=&#34;m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z&#34;&gt;&lt;/path&gt;&lt;/svg&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h2&gt;&lt;p&gt;如果某一个问题有很多重叠子问题，那就很适合使用动态规划。&#xA;那什么是是重叠子问题，就是每一个状态是可以由上一个状态推导出来&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>二叉树：理论基础</title>
+      <link>http://localhost:1313/posts/%E4%BA%8C%E5%8F%89%E6%A0%91%E7%90%86%E8%AE%BA%E5%9F%BA%E7%A1%80/</link>
+      <pubDate>Sun, 19 Apr 2026 18:46:07 +0800</pubDate>
+      <guid>http://localhost:1313/posts/%E4%BA%8C%E5%8F%89%E6%A0%91%E7%90%86%E8%AE%BA%E5%9F%BA%E7%A1%80/</guid>
+      <category domain="http://localhost:1313/categories/%E6%95%B0%E6%8D%AE%E7%AE%97%E6%B3%95/">数据算法</category>
+      <description>&lt;p&gt;二叉树主要有两种遍历方式：&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;深度优先遍历：先往深走，遇到叶子节点再往回走。&lt;/li&gt;&#xA;&lt;li&gt;广度优先遍历：一层一层的去遍历。&lt;/li&gt;&#xA;&lt;/ul&gt;&#xA;&lt;p&gt;那么从深度优先遍历和广度优先遍历进一步拓展，才有如下遍历方式：&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>二叉树：应用</title>
+      <link>http://localhost:1313/posts/%E4%BA%8C%E5%8F%89%E6%A0%91%E5%BA%94%E7%94%A8/</link>
+      <pubDate>Sun, 12 Apr 2026 09:16:15 +0800</pubDate>
+      <guid>http://localhost:1313/posts/%E4%BA%8C%E5%8F%89%E6%A0%91%E5%BA%94%E7%94%A8/</guid>
+      <category domain="http://localhost:1313/categories/%E6%95%B0%E6%8D%AE%E7%AE%97%E6%B3%95/">数据算法</category>
+      <description>&lt;p&gt;在本文之前，必须要读&lt;a href=&#34;./%e4%ba%8c%e5%8f%89%e6%a0%91%ef%bc%9a%e7%90%86%e8%ae%ba%e5%9f%ba%e7%a1%80.md&#34;&gt;二叉树：理论基础&lt;/a&gt;,这是一切问题的基石。尤其是二叉树的深度优先遍历的原理和方式。&lt;/p&gt;&#xA;&lt;p&gt;&lt;img loading=&#34;lazy&#34; src=&#39;images/binary_tree_dfs.png&#39; alt=&#34;binary_tree_dfs&#34;&gt;&lt;/p&gt;&#xA;&lt;p&gt;递归遍历的本质是：&lt;/p&gt;&#xA;&lt;p&gt;&lt;strong&gt;每个节点都会被“经过三次机会”：进入时 / 左子树返回后 / 右子树返回后，在哪一步写代码，就决定是哪种遍历。“递”是进入函数栈深处；“归”是函数栈逐层返回。前序在“第一次进入节点时处理”，中序在“左子树返回后处理”，后序在“左右子树都返回后处理”。&lt;/strong&gt;&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Post</title>
       <link>http://localhost:1313/posts/my-first-post/</link>
-      <pubDate>Mon, 09 Feb 2026 15:57:24 +0800</pubDate>
+      <pubDate>Sun, 09 Feb 2025 15:57:24 +0800</pubDate>
       <guid>http://localhost:1313/posts/my-first-post/</guid>
-      <description>&lt;p&gt;自定义文章&lt;/p&gt;</description>
+      <description>&lt;p&gt;暂时不知道写一些什么。&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>
