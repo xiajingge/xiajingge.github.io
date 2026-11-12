@@ -132,7 +132,7 @@ go func() {
 
 组件关系图：
 
-![GMP组件关系](./images/GMP组件关系.png)
+![GMP组件关系](/go/images/GMP组件关系.png)
 
 ## 3. 核心数据结构
 
@@ -176,7 +176,7 @@ type gobuf struct {
 
 其中g的生命周期由以下几个状态：
 
-![g的生命周期](./images/g生命周期.png)
+![g的生命周期](/go/images/g生命周期.png)
 
 ```go
 const(
@@ -253,7 +253,7 @@ type schedt struct {
 
 ### 4.1 两种g的转换
 
-![两种g的转换](./images/两种g的转换.png)
+![两种g的转换](/go/images/两种g的转换.png)
 
 g0 是每个 M（操作系统线程）内部自带的一个特殊的、专用于调度的 Goroutine。它不执行你的业务代码，它的唯一使命是为 Go 运行时（runtime）的调度器、系统调用和垃圾回收等核心逻辑提供一个安全、稳定的执行环境
 
@@ -275,7 +275,7 @@ m 通过 p 调度执行的 goroutine 永远在普通 g 和 g0 之间进行切换
 
 ### 4.2 调度流程
 
-![调度流程](./images/调度流程.png)
+![调度流程](/go/images/调度流程.png)
 
 对 gmp 的宏观调度流程进行整体串联：
 
@@ -310,7 +310,7 @@ func schedule() {
 
 调度流程中，一个非常核心的步骤，就是为 m 寻找到下一个执行的 g，这部分内容位于 runtime/proc.go 的 `findRunnable` 方法中：
 
-![findRunnable流程](./images/findRunnable.png)
+![findRunnable流程](/go/images/findRunnable.png)
 
 findRunnable 的查找过程是分层的，优先选择开销最小、局部性最好的路径：
 
@@ -384,7 +384,7 @@ func execute(gp *g, inheritTime bool) {
 
 g 执行主动让渡时，会调用 mcall 方法将执行权归还给 g0，并由 g0 调用 gosched_m 方法，位于 runtime/proc.go 文件中：
 
-![gosched_m](./images/gosched_m.png)
+![gosched_m](/go/images/gosched_m.png)
 
 ```go
 func gosched_m(gp *g) {
