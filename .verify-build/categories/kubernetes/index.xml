@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Kubernetes - 分类 - zenthys&#39;s blog</title>
+    <link>https://nsddd.top/categories/kubernetes/</link>
+    <description>记录 Go、AI、中间件与后端开发的技术博客</description>
+    <generator>Hugo 0.163.1 &amp; FixIt v0.4.5</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Fri, 22 Nov 2024 17:35:53 +0800</lastBuildDate>
+    <atom:link href="https://nsddd.top/categories/kubernetes/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>部署：使用kind安装k8s</title>
+      <link>https://nsddd.top/k8s/%E9%83%A8%E7%BD%B2%E4%BD%BF%E7%94%A8kind%E5%AE%89%E8%A3%85k8s/</link>
+      <pubDate>Fri, 22 Nov 2024 17:35:53 +0800</pubDate>
+      <guid>https://nsddd.top/k8s/%E9%83%A8%E7%BD%B2%E4%BD%BF%E7%94%A8kind%E5%AE%89%E8%A3%85k8s/</guid>
+      <category domain="https://nsddd.top/categories/kubernetes/">Kubernetes</category>
+      <category domain="https://nsddd.top/categories/k8s/">K8s</category>
+      <description>&lt;p&gt;本文记录了使用 kind 搭建一个 Kubernetes 集群的过程，适合学习、测试、小型自建集群.&#xA;使用机器是wsl2 Ubuntu2204&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>部署：使用kubeadm安装k8s</title>
+      <link>https://nsddd.top/k8s/%E9%83%A8%E7%BD%B2%E4%BD%BF%E7%94%A8kubeadm%E5%AE%89%E8%A3%85k8s/</link>
+      <pubDate>Tue, 12 Nov 2024 20:24:34 +0800</pubDate>
+      <guid>https://nsddd.top/k8s/%E9%83%A8%E7%BD%B2%E4%BD%BF%E7%94%A8kubeadm%E5%AE%89%E8%A3%85k8s/</guid>
+      <category domain="https://nsddd.top/categories/kubernetes/">Kubernetes</category>
+      <category domain="https://nsddd.top/categories/k8s/">K8s</category>
+      <description>&lt;p&gt;本文记录了使用 kubeadm 从头搭建一个使用 containerd 作为容器运行时的 Kubernetes 集群的过程，适合学习、测试、小型自建集群&#xA;本文用到的机器如下：&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Mcp - 标签 - zenthys&#39;s blog</title>
+    <link>https://nsddd.top/tags/mcp/</link>
+    <description>记录 Go、AI、中间件与后端开发的技术博客</description>
+    <generator>Hugo 0.163.1 &amp; FixIt v0.4.5</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Sat, 29 Nov 2025 17:36:22 +0800</lastBuildDate>
+    <atom:link href="https://nsddd.top/tags/mcp/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>模型上下文协议(MCP)</title>
+      <link>https://nsddd.top/ai/go-mcp/</link>
+      <pubDate>Sat, 29 Nov 2025 17:36:22 +0800</pubDate>
+      <guid>https://nsddd.top/ai/go-mcp/</guid>
+      <category domain="https://nsddd.top/categories/ai/">AI</category>
+      <description>&lt;p&gt;如果你最近在看 AI 应用、Agent、工具调用或者 LLM 集成，大概率已经绕不过一个词：&lt;code&gt;MCP&lt;/code&gt;。&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

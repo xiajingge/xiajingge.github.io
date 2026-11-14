@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>基准测试 - 标签 - zenthys&#39;s blog</title>
+    <link>https://nsddd.top/tags/%E5%9F%BA%E5%87%86%E6%B5%8B%E8%AF%95/</link>
+    <description>记录 Go、AI、中间件与后端开发的技术博客</description>
+    <generator>Hugo 0.163.1 &amp; FixIt v0.4.5</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Wed, 26 Feb 2025 15:48:32 +0800</lastBuildDate>
+    <atom:link href="https://nsddd.top/tags/%E5%9F%BA%E5%87%86%E6%B5%8B%E8%AF%95/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Go基准测试：benchmark</title>
+      <link>https://nsddd.top/go/go%E5%9F%BA%E5%87%86%E6%B5%8B%E8%AF%95benchmark/</link>
+      <pubDate>Wed, 26 Feb 2025 15:48:32 +0800</pubDate>
+      <guid>https://nsddd.top/go/go%E5%9F%BA%E5%87%86%E6%B5%8B%E8%AF%95benchmark/</guid>
+      <category domain="https://nsddd.top/categories/go/">Go</category>
+      <category domain="https://nsddd.top/categories/%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91/">后端开发</category>
+      <description>&lt;p&gt;​&#x9;Go 语言的 &lt;strong&gt;benchmark&lt;/strong&gt; 功能用于性能测试，它可以帮助测量和比较不同代码段的执行效率。Benchmark 测试不仅是为了测试程序的执行速度，还能帮助开发者优化代码。Go 提供了一个非常方便的内置工具来进行基准测试，它主要依赖于 &lt;code&gt;testing&lt;/code&gt; 包中的 &lt;code&gt;Benchmark&lt;/code&gt; 函数。&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

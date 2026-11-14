@@ -6,8 +6,16 @@
     <description>记录 Go、AI、中间件与后端开发的技术博客</description>
     <generator>Hugo 0.163.1 &amp; FixIt v0.4.5</generator>
     <language>zh-CN</language>
-    <lastBuildDate>Mon, 11 Aug 2025 20:43:32 +0800</lastBuildDate>
+    <lastBuildDate>Wed, 03 Sep 2025 16:35:13 +0800</lastBuildDate>
     <atom:link href="http://localhost:1313/categories/opensource/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>开源系列--GORM</title>
+      <link>http://localhost:1313/go/%E5%BC%80%E6%BA%90%E6%A1%86%E6%9E%B6gorm/</link>
+      <pubDate>Wed, 03 Sep 2025 16:35:13 +0800</pubDate>
+      <guid>http://localhost:1313/go/%E5%BC%80%E6%BA%90%E6%A1%86%E6%9E%B6gorm/</guid>
+      <category domain="http://localhost:1313/categories/opensource/">Opensource</category>
+      <description>&lt;p&gt;GORM 应该是 Go 生态里用得最多的 ORM 了。它的核心思路是用结构体对象去间接操作数据库：你只管操作 Go 对象，SQL 交给它来生成。用法本身没什么好讲的，官方文档很全，没上手过的直接看&lt;a href=&#34;https://gorm.io/zh_CN/&#34; target=&#34;_blank&#34; rel=&#34;external nofollow noopener noreferrer&#34;&gt;gorm官方指南&lt;/a&gt;就行。&lt;/p&gt;</description>
+    </item>
     <item>
       <title>开源系列--Gin</title>
       <link>http://localhost:1313/go/%E5%BC%80%E6%BA%90%E6%A1%86%E6%9E%B6gin/</link>

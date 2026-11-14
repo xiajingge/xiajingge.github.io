@@ -7,3 +7,140 @@
 .single .single-title {
   text-align: center;
 }
+
+// ==============================
+// 可交互图片查看器（image-viewer shortcode）
+// ==============================
+.image-viewer {
+  margin: 1.25rem 0;
+  border: 1px solid rgba(127, 127, 127, .35);
+  border-radius: .5rem;
+  overflow: hidden;
+  background: rgba(127, 127, 127, .05);
+
+  &:focus-visible {
+    outline: 2px solid #2d8cf0;
+    outline-offset: 2px;
+  }
+}
+
+.iv-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .5rem;
+  padding: .35rem .6rem;
+  font-size: .85rem;
+  border-bottom: 1px solid rgba(127, 127, 127, .25);
+}
+
+.iv-title {
+  font-weight: 600;
+  opacity: .85;
+}
+
+.iv-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+}
+
+.iv-zoom {
+  min-width: 3.5rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  opacity: .75;
+}
+
+.iv-btn {
+  min-width: 1.9rem;
+  padding: .15rem .45rem;
+  font: inherit;
+  line-height: 1.4;
+  color: inherit;
+  background: transparent;
+  border: 1px solid rgba(127, 127, 127, .45);
+  border-radius: .3rem;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(127, 127, 127, .15);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #2d8cf0;
+    outline-offset: 1px;
+  }
+}
+
+.iv-stage {
+  position: relative;
+  width: 100%;
+  height: var(--iv-height, 70vh);
+  max-height: 80vh;
+  overflow: hidden;
+  touch-action: none;
+  cursor: grab;
+  background-color: var(--iv-bg, transparent);
+  background-image:
+    linear-gradient(45deg, rgba(127, 127, 127, .06) 25%, transparent 25%, transparent 75%, rgba(127, 127, 127, .06) 75%),
+    linear-gradient(45deg, rgba(127, 127, 127, .06) 25%, transparent 25%, transparent 75%, rgba(127, 127, 127, .06) 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.iv-canvas {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 0;
+  user-select: none;
+
+  // 内联 SVG：由 JS 修改 viewBox 缩放，始终矢量重绘
+  > svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+
+    // 单色图标（mono="true"）才跟随文字色，避免影响彩色设计图
+    &.iv-mono {
+      fill: currentColor;
+    }
+  }
+
+  > img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+    -webkit-user-drag: none;
+  }
+}
+
+.iv-hint {
+  margin: 0;
+  padding: .3rem .6rem;
+  font-size: .78rem;
+  opacity: .65;
+  border-top: 1px solid rgba(127, 127, 127, .25);
+}
+
+.image-viewer:fullscreen {
+  display: flex;
+  flex-direction: column;
+  border: 0;
+  border-radius: 0;
+  color: #333;
+  background: var(--iv-bg, #fff);
+
+  .iv-stage {
+    flex: 1;
+    height: auto;
+    max-height: none;
+  }
+}

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Wire - 标签 - zenthys&#39;s blog</title>
+    <link>https://nsddd.top/tags/wire/</link>
+    <description>记录 Go、AI、中间件与后端开发的技术博客</description>
+    <generator>Hugo 0.163.1 &amp; FixIt v0.4.5</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Sun, 09 Feb 2025 16:42:35 +0800</lastBuildDate>
+    <atom:link href="https://nsddd.top/tags/wire/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Go Wire 依赖注入</title>
+      <link>https://nsddd.top/go/wire/</link>
+      <pubDate>Sun, 09 Feb 2025 16:42:35 +0800</pubDate>
+      <guid>https://nsddd.top/go/wire/</guid>
+      <category domain="https://nsddd.top/categories/go/">Go</category>
+      <description>&lt;p&gt;今天要学习的内容是依赖注入，主要的目的就是简化main文件的内容，以及避免过多的全局变量带来的维护困难。&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

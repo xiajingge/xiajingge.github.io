@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Linux - 标签 - zenthys&#39;s blog</title>
+    <link>https://nsddd.top/tags/linux/</link>
+    <description>记录 Go、AI、中间件与后端开发的技术博客</description>
+    <generator>Hugo 0.163.1 &amp; FixIt v0.4.5</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Tue, 13 May 2025 19:56:15 +0800</lastBuildDate>
+    <atom:link href="https://nsddd.top/tags/linux/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>k8s网络之Linux内核网络</title>
+      <link>https://nsddd.top/k8s/linux%E5%86%85%E6%A0%B8%E7%BD%91%E7%BB%9C/</link>
+      <pubDate>Tue, 13 May 2025 19:56:15 +0800</pubDate>
+      <guid>https://nsddd.top/k8s/linux%E5%86%85%E6%A0%B8%E7%BD%91%E7%BB%9C/</guid>
+      <category domain="https://nsddd.top/categories/k8s/">K8s</category>
+      <description>&lt;p&gt;Kubernetes 的网络是构建在 Linux 内核网络能力之上的一个具体应用和策略集。&#xA;可以把 Linux 内核网络看作操作系统的“网络能力库”，而 Kubernetes 网络则是一个使用这些能力搭建的“网络解决方案”。它们的关系可以这样理解：&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

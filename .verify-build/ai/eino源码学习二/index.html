@@ -1,0 +1,674 @@
+<!doctype html><html itemscope itemtype=http://schema.org/WebPage lang=zh-CN><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=2"><meta name=robots content="noodp"><title>Eino源码学习(二)--ChatModel和ChatTemplate - zenthys's blog</title><meta name=author content="zenthys"><meta name=description content="ChatModel概念 ChatModel 是 Eino 中用于与大语言模型交互的核心组件。它提供了统一的接口来调用不同的大模型服务（如 OpenAI、Claude、ARK 等）。抽离出统一的接口进行模型的调用，这里就体现出框架所带来的一大优势。
+"><meta name=keywords content='Agent,AI'><meta itemprop=name content="Eino源码学习(二)--ChatModel和ChatTemplate"><meta itemprop=description content="ChatModel概念 ChatModel 是 Eino 中用于与大语言模型交互的核心组件。它提供了统一的接口来调用不同的大模型服务（如 OpenAI、Claude、ARK 等）。抽离出统一的接口进行模型的调用，这里就体现出框架所带来的一大优势。"><meta itemprop=datePublished content="2026-03-11T21:24:45+08:00"><meta itemprop=dateModified content="2026-03-11T21:24:45+08:00"><meta itemprop=wordCount content="3851"><meta itemprop=keywords content="Agent,AI"><meta property="og:url" content="https://nsddd.top/ai/eino%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E4%BA%8C/"><meta property="og:site_name" content="zenthys's blog"><meta property="og:title" content="Eino源码学习(二)--ChatModel和ChatTemplate"><meta property="og:description" content="ChatModel概念 ChatModel 是 Eino 中用于与大语言模型交互的核心组件。它提供了统一的接口来调用不同的大模型服务（如 OpenAI、Claude、ARK 等）。抽离出统一的接口进行模型的调用，这里就体现出框架所带来的一大优势。"><meta property="og:locale" content="zh_CN"><meta property="og:type" content="article"><meta property="article:section" content="ai"><meta property="article:published_time" content="2026-03-11T21:24:45+08:00"><meta property="article:modified_time" content="2026-03-11T21:24:45+08:00"><meta property="article:tag" content="Agent"><meta property="article:tag" content="AI"><meta name=twitter:card content="summary"><meta name=twitter:title content="Eino源码学习(二)--ChatModel和ChatTemplate"><meta name=twitter:description content="ChatModel概念 ChatModel 是 Eino 中用于与大语言模型交互的核心组件。它提供了统一的接口来调用不同的大模型服务（如 OpenAI、Claude、ARK 等）。抽离出统一的接口进行模型的调用，这里就体现出框架所带来的一大优势。"><meta name=application-name content="FixIt"><meta name=apple-mobile-web-app-title content="FixIt"><meta name=theme-color data-light=#f8f8f8 data-dark=#252627 content="#f8f8f8"><meta name=msapplication-TileColor content="#da532c"><link rel="shortcut icon" type=image/x-icon href=/favicon.ico><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><link rel=canonical type=text/html href=https://nsddd.top/ai/eino%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E4%BA%8C/ title="Eino源码学习(二)--ChatModel和ChatTemplate - zenthys's blog"><link rel=prev type=text/html href=https://nsddd.top/ai/eino%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E4%B8%80/ title=Eino源码学习(一)--Schema><link rel=next type=text/html href=https://nsddd.top/posts/%E4%BA%8C%E5%8F%89%E6%A0%91%E5%BA%94%E7%94%A8/ title=二叉树：应用><link rel=stylesheet href=/css/config.min.css><link rel=stylesheet href=/css/style.min.css><link rel=preload href=/lib/fontawesome-free/all.min.css as=style onload='this.removeAttribute("onload"),this.rel="stylesheet"'><noscript><link rel=stylesheet href=/lib/fontawesome-free/all.min.css></noscript><link rel=preload href=/lib/animate/animate.min.css as=style onload='this.removeAttribute("onload"),this.rel="stylesheet"'><noscript><link rel=stylesheet href=/lib/animate/animate.min.css></noscript><script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","headline":"Eino源码学习(二)--ChatModel和ChatTemplate","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https:\/\/nsddd.top\/ai\/eino%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E4%BA%8C\/"},"genre":"posts","keywords":"Agent, AI","wordcount":3851,"url":"https:\/\/nsddd.top\/ai\/eino%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E4%BA%8C\/","datePublished":"2026-03-11T21:24:45+08:00","dateModified":"2026-03-11T21:24:45+08:00","publisher":{"@type":"Organization","name":""},"author":{"@type":"Person","name":"zenthys"},"description":""}</script><script src=/js/head/color-scheme.min.js></script></head><body data-instant-intensity=viewport data-header-desktop=sticky data-header-mobile=auto><div class=wrapper data-page-style=normal><header class="desktop animate__faster" id=header-desktop><div class=header-wrapper><div class=header-title><a href=/ title="zenthys's blog"><span class=header-title-text>zenthys's blog</span></a><span class=header-subtitle></span></div><nav><ul class=menu><li class=menu-item><a class=menu-link href=/archives/><i class="fa-solid fa-box-archive fa-sm" aria-hidden=true></i> 归档</a></li><li class=menu-item><a class=menu-link href=/categories/><i class="fa-solid fa-folder-tree fa-sm" aria-hidden=true></i> 分类</a></li><li class=menu-item><a class=menu-link href=/tags/><i class="fa-solid fa-tags fa-sm" aria-hidden=true></i> 标签</a></li><li class="menu-item delimiter"></li><li class="menu-item search" id=search-desktop><input type=text placeholder=搜索文章标题或内容…… id=search-input-desktop>
+<a href=javascript:void(0); class="search-button search-toggle" id=search-toggle-desktop title=搜索><i class="fa-solid fa-search" aria-hidden=true></i>
+</a><a href=javascript:void(0); class="search-button search-clear" id=search-clear-desktop title=清空><i class="fa-solid fa-times-circle" aria-hidden=true></i>
+</a><span class="search-button search-loading" id=search-loading-desktop><i class="fa-solid fa-spinner fa-spin" aria-hidden=true></i></span></li><li class="menu-item theme-switch" role=button aria-label=切换主题 title=切换主题><i class="fa-solid fa-adjust" aria-hidden=true></i></li></ul></nav></div></header><header class="mobile animate__faster" id=header-mobile><div class=header-container><div class=header-wrapper><div class=header-title><a href=/ title="zenthys's blog"><span class=header-title-text>zenthys's blog</span></a><span class=header-subtitle></span></div><div class=theme-switch role=button aria-label=切换主题><i class="fa-solid fa-adjust" aria-hidden=true></i></div><div class=menu-toggle id=menu-toggle-mobile role=button aria-labelledby=menu-mobile><span></span><span></span><span></span></div></div><nav><ul class=menu id=menu-mobile><li class=search-wrapper><div class="search mobile" id=search-mobile><input type=text placeholder=搜索文章标题或内容…… id=search-input-mobile>
+<a href=javascript:void(0); class="search-button search-toggle" id=search-toggle-mobile title=搜索><i class="fa-solid fa-search" aria-hidden=true></i>
+</a><a href=javascript:void(0); class="search-button search-clear" id=search-clear-mobile title=清空><i class="fa-solid fa-times-circle" aria-hidden=true></i>
+</a><span class="search-button search-loading" id=search-loading-mobile><i class="fa-solid fa-spinner fa-spin" aria-hidden=true></i></span></div><a href=javascript:void(0); class=search-cancel id=search-cancel-mobile>取消</a></li><li class=menu-item><a class=menu-link href=/archives/><i class="fa-solid fa-box-archive fa-sm" aria-hidden=true></i> 归档</a></li><li class=menu-item><a class=menu-link href=/categories/><i class="fa-solid fa-folder-tree fa-sm" aria-hidden=true></i> 分类</a></li><li class=menu-item><a class=menu-link href=/tags/><i class="fa-solid fa-tags fa-sm" aria-hidden=true></i> 标签</a></li><li class="menu-item menu-system"></li></ul></nav></div></header><div class="search-dropdown desktop"><div id=search-dropdown-desktop></div></div><div class="search-dropdown mobile"><div id=search-dropdown-mobile></div></div><main class=fi-container><aside class="aside-collection animate__animated animate__fadeIn animate__faster" aria-label=合集></aside><article class="page single"><div class=header><h1 class="single-title animate__animated animate__flipInX"><span>Eino源码学习(二)--ChatModel和ChatTemplate</span></h1></div><div class=post-meta><div class=post-meta-line><span class=post-author><a href=https://github.com/zenthys title=作者 target=_blank rel="external nofollow noopener noreferrer author" class=author><img class=avatar src=/images/avatar.png alt=zenthys height=16 width=16>&nbsp;zenthys</a></span><span class=post-included-in>&nbsp;收录于 <a href=/categories/ai/ class=post-category title="分类 - AI"><i class="fa-regular fa-folder" aria-hidden=true></i> AI</a></span></div><div class=post-meta-line><span title="发布于 2026-03-11 21:24:45"><i class="fa-solid fa-calendar-days me-1" aria-hidden=true></i><time datetime=2026-03-11>2026-03-11</time></span>&nbsp;<span title="3851 字"><i class="fa-solid fa-pencil-alt me-1" aria-hidden=true></i>约 3900 字</span>&nbsp;<span><i class="fa-regular fa-clock me-1" aria-hidden=true></i>预计阅读 8 分钟</span>&nbsp;</div></div><div class="details toc" id=toc-static data-kept=false><div class="details-summary toc-title"><span>目录</span>
+<span><i class="details-icon fa-solid fa-angle-right" aria-hidden=true></i></span></div><div class="details-content toc-content" id=toc-content-static><nav id=TableOfContents><ul><li><a href=#chatmodel概念>ChatModel概念</a></li><li><a href=#组件定义>组件定义</a><ul><li><a href=#接口定义>接口定义</a></li><li><a href=#公共option>公共Option</a></li></ul></li><li><a href=#实现案例>实现案例</a></li><li><a href=#chattemplate概念>ChatTemplate概念</a></li><li><a href=#组件定义-1>组件定义</a><ul><li><a href=#接口定义-1>接口定义</a></li></ul></li><li><a href=#使用方式>使用方式</a><ul><li><a href=#fstring>FString</a></li><li><a href=#gotemplate>GoTemplate</a></li><li><a href=#jinja2>Jinja2</a></li><li><a href=#小结>小结</a></li></ul></li></ul></nav></div></div><div class=content id=content><h2 class=heading-element id=chatmodel概念><span>ChatModel概念</span>
+<a href=#chatmodel%e6%a6%82%e5%bf%b5 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h2><p>ChatModel 是 Eino 中用于与大语言模型交互的核心组件。它提供了统一的接口来调用不同的大模型服务（如 OpenAI、Claude、ARK 等）。抽离出统一的接口进行模型的调用，这里就体现出框架所带来的一大优势。</p><p>使用场景：</p><ul><li><p>自然语言对话</p></li><li><p>文本生成和补全</p></li><li><p>工具调用的参数生成</p></li><li><p>多模态交互（文本、图片、音频等）</p></li></ul><h2 class=heading-element id=组件定义><span>组件定义</span>
+<a href=#%e7%bb%84%e4%bb%b6%e5%ae%9a%e4%b9%89 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h2><h3 class=heading-element id=接口定义><span>接口定义</span>
+<a href=#%e6%8e%a5%e5%8f%a3%e5%ae%9a%e4%b9%89 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h3><blockquote><p>代码位置：eino/components/model/interface.go</p></blockquote><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>type</span><span class=w> </span><span class=nx>BaseChatModel</span><span class=w> </span><span class=kd>interface</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nf>Generate</span><span class=p>(</span><span class=nx>ctx</span><span class=w> </span><span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>,</span><span class=w> </span><span class=nx>input</span><span class=w> </span><span class=p>[]</span><span class=o>*</span><span class=nx>schema</span><span class=p>.</span><span class=nx>Message</span><span class=p>,</span><span class=w> </span><span class=nx>opts</span><span class=w> </span><span class=o>...</span><span class=nx>Option</span><span class=p>)</span><span class=w> </span><span class=p>(</span><span class=o>*</span><span class=nx>schema</span><span class=p>.</span><span class=nx>Message</span><span class=p>,</span><span class=w> </span><span class=kt>error</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nf>Stream</span><span class=p>(</span><span class=nx>ctx</span><span class=w> </span><span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>,</span><span class=w> </span><span class=nx>input</span><span class=w> </span><span class=p>[]</span><span class=o>*</span><span class=nx>schema</span><span class=p>.</span><span class=nx>Message</span><span class=p>,</span><span class=w> </span><span class=nx>opts</span><span class=w> </span><span class=o>...</span><span class=nx>Option</span><span class=p>)</span><span class=w> </span><span class=p>(</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=o>*</span><span class=nx>schema</span><span class=p>.</span><span class=nx>StreamReader</span><span class=p>[</span><span class=o>*</span><span class=nx>schema</span><span class=p>.</span><span class=nx>Message</span><span class=p>],</span><span class=w> </span><span class=kt>error</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>type</span><span class=w> </span><span class=nx>ChatModel</span><span class=w> </span><span class=kd>interface</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>BaseChatModel</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// BindTools bind tools to the model.</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// BindTools before requesting ChatModel generally.</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// notice the non-atomic problem of BindTools and Generate.</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nf>BindTools</span><span class=p>(</span><span class=nx>tools</span><span class=w> </span><span class=p>[]</span><span class=o>*</span><span class=nx>schema</span><span class=p>.</span><span class=nx>ToolInfo</span><span class=p>)</span><span class=w> </span><span class=kt>error</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// ToolCallingChatModel extends BaseChatModel with tool calling capabilities.</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>type</span><span class=w> </span><span class=nx>ToolCallingChatModel</span><span class=w> </span><span class=kd>interface</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>BaseChatModel</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// WithTools returns a new ToolCallingChatModel instance with the specified tools bound.</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// This method does not modify the current instance, making it safer for concurrent use.</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nf>WithTools</span><span class=p>(</span><span class=nx>tools</span><span class=w> </span><span class=p>[]</span><span class=o>*</span><span class=nx>schema</span><span class=p>.</span><span class=nx>ToolInfo</span><span class=p>)</span><span class=w> </span><span class=p>(</span><span class=nx>ToolCallingChatModel</span><span class=p>,</span><span class=w> </span><span class=kt>error</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div><p>这两个接口 <code>ChatModel</code> 和 <code>ToolCallingChatModel</code> 都扩展了 <code>BaseChatModel</code>，用于支持工具调用（Tool Calling/Function Calling），但它们在<strong>设计模式、并发安全性和使用方式</strong>上有区别。</p><p>以下是核心差异对比：</p><ol><li>状态管理 vs 不可变性 (Mutability vs Immutability)</li></ol><ul><li><strong><code>ChatModel</code> (可变/有状态):</strong><ul><li><code>BindTools</code> 直接修改当前实例的内部状态。</li><li>这是一个 <strong>Mutation</strong> 操作。一旦调用，该模型实例后续的所有 <code>Generate/Stream</code> 请求都会携带这些工具。</li></ul></li><li><strong><code>ToolCallingChatModel</code> (不可变/无状态):</strong><ul><li><code>WithTools</code> <strong>不修改</strong>当前实例，而是返回一个绑定了工具的<strong>新实例</strong>。</li><li>这是一个 <strong>Functional/Immutable</strong> 操作。原始模型实例保持不变，可以安全地被多个 goroutine 共享作为“基础模板”。</li></ul></li></ul><ol start=2><li>并发安全性 (Concurrency Safety)</li></ol><ul><li><strong><code>ChatModel</code>:</strong> <strong>不安全</strong><ul><li>正如注释中提到的 <em>&ldquo;notice the non-atomic problem of BindTools and Generate&rdquo;</em>，如果在多线程环境下，一个 goroutine 调用 <code>BindTools</code> 的同时另一个 goroutine 调用 <code>Generate</code>，会导致竞态条件（Race Condition）。</li><li>使用时通常需要加锁，或者确保每个请求使用独立的模型实例。</li></ul></li><li><strong><code>ToolCallingChatModel</code>:</strong> <strong>安全</strong><ul><li>注释明确说明 <em>&ldquo;making it safer for concurrent use&rdquo;</em>。</li><li>全局共享一个基础的 <code>ToolCallingChatModel</code>，在每个请求处理函数中通过 <code>WithTools</code> 派生出带特定工具的临时实例，无需任何锁机制。</li></ul></li></ul><ol start=3><li>API 风格与链式调用</li></ol><ul><li><strong><code>ChatModel</code>:</strong> 命令式风格<div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=1 style=--fi-max-shown-lines:50;--fi-line-digit:1;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=nx>model</span><span class=p>.</span><span class=nf>BindTools</span><span class=p>(</span><span class=nx>tools</span><span class=p>)</span><span class=w>      </span><span class=c1>// 先绑定</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=nx>resp</span><span class=p>,</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>model</span><span class=p>.</span><span class=nf>Generate</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=nx>msgs</span><span class=p>)</span><span class=w> </span><span class=c1>// 再调用</span></span></span></code></pre></td></tr></table></div></div></div></li><li><strong><code>ToolCallingChatModel</code>:</strong> 声明式/链式风格<div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=1 style=--fi-max-shown-lines:50;--fi-line-digit:1;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// 一行完成，原始 model 不受影响</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=nx>resp</span><span class=p>,</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>model</span><span class=p>.</span><span class=nf>WithTools</span><span class=p>(</span><span class=nx>tools</span><span class=p>).</span><span class=nf>Generate</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=nx>msgs</span><span class=p>)</span><span class=w> </span></span></span></code></pre></td></tr></table></div></div></div></li></ul><blockquote><p>在新版本中， ChatModel 目前正在逐渐废弃，后续统一用 ToolCallingChatModel 来代替。</p></blockquote><h3 class=heading-element id=公共option><span>公共Option</span>
+<a href=#%e5%85%ac%e5%85%b1option class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h3><p>Model 组件提供了一组公共 Option 用于配置模型行为：</p><blockquote><p>代码位置：eino/components/model/option.go</p></blockquote><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>type</span><span class=w> </span><span class=nx>Options</span><span class=w> </span><span class=kd>struct</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// Temperature 控制输出的随机性</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>Temperature</span><span class=w> </span><span class=o>*</span><span class=kt>float32</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// MaxTokens 控制生成的最大 token 数量</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>MaxTokens</span><span class=w> </span><span class=o>*</span><span class=kt>int</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// Model 指定使用的模型名称</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>Model</span><span class=w> </span><span class=o>*</span><span class=kt>string</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// TopP 控制输出的多样性</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>TopP</span><span class=w> </span><span class=o>*</span><span class=kt>float32</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// Stop 指定停止生成的条件</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>Stop</span><span class=w> </span><span class=p>[]</span><span class=kt>string</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div><p>可以通过以下方式设置 Option：</p><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=c1>// 设置温度</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=nf>WithTemperature</span><span class=p>(</span><span class=nx>temperature</span><span class=w> </span><span class=kt>float32</span><span class=p>)</span><span class=w> </span><span class=nx>Option</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// 设置最大 token 数</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=nf>WithMaxTokens</span><span class=p>(</span><span class=nx>maxTokens</span><span class=w> </span><span class=kt>int</span><span class=p>)</span><span class=w> </span><span class=nx>Option</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// 设置模型名称</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=nf>WithModel</span><span class=p>(</span><span class=nx>name</span><span class=w> </span><span class=kt>string</span><span class=p>)</span><span class=w> </span><span class=nx>Option</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// 设置 top_p 值</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=nf>WithTopP</span><span class=p>(</span><span class=nx>topP</span><span class=w> </span><span class=kt>float32</span><span class=p>)</span><span class=w> </span><span class=nx>Option</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// 设置停止词</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=nf>WithStop</span><span class=p>(</span><span class=nx>stop</span><span class=w> </span><span class=p>[]</span><span class=kt>string</span><span class=p>)</span><span class=w> </span><span class=nx>Option</span></span></span></code></pre></td></tr></table></div></div></div><h2 class=heading-element id=实现案例><span>实现案例</span>
+<a href=#%e5%ae%9e%e7%8e%b0%e6%a1%88%e4%be%8b class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h2><p><a href=https://cloudwego.cn/zh/docs/eino/core_modules/components/chat_model_guide target=_blank rel="external nofollow noopener noreferrer">Eino: ChatModel 使用说明</a>官方文档中给出了不少关于ChatModel模块组件中的使用案例，由于官方内容很详细，这里就不再过多进行赘述，而是拿一个完整的代码事例对上述内容进行详细的解释和总结，以便读者理解。</p><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=3 style=--fi-max-shown-lines:50;--fi-line-digit:3;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>  1
+</span><span class=lnt>  2
+</span><span class=lnt>  3
+</span><span class=lnt>  4
+</span><span class=lnt>  5
+</span><span class=lnt>  6
+</span><span class=lnt>  7
+</span><span class=lnt>  8
+</span><span class=lnt>  9
+</span><span class=lnt> 10
+</span><span class=lnt> 11
+</span><span class=lnt> 12
+</span><span class=lnt> 13
+</span><span class=lnt> 14
+</span><span class=lnt> 15
+</span><span class=lnt> 16
+</span><span class=lnt> 17
+</span><span class=lnt> 18
+</span><span class=lnt> 19
+</span><span class=lnt> 20
+</span><span class=lnt> 21
+</span><span class=lnt> 22
+</span><span class=lnt> 23
+</span><span class=lnt> 24
+</span><span class=lnt> 25
+</span><span class=lnt> 26
+</span><span class=lnt> 27
+</span><span class=lnt> 28
+</span><span class=lnt> 29
+</span><span class=lnt> 30
+</span><span class=lnt> 31
+</span><span class=lnt> 32
+</span><span class=lnt> 33
+</span><span class=lnt> 34
+</span><span class=lnt> 35
+</span><span class=lnt> 36
+</span><span class=lnt> 37
+</span><span class=lnt> 38
+</span><span class=lnt> 39
+</span><span class=lnt> 40
+</span><span class=lnt> 41
+</span><span class=lnt> 42
+</span><span class=lnt> 43
+</span><span class=lnt> 44
+</span><span class=lnt> 45
+</span><span class=lnt> 46
+</span><span class=lnt> 47
+</span><span class=lnt> 48
+</span><span class=lnt> 49
+</span><span class=lnt> 50
+</span><span class=lnt> 51
+</span><span class=lnt> 52
+</span><span class=lnt> 53
+</span><span class=lnt> 54
+</span><span class=lnt> 55
+</span><span class=lnt> 56
+</span><span class=lnt> 57
+</span><span class=lnt> 58
+</span><span class=lnt> 59
+</span><span class=lnt> 60
+</span><span class=lnt> 61
+</span><span class=lnt> 62
+</span><span class=lnt> 63
+</span><span class=lnt> 64
+</span><span class=lnt> 65
+</span><span class=lnt> 66
+</span><span class=lnt> 67
+</span><span class=lnt> 68
+</span><span class=lnt> 69
+</span><span class=lnt> 70
+</span><span class=lnt> 71
+</span><span class=lnt> 72
+</span><span class=lnt> 73
+</span><span class=lnt> 74
+</span><span class=lnt> 75
+</span><span class=lnt> 76
+</span><span class=lnt> 77
+</span><span class=lnt> 78
+</span><span class=lnt> 79
+</span><span class=lnt> 80
+</span><span class=lnt> 81
+</span><span class=lnt> 82
+</span><span class=lnt> 83
+</span><span class=lnt> 84
+</span><span class=lnt> 85
+</span><span class=lnt> 86
+</span><span class=lnt> 87
+</span><span class=lnt> 88
+</span><span class=lnt> 89
+</span><span class=lnt> 90
+</span><span class=lnt> 91
+</span><span class=lnt> 92
+</span><span class=lnt> 93
+</span><span class=lnt> 94
+</span><span class=lnt> 95
+</span><span class=lnt> 96
+</span><span class=lnt> 97
+</span><span class=lnt> 98
+</span><span class=lnt> 99
+</span><span class=lnt>100
+</span><span class=lnt>101
+</span><span class=lnt>102
+</span><span class=lnt>103
+</span><span class=lnt>104
+</span><span class=lnt>105
+</span><span class=lnt>106
+</span><span class=lnt>107
+</span><span class=lnt>108
+</span><span class=lnt>109
+</span><span class=lnt>110
+</span><span class=lnt>111
+</span><span class=lnt>112
+</span><span class=lnt>113
+</span><span class=lnt>114
+</span><span class=lnt>115
+</span><span class=lnt>116
+</span><span class=lnt>117
+</span><span class=lnt>118
+</span><span class=lnt>119
+</span><span class=lnt>120
+</span><span class=lnt>121
+</span><span class=lnt>122
+</span><span class=lnt>123
+</span><span class=lnt>124
+</span><span class=lnt>125
+</span><span class=lnt>126
+</span><span class=lnt>127
+</span><span class=lnt>128
+</span><span class=lnt>129
+</span><span class=lnt>130
+</span><span class=lnt>131
+</span><span class=lnt>132
+</span><span class=lnt>133
+</span><span class=lnt>134
+</span><span class=lnt>135
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kn>import</span><span class=w> </span><span class=p>(</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=s>&#34;context&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=s>&#34;errors&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=s>&#34;net/http&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=s>&#34;time&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=s>&#34;github.com/cloudwego/eino/callbacks&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=s>&#34;github.com/cloudwego/eino/components/model&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=s>&#34;github.com/cloudwego/eino/schema&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// 定义 ChatModel 模块</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>type</span><span class=w> </span><span class=nx>MyChatModel</span><span class=w> </span><span class=kd>struct</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>client</span><span class=w>     </span><span class=o>*</span><span class=nx>http</span><span class=p>.</span><span class=nx>Client</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>apiKey</span><span class=w>     </span><span class=kt>string</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>baseURL</span><span class=w>    </span><span class=kt>string</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>model</span><span class=w>      </span><span class=kt>string</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>timeout</span><span class=w>    </span><span class=nx>time</span><span class=p>.</span><span class=nx>Duration</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>retryCount</span><span class=w> </span><span class=kt>int</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// 定义 ChatModel 模块配置</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>type</span><span class=w> </span><span class=nx>MyChatModelConfig</span><span class=w> </span><span class=kd>struct</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>APIKey</span><span class=w> </span><span class=kt>string</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// 初始化 ChatModel 模块</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=nf>NewMyChatModel</span><span class=p>(</span><span class=nx>config</span><span class=w> </span><span class=o>*</span><span class=nx>MyChatModelConfig</span><span class=p>)</span><span class=w> </span><span class=p>(</span><span class=o>*</span><span class=nx>MyChatModel</span><span class=p>,</span><span class=w> </span><span class=kt>error</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>if</span><span class=w> </span><span class=nx>config</span><span class=p>.</span><span class=nx>APIKey</span><span class=w> </span><span class=o>==</span><span class=w> </span><span class=s>&#34;&#34;</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>       </span><span class=k>return</span><span class=w> </span><span class=kc>nil</span><span class=p>,</span><span class=w> </span><span class=nx>errors</span><span class=p>.</span><span class=nf>New</span><span class=p>(</span><span class=s>&#34;api key is required&#34;</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>return</span><span class=w> </span><span class=o>&amp;</span><span class=nx>MyChatModel</span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>       </span><span class=nx>client</span><span class=p>:</span><span class=w> </span><span class=o>&amp;</span><span class=nx>http</span><span class=p>.</span><span class=nx>Client</span><span class=p>{},</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>       </span><span class=nx>apiKey</span><span class=p>:</span><span class=w> </span><span class=nx>config</span><span class=p>.</span><span class=nx>APIKey</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>},</span><span class=w> </span><span class=kc>nil</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// 包含 Options、callback、Stream、WithTools 具体实践</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=p>(</span><span class=nx>m</span><span class=w> </span><span class=o>*</span><span class=nx>MyChatModel</span><span class=p>)</span><span class=w> </span><span class=nf>Generate</span><span class=p>(</span><span class=nx>ctx</span><span class=w> </span><span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>,</span><span class=w> </span><span class=nx>messages</span><span class=w> </span><span class=p>[]</span><span class=o>*</span><span class=nx>schema</span><span class=p>.</span><span class=nx>Message</span><span class=p>,</span><span class=w> </span><span class=nx>opts</span><span class=w> </span><span class=o>...</span><span class=nx>model</span><span class=p>.</span><span class=nx>Option</span><span class=p>)</span><span class=w> </span><span class=p>(</span><span class=o>*</span><span class=nx>schema</span><span class=p>.</span><span class=nx>Message</span><span class=p>,</span><span class=w> </span><span class=kt>error</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// 1. 处理选项</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>options</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=o>&amp;</span><span class=nx>MyChatModelOptions</span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>       </span><span class=nx>Options</span><span class=p>:</span><span class=w> </span><span class=o>&amp;</span><span class=nx>model</span><span class=p>.</span><span class=nx>Options</span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nx>Model</span><span class=p>:</span><span class=w> </span><span class=o>&amp;</span><span class=nx>m</span><span class=p>.</span><span class=nx>model</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>       </span><span class=p>},</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>       </span><span class=nx>RetryCount</span><span class=p>:</span><span class=w> </span><span class=nx>m</span><span class=p>.</span><span class=nx>retryCount</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>       </span><span class=nx>Timeout</span><span class=p>:</span><span class=w>    </span><span class=nx>m</span><span class=p>.</span><span class=nx>timeout</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>options</span><span class=p>.</span><span class=nx>Options</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=nx>model</span><span class=p>.</span><span class=nf>GetCommonOptions</span><span class=p>(</span><span class=nx>options</span><span class=p>.</span><span class=nx>Options</span><span class=p>,</span><span class=w> </span><span class=nx>opts</span><span class=o>...</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>options</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=nx>model</span><span class=p>.</span><span class=nf>GetImplSpecificOptions</span><span class=p>(</span><span class=nx>options</span><span class=p>,</span><span class=w> </span><span class=nx>opts</span><span class=o>...</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// 2. 开始生成前的回调</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>ctx</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=nx>callbacks</span><span class=p>.</span><span class=nf>OnStart</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=o>&amp;</span><span class=nx>model</span><span class=p>.</span><span class=nx>CallbackInput</span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>       </span><span class=nx>Messages</span><span class=p>:</span><span class=w> </span><span class=nx>messages</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>       </span><span class=nx>Config</span><span class=p>:</span><span class=w> </span><span class=o>&amp;</span><span class=nx>model</span><span class=p>.</span><span class=nx>Config</span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nx>Model</span><span class=p>:</span><span class=w> </span><span class=o>*</span><span class=nx>options</span><span class=p>.</span><span class=nx>Options</span><span class=p>.</span><span class=nx>Model</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>       </span><span class=p>},</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>})</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// 3. 执行生成逻辑</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>response</span><span class=p>,</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>m</span><span class=p>.</span><span class=nf>doGenerate</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=nx>messages</span><span class=p>,</span><span class=w> </span><span class=nx>options</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// 4. 处理错误和完成回调</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>if</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=kc>nil</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>       </span><span class=nx>ctx</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=nx>callbacks</span><span class=p>.</span><span class=nf>OnError</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=nx>err</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>       </span><span class=k>return</span><span class=w> </span><span class=kc>nil</span><span class=p>,</span><span class=w> </span><span class=nx>err</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>ctx</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=nx>callbacks</span><span class=p>.</span><span class=nf>OnEnd</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=o>&amp;</span><span class=nx>model</span><span class=p>.</span><span class=nx>CallbackOutput</span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>       </span><span class=nx>Message</span><span class=p>:</span><span class=w> </span><span class=nx>response</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>})</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>return</span><span class=w> </span><span class=nx>response</span><span class=p>,</span><span class=w> </span><span class=kc>nil</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// 流式输出</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=p>(</span><span class=nx>m</span><span class=w> </span><span class=o>*</span><span class=nx>MyChatModel</span><span class=p>)</span><span class=w> </span><span class=nf>Stream</span><span class=p>(</span><span class=nx>ctx</span><span class=w> </span><span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>,</span><span class=w> </span><span class=nx>messages</span><span class=w> </span><span class=p>[]</span><span class=o>*</span><span class=nx>schema</span><span class=p>.</span><span class=nx>Message</span><span class=p>,</span><span class=w> </span><span class=nx>opts</span><span class=w> </span><span class=o>...</span><span class=nx>model</span><span class=p>.</span><span class=nx>Option</span><span class=p>)</span><span class=w> </span><span class=p>(</span><span class=o>*</span><span class=nx>schema</span><span class=p>.</span><span class=nx>StreamReader</span><span class=p>[</span><span class=o>*</span><span class=nx>schema</span><span class=p>.</span><span class=nx>Message</span><span class=p>],</span><span class=w> </span><span class=kt>error</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// 1. 处理选项</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>options</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=o>&amp;</span><span class=nx>MyChatModelOptions</span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>       </span><span class=nx>Options</span><span class=p>:</span><span class=w> </span><span class=o>&amp;</span><span class=nx>model</span><span class=p>.</span><span class=nx>Options</span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nx>Model</span><span class=p>:</span><span class=w> </span><span class=o>&amp;</span><span class=nx>m</span><span class=p>.</span><span class=nx>model</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>       </span><span class=p>},</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>       </span><span class=nx>RetryCount</span><span class=p>:</span><span class=w> </span><span class=nx>m</span><span class=p>.</span><span class=nx>retryCount</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>       </span><span class=nx>Timeout</span><span class=p>:</span><span class=w>    </span><span class=nx>m</span><span class=p>.</span><span class=nx>timeout</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>options</span><span class=p>.</span><span class=nx>Options</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=nx>model</span><span class=p>.</span><span class=nf>GetCommonOptions</span><span class=p>(</span><span class=nx>options</span><span class=p>.</span><span class=nx>Options</span><span class=p>,</span><span class=w> </span><span class=nx>opts</span><span class=o>...</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>options</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=nx>model</span><span class=p>.</span><span class=nf>GetImplSpecificOptions</span><span class=p>(</span><span class=nx>options</span><span class=p>,</span><span class=w> </span><span class=nx>opts</span><span class=o>...</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// 2. 开始流式生成前的回调</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>ctx</span><span class=w> </span><span class=p>=</span><span class=w> </span><span class=nx>callbacks</span><span class=p>.</span><span class=nf>OnStart</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=o>&amp;</span><span class=nx>model</span><span class=p>.</span><span class=nx>CallbackInput</span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>       </span><span class=nx>Messages</span><span class=p>:</span><span class=w> </span><span class=nx>messages</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>       </span><span class=nx>Config</span><span class=p>:</span><span class=w> </span><span class=o>&amp;</span><span class=nx>model</span><span class=p>.</span><span class=nx>Config</span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nx>Model</span><span class=p>:</span><span class=w> </span><span class=o>*</span><span class=nx>options</span><span class=p>.</span><span class=nx>Options</span><span class=p>.</span><span class=nx>Model</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>       </span><span class=p>},</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>})</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// 3. 创建流式响应</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// Pipe产生一个StreamReader和一个StreamWrite，向StreamWrite中写入可以从StreamReader中读到，二者并发安全。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// 实现中异步向StreamWrite中写入生成内容，返回StreamReader作为返回值</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// ***StreamReader是一个数据流，仅可读一次，组件自行实现Callback时，既需要通过OnEndWithCallbackOutput向callback传递数据流，也需要向返回一个数据流，需要对数据流进行一次拷贝</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// 考虑到此种情形总是需要拷贝数据流，OnEndWithCallbackOutput函数会在内部拷贝并返回一个未被读取的流</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// 以下代码演示了一种流处理方式，处理方式不唯一</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>sr</span><span class=p>,</span><span class=w> </span><span class=nx>sw</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>schema</span><span class=p>.</span><span class=nx>Pipe</span><span class=p>[</span><span class=o>*</span><span class=nx>model</span><span class=p>.</span><span class=nx>CallbackOutput</span><span class=p>](</span><span class=mi>1</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// 4. 启动异步生成</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>go</span><span class=w> </span><span class=kd>func</span><span class=p>()</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>       </span><span class=k>defer</span><span class=w> </span><span class=nx>sw</span><span class=p>.</span><span class=nf>Close</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>       </span><span class=c1>// 流式写入</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>       </span><span class=nx>m</span><span class=p>.</span><span class=nf>doStream</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=nx>messages</span><span class=p>,</span><span class=w> </span><span class=nx>options</span><span class=p>,</span><span class=w> </span><span class=nx>sw</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// 5. 完成回调</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nx>_</span><span class=p>,</span><span class=w> </span><span class=nx>nsr</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>callbacks</span><span class=p>.</span><span class=nf>OnEndWithStreamOutput</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=nx>sr</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>return</span><span class=w> </span><span class=nx>schema</span><span class=p>.</span><span class=nf>StreamReaderWithConvert</span><span class=p>(</span><span class=nx>nsr</span><span class=p>,</span><span class=w> </span><span class=kd>func</span><span class=p>(</span><span class=nx>t</span><span class=w> </span><span class=o>*</span><span class=nx>model</span><span class=p>.</span><span class=nx>CallbackOutput</span><span class=p>)</span><span class=w> </span><span class=p>(</span><span class=o>*</span><span class=nx>schema</span><span class=p>.</span><span class=nx>Message</span><span class=p>,</span><span class=w> </span><span class=kt>error</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>       </span><span class=k>return</span><span class=w> </span><span class=nx>t</span><span class=p>.</span><span class=nx>Message</span><span class=p>,</span><span class=w> </span><span class=kc>nil</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=p>}),</span><span class=w> </span><span class=kc>nil</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=c1>// 工具绑定、参数配置</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=p>(</span><span class=nx>m</span><span class=w> </span><span class=o>*</span><span class=nx>MyChatModel</span><span class=p>)</span><span class=w>  </span><span class=nf>WithTools</span><span class=p>(</span><span class=nx>tools</span><span class=w> </span><span class=p>[]</span><span class=o>*</span><span class=nx>schema</span><span class=p>.</span><span class=nx>ToolInfo</span><span class=p>)</span><span class=w> </span><span class=p>(</span><span class=nx>model</span><span class=p>.</span><span class=nx>ToolCallingChatModel</span><span class=p>,</span><span class=w> </span><span class=kt>error</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// 实现工具绑定逻辑</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>return</span><span class=w> </span><span class=kc>nil</span><span class=p>,</span><span class=w> </span><span class=kc>nil</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=p>(</span><span class=nx>m</span><span class=w> </span><span class=o>*</span><span class=nx>MyChatModel</span><span class=p>)</span><span class=w> </span><span class=nf>doGenerate</span><span class=p>(</span><span class=nx>ctx</span><span class=w> </span><span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>,</span><span class=w> </span><span class=nx>messages</span><span class=w> </span><span class=p>[]</span><span class=o>*</span><span class=nx>schema</span><span class=p>.</span><span class=nx>Message</span><span class=p>,</span><span class=w> </span><span class=nx>opts</span><span class=w> </span><span class=o>*</span><span class=nx>MyChatModelOptions</span><span class=p>)</span><span class=w> </span><span class=p>(</span><span class=o>*</span><span class=nx>schema</span><span class=p>.</span><span class=nx>Message</span><span class=p>,</span><span class=w> </span><span class=kt>error</span><span class=p>)</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// 实现生成逻辑</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>return</span><span class=w> </span><span class=kc>nil</span><span class=p>,</span><span class=w> </span><span class=kc>nil</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=p>(</span><span class=nx>m</span><span class=w> </span><span class=o>*</span><span class=nx>MyChatModel</span><span class=p>)</span><span class=w> </span><span class=nf>doStream</span><span class=p>(</span><span class=nx>ctx</span><span class=w> </span><span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>,</span><span class=w> </span><span class=nx>messages</span><span class=w> </span><span class=p>[]</span><span class=o>*</span><span class=nx>schema</span><span class=p>.</span><span class=nx>Message</span><span class=p>,</span><span class=w> </span><span class=nx>opts</span><span class=w> </span><span class=o>*</span><span class=nx>MyChatModelOptions</span><span class=p>,</span><span class=w> </span><span class=nx>sr</span><span class=w> </span><span class=o>*</span><span class=nx>schema</span><span class=p>.</span><span class=nx>StreamWriter</span><span class=p>[</span><span class=o>*</span><span class=nx>model</span><span class=p>.</span><span class=nx>CallbackOutput</span><span class=p>])</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c1>// 流式生成文本写入sr中</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=k>return</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div><div class=code-expand-btn aria-label=展开或折叠代码块 role=button><i class="fa-solid fa-angles-down" aria-hidden=true></i></div></div></div><h2 class=heading-element id=chattemplate概念><span>ChatTemplate概念</span>
+<a href=#chattemplate%e6%a6%82%e5%bf%b5 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h2><p>ChatTemplate 是 Eino 中用于管理和构建提示词（Prompt）的组件。它提供了变量替换、消息模板化等功能，让 Prompt 管理更加规范和可维护。</p><p>使用场景：</p><ul><li><p>构建结构化的系统提示。</p></li><li><p>处理多轮对话的模板 (包括 history)。</p></li><li><p>实现可复用的提示模式。</p></li></ul><h2 class=heading-element id=组件定义-1><span>组件定义</span>
+<a href=#%e7%bb%84%e4%bb%b6%e5%ae%9a%e4%b9%89-1 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h2><h3 class=heading-element id=接口定义-1><span>接口定义</span>
+<a href=#%e6%8e%a5%e5%8f%a3%e5%ae%9a%e4%b9%89-1 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h3><blockquote><p>代码位置：eino/components/prompt/interface.go</p></blockquote><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=1 style=--fi-max-shown-lines:50;--fi-line-digit:1;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>type</span><span class=w> </span><span class=nx>ChatTemplate</span><span class=w> </span><span class=kd>interface</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nf>Format</span><span class=p>(</span><span class=nx>ctx</span><span class=w> </span><span class=nx>context</span><span class=p>.</span><span class=nx>Context</span><span class=p>,</span><span class=w> </span><span class=nx>vs</span><span class=w> </span><span class=kd>map</span><span class=p>[</span><span class=kt>string</span><span class=p>]</span><span class=kt>any</span><span class=p>,</span><span class=w> </span><span class=nx>opts</span><span class=w> </span><span class=o>...</span><span class=nx>Option</span><span class=p>)</span><span class=w> </span><span class=p>([]</span><span class=o>*</span><span class=nx>schema</span><span class=p>.</span><span class=nx>Message</span><span class=p>,</span><span class=w> </span><span class=kt>error</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div><ul><li><p><code>prompt.FromMessages()</code></p><ul><li>用于把多个 message 变成一个 chat template。</li></ul></li><li><p><code>schema.Message{}</code></p><ul><li>schema.Message 是实现了 Format 接口的结构体，因此可直接构建 <code>schema.Message{}</code> 作为 template</li></ul></li><li><p><code>schema.SystemMessage()</code></p><ul><li>此方法是构建 role 为 “system” 的 message 快捷方法</li></ul></li><li><p><code>schema.AssistantMessage()</code></p><ul><li>此方法是构建 role 为 “assistant” 的 message 快捷方法</li></ul></li><li><p><code>schema.UserMessage()</code></p><ul><li>此方法是构建 role 为 “user” 的 message 快捷方法</li></ul></li><li><p><code>schema.ToolMessage()</code></p><ul><li>此方法是构建 role 为 “tool” 的 message 快捷方法</li></ul></li><li><p><code>schema.MessagesPlaceholder()</code></p><ul><li>可用于把一个 <code>[]*schema.Message</code> 插入到 message 列表中，常用于插入历史对话</li></ul></li></ul><h2 class=heading-element id=使用方式><span>使用方式</span>
+<a href=#%e4%bd%bf%e7%94%a8%e6%96%b9%e5%bc%8f class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h2><p>ChatTemplate 支持多种模板化方式，最常见的包括：</p><ol><li><p>FString 格式：使用 <code>{variable}</code> 语法进行变量替换</p></li><li><p>GoTemplate 格式：使用 Go 标准库的 text/template 语法，支持条件判断、循环等复杂逻辑</p></li><li><p>Jinja2 格式：使用 Jinja2 模板语法</p></li></ol><p>基本使用思路：</p><ol><li><p>使用prompt.FromMessages以及提供的schema.FString格式化</p></li><li><p>构造params参数</p></li><li><p>使用template自带的Format构建即可</p></li></ol><p>ChatTemplate 一般用于 ChatModel 之前做上下文准备的</p><h3 class=heading-element id=fstring><span>FString</span>
+<a href=#fstring class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h3><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=nf>main</span><span class=p>()</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>ctx</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>context</span><span class=p>.</span><span class=nf>Background</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>apiKey</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>os</span><span class=p>.</span><span class=nf>Getenv</span><span class=p>(</span><span class=s>&#34;DEEPSEEK_API_KEY&#34;</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>if</span><span class=w> </span><span class=nx>apiKey</span><span class=w> </span><span class=o>==</span><span class=w> </span><span class=s>&#34;&#34;</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>log</span><span class=p>.</span><span class=nf>Fatal</span><span class=p>(</span><span class=s>&#34;缺少环境变量 DEEPSEEK_API_KEY&#34;</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>model</span><span class=p>,</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>deepseek</span><span class=p>.</span><span class=nf>NewChatModel</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=o>&amp;</span><span class=nx>deepseek</span><span class=p>.</span><span class=nx>ChatModelConfig</span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>APIKey</span><span class=p>:</span><span class=w>  </span><span class=nx>apiKey</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>Model</span><span class=p>:</span><span class=w>   </span><span class=s>&#34;deepseek-chat&#34;</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>BaseURL</span><span class=p>:</span><span class=w> </span><span class=s>&#34;https://api.deepseek.com&#34;</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>})</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>if</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=kc>nil</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nb>panic</span><span class=p>(</span><span class=nx>err</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>template</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>prompt</span><span class=p>.</span><span class=nf>FromMessages</span><span class=p>(</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>schema</span><span class=p>.</span><span class=nx>FString</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>schema</span><span class=p>.</span><span class=nf>SystemMessage</span><span class=p>(</span><span class=s>&#34;你是一个{role}，请用{tone}的语气回答问题。&#34;</span><span class=p>),</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>schema</span><span class=p>.</span><span class=nf>UserMessage</span><span class=p>(</span><span class=s>&#34;{question}&#34;</span><span class=p>),</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>vars</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=kd>map</span><span class=p>[</span><span class=kt>string</span><span class=p>]</span><span class=kt>any</span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=s>&#34;role&#34;</span><span class=p>:</span><span class=w>     </span><span class=s>&#34;篮球体能教练&#34;</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=s>&#34;tone&#34;</span><span class=p>:</span><span class=w>     </span><span class=s>&#34;专业但易懂&#34;</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=s>&#34;question&#34;</span><span class=p>:</span><span class=w> </span><span class=s>&#34;我每周打球2次，想提升第一步爆发和上篮终结，给我一周训练计划。&#34;</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>messages</span><span class=p>,</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>template</span><span class=p>.</span><span class=nf>Format</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=nx>vars</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>if</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=kc>nil</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nb>panic</span><span class=p>(</span><span class=nx>err</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>stream</span><span class=p>,</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>model</span><span class=p>.</span><span class=nf>Stream</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=nx>messages</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>if</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=kc>nil</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nb>panic</span><span class=p>(</span><span class=nx>err</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>defer</span><span class=w> </span><span class=nx>stream</span><span class=p>.</span><span class=nf>Close</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>for</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>chunk</span><span class=p>,</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>stream</span><span class=p>.</span><span class=nf>Recv</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=k>if</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=kc>nil</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                        </span><span class=k>break</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nb>print</span><span class=p>(</span><span class=nx>chunk</span><span class=p>.</span><span class=nx>Content</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nb>println</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div><h3 class=heading-element id=gotemplate><span>GoTemplate</span>
+<a href=#gotemplate class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h3><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=nf>main</span><span class=p>()</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>ctx</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>context</span><span class=p>.</span><span class=nf>Background</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>apiKey</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>os</span><span class=p>.</span><span class=nf>Getenv</span><span class=p>(</span><span class=s>&#34;DEEPSEEK_API_KEY&#34;</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>if</span><span class=w> </span><span class=nx>apiKey</span><span class=w> </span><span class=o>==</span><span class=w> </span><span class=s>&#34;&#34;</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>log</span><span class=p>.</span><span class=nf>Fatal</span><span class=p>(</span><span class=s>&#34;缺少环境变量 DEEPSEEK_API_KEY&#34;</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>model</span><span class=p>,</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>deepseek</span><span class=p>.</span><span class=nf>NewChatModel</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=o>&amp;</span><span class=nx>deepseek</span><span class=p>.</span><span class=nx>ChatModelConfig</span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>APIKey</span><span class=p>:</span><span class=w>  </span><span class=nx>apiKey</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>Model</span><span class=p>:</span><span class=w>   </span><span class=s>&#34;deepseek-chat&#34;</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>BaseURL</span><span class=p>:</span><span class=w> </span><span class=s>&#34;https://api.deepseek.com&#34;</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>})</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>if</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=kc>nil</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nb>panic</span><span class=p>(</span><span class=nx>err</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>template</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>prompt</span><span class=p>.</span><span class=nf>FromMessages</span><span class=p>(</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>schema</span><span class=p>.</span><span class=nx>GoTemplate</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>schema</span><span class=p>.</span><span class=nf>SystemMessage</span><span class=p>(</span><span class=s>`</span><span class=cp>{{</span><span class=k>if</span><span class=w> </span><span class=na>.isExpert</span><span class=cp>}}</span><span class=s>你是一个专家级</span><span class=cp>{{</span><span class=na>.domain</span><span class=cp>}}</span><span class=s>教练。</span><span class=cp>{{</span><span class=k>else</span><span class=cp>}}</span><span class=s>你是一个入门级</span><span class=cp>{{</span><span class=na>.domain</span><span class=cp>}}</span><span class=s>助教。</span><span class=cp>{{</span><span class=k>end</span><span class=cp>}}</span><span class=s>
+</span></span></span><span class=line><span class=cl><span class=cp>{{</span><span class=k>if</span><span class=w> </span><span class=na>.isFormal</span><span class=cp>}}</span><span class=s>请使用正式、结构化的语言风格。</span><span class=cp>{{</span><span class=k>else</span><span class=cp>}}</span><span class=s>请使用轻松、友好的语言风格。</span><span class=cp>{{</span><span class=k>end</span><span class=cp>}}</span><span class=s>
+</span></span></span><span class=line><span class=cl><span class=s>你的任务是：</span><span class=cp>{{</span><span class=na>.task</span><span class=cp>}}</span><span class=s>`</span><span class=p>),</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>schema</span><span class=p>.</span><span class=nf>UserMessage</span><span class=p>(</span><span class=s>&#34;{{.question}}&#34;</span><span class=p>),</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>vars</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=kd>map</span><span class=p>[</span><span class=kt>string</span><span class=p>]</span><span class=kt>any</span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=s>&#34;isExpert&#34;</span><span class=p>:</span><span class=w> </span><span class=kc>false</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=s>&#34;domain&#34;</span><span class=p>:</span><span class=w>   </span><span class=s>&#34;篮球基础&#34;</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=s>&#34;isFormal&#34;</span><span class=p>:</span><span class=w> </span><span class=kc>false</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=s>&#34;task&#34;</span><span class=p>:</span><span class=w>     </span><span class=s>&#34;帮助初学者理解基本概念并给出练习方法&#34;</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=s>&#34;question&#34;</span><span class=p>:</span><span class=w> </span><span class=s>&#34;什么是“挡拆”（Pick and Roll）？我该如何在野球局里用好它？&#34;</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>messages</span><span class=p>,</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>template</span><span class=p>.</span><span class=nf>Format</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=nx>vars</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>if</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=kc>nil</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nb>panic</span><span class=p>(</span><span class=nx>err</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=c1>// 可选：把渲染后的 prompt 打印出来，便于教学</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>for</span><span class=w> </span><span class=nx>_</span><span class=p>,</span><span class=w> </span><span class=nx>m</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=k>range</span><span class=w> </span><span class=nx>messages</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nb>println</span><span class=p>(</span><span class=s>&#34;[rendered]&#34;</span><span class=p>,</span><span class=w> </span><span class=nx>m</span><span class=p>.</span><span class=nx>Role</span><span class=p>,</span><span class=w> </span><span class=s>&#34;:&#34;</span><span class=p>,</span><span class=w> </span><span class=nx>m</span><span class=p>.</span><span class=nx>Content</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>stream</span><span class=p>,</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>model</span><span class=p>.</span><span class=nf>Stream</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=nx>messages</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>if</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=kc>nil</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nb>panic</span><span class=p>(</span><span class=nx>err</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>defer</span><span class=w> </span><span class=nx>stream</span><span class=p>.</span><span class=nf>Close</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>for</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>chunk</span><span class=p>,</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>stream</span><span class=p>.</span><span class=nf>Recv</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=k>if</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=kc>nil</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                        </span><span class=k>break</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nb>print</span><span class=p>(</span><span class=nx>chunk</span><span class=p>.</span><span class=nx>Content</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nb>println</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div><div class=code-expand-btn aria-label=展开或折叠代码块 role=button><i class="fa-solid fa-angles-down" aria-hidden=true></i></div></div></div><h3 class=heading-element id=jinja2><span>Jinja2</span>
+<a href=#jinja2 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h3><div class="code-block highlight" data-mode=classic data-copyable=true data-editable=true><div class=chroma><div class="code-header language-go"><span class=code-title><i class="arrow fa-solid fa-chevron-down" aria-hidden=true></i></span><span class=ellipses-btn aria-label="Show more options" role=button><i class="fa-solid fa-ellipsis-h" aria-hidden=true></i></span><span class="action-btn line-nos-btn" aria-label=切换行号 role=button title=切换行号 data-ct-tooltip><i class="fa-solid fa-list-ol" aria-hidden=true></i></span><span class="action-btn line-wrap-btn" aria-label=切换自动换行 role=button title=切换自动换行 data-ct-tooltip><i class="fa-solid fa-right-left" aria-hidden=true></i></span><span class="action-btn edit-btn" aria-label=切换可编辑代码块 role=button title=切换可编辑代码块 data-ct-tooltip><i class="fa-solid fa-pen-to-square" aria-hidden=true></i></span><span class="action-btn copy-btn" aria-label=复制到剪贴板 role=button title=复制到剪贴板 data-copied-text=已复制 data-ct-tooltip><i class="fa-regular fa-clone" aria-hidden=true></i></span></div><div class=code-wrapper data-max=50 data-line-digit=2 style=--fi-max-shown-lines:50;--fi-line-digit:2;--fi-line-start:1><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-go data-lang=go><span class=line><span class=cl><span class=kd>func</span><span class=w> </span><span class=nf>main</span><span class=p>()</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>ctx</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>context</span><span class=p>.</span><span class=nf>Background</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>apiKey</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>os</span><span class=p>.</span><span class=nf>Getenv</span><span class=p>(</span><span class=s>&#34;DEEPSEEK_API_KEY&#34;</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>if</span><span class=w> </span><span class=nx>apiKey</span><span class=w> </span><span class=o>==</span><span class=w> </span><span class=s>&#34;&#34;</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>log</span><span class=p>.</span><span class=nf>Fatal</span><span class=p>(</span><span class=s>&#34;缺少环境变量 DEEPSEEK_API_KEY&#34;</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>model</span><span class=p>,</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>deepseek</span><span class=p>.</span><span class=nf>NewChatModel</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=o>&amp;</span><span class=nx>deepseek</span><span class=p>.</span><span class=nx>ChatModelConfig</span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>APIKey</span><span class=p>:</span><span class=w>  </span><span class=nx>apiKey</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>Model</span><span class=p>:</span><span class=w>   </span><span class=s>&#34;deepseek-chat&#34;</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>BaseURL</span><span class=p>:</span><span class=w> </span><span class=s>&#34;https://api.deepseek.com&#34;</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>})</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>if</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=kc>nil</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nb>panic</span><span class=p>(</span><span class=nx>err</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>template</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>prompt</span><span class=p>.</span><span class=nf>FromMessages</span><span class=p>(</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>schema</span><span class=p>.</span><span class=nx>Jinja2</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>schema</span><span class=p>.</span><span class=nf>SystemMessage</span><span class=p>(</span><span class=s>`{% if level == &#39;expert&#39; %}你是一名专家级篮球训练顾问。{% else %}你是一名入门篮球助教。{% endif %}
+</span></span></span><span class=line><span class=cl><span class=s>{% if domain %}你的专长方向是：</span><span class=cp>{{</span><span class=w> </span><span class=nx>domain</span><span class=w> </span><span class=cp>}}</span><span class=s>。{% endif %}
+</span></span></span><span class=line><span class=cl><span class=s>请用{% if formal %}正式{% else %}友好{% endif %}的语气回答，并给出可执行步骤清单。`</span><span class=p>),</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>schema</span><span class=p>.</span><span class=nf>UserMessage</span><span class=p>(</span><span class=s>&#34;{{ question }}&#34;</span><span class=p>),</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>vars</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=kd>map</span><span class=p>[</span><span class=kt>string</span><span class=p>]</span><span class=kt>any</span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=s>&#34;level&#34;</span><span class=p>:</span><span class=w>  </span><span class=s>&#34;expert&#34;</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=s>&#34;domain&#34;</span><span class=p>:</span><span class=w> </span><span class=s>&#34;持球进攻与终结&#34;</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=s>&#34;formal&#34;</span><span class=p>:</span><span class=w> </span><span class=kc>true</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=s>&#34;question&#34;</span><span class=p>:</span><span class=w> </span><span class=s>&#34;请讲解“欧洲步”的关键细节，给一个30分钟训练流程，并指出最常见的3个错误。&#34;</span><span class=p>,</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>messages</span><span class=p>,</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>template</span><span class=p>.</span><span class=nf>Format</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=nx>vars</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>if</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=kc>nil</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nb>panic</span><span class=p>(</span><span class=nx>err</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>for</span><span class=w> </span><span class=nx>_</span><span class=p>,</span><span class=w> </span><span class=nx>m</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=k>range</span><span class=w> </span><span class=nx>messages</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nb>println</span><span class=p>(</span><span class=s>&#34;[rendered]&#34;</span><span class=p>,</span><span class=w> </span><span class=nx>m</span><span class=p>.</span><span class=nx>Role</span><span class=p>,</span><span class=w> </span><span class=s>&#34;:&#34;</span><span class=p>,</span><span class=w> </span><span class=nx>m</span><span class=p>.</span><span class=nx>Content</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nx>stream</span><span class=p>,</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>model</span><span class=p>.</span><span class=nf>Stream</span><span class=p>(</span><span class=nx>ctx</span><span class=p>,</span><span class=w> </span><span class=nx>messages</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>if</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=kc>nil</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nb>panic</span><span class=p>(</span><span class=nx>err</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>defer</span><span class=w> </span><span class=nx>stream</span><span class=p>.</span><span class=nf>Close</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=k>for</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nx>chunk</span><span class=p>,</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>:=</span><span class=w> </span><span class=nx>stream</span><span class=p>.</span><span class=nf>Recv</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=k>if</span><span class=w> </span><span class=nx>err</span><span class=w> </span><span class=o>!=</span><span class=w> </span><span class=kc>nil</span><span class=w> </span><span class=p>{</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                        </span><span class=k>break</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nb>print</span><span class=p>(</span><span class=nx>chunk</span><span class=p>.</span><span class=nx>Content</span><span class=p>)</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=p>}</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nb>println</span><span class=p>()</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=p>}</span></span></span></code></pre></td></tr></table></div></div></div><h3 class=heading-element id=小结><span>小结</span>
+<a href=#%e5%b0%8f%e7%bb%93 class=heading-mark><svg class="octicon octicon-link" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5.0 114.95 4.95l-2.5 2.5a3.5 3.5.0 01-4.95.0.751.751.0 01.018-1.042.751.751.0 011.042-.018 1.998 1.998.0 002.83.0l2.5-2.5a2.002 2.002.0 00-2.83-2.83l-1.25 1.25a.751.751.0 01-1.042-.018.751.751.0 01-.018-1.042zm-4.69 9.64a1.998 1.998.0 002.83.0l1.25-1.25a.751.751.0 011.042.018.751.751.0 01.018 1.042l-1.25 1.25a3.5 3.5.0 11-4.95-4.95l2.5-2.5a3.5 3.5.0 014.95.0.751.751.0 01-.018 1.042.751.751.0 01-1.042.018 1.998 1.998.0 00-2.83.0l-2.5 2.5a1.998 1.998.0 000 2.83z"/></svg></a></h3><ol><li><p>FString 格式 (schema.FString)</p><ul><li><p>使用 <code>{variable}</code> 语法进行变量替换</p></li><li><p>简单直观，适合基础文本替换场景</p></li><li><p>示例：<code>"你是一个{role}，请帮我{task}。"</code></p></li></ul></li><li><p>GoTemplate 格式 (schema.GoTemplate)</p><ul><li><p>使用 Go 标准库的 text/template 语法</p></li><li><p>支持条件判断、循环等复杂逻辑</p></li><li><p>示例：<code>"{{if .expert}}作为专家{{end}}请{{.action}}"</code></p></li></ul></li><li><p>Jinja2 格式 (schema.Jinja2)</p><ul><li><p>使用 Jinja2 模板语法</p></li><li><p>示例：<code>"{% if level == 'expert' %}以专家的角度{% endif %}分析{{topic}}"</code></p></li></ul></li></ol></div><div class=post-footer id=post-footer><div class=post-info><div class=post-info-line><div class=post-info-mod><span title="更新于 2026-03-11 21:24:45">更新于 2026-03-11&nbsp;</span></div><div class=post-info-license><span><a rel="license external nofollow noopener noreferrer" href=https://creativecommons.org/licenses/by-nc-sa/4.0/ target=_blank>CC BY-NC-SA 4.0</a></span></div></div><div class=post-info-line><div class=post-info-md></div><div class=post-info-share><span></span></div></div></div><div class=post-info-more><section class=post-tags><i class="fa-solid fa-tags me-1" aria-hidden=true></i><a href=/tags/agent/ class=post-tag title="标签 - Agent">Agent</a><a href=/tags/ai/ class=post-tag title="标签 - AI">AI</a></section><section><span><a href=javascript:void(0); onclick=window.history.back()>返回</a></span>&nbsp;|&nbsp;<span><a href=/>主页</a></span></section></div><div class=post-nav><a href=/ai/eino%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E4%B8%80/ class=post-nav-item rel=prev title=Eino源码学习(一)--Schema><i class="fa-solid fa-angle-left" aria-hidden=true></i>Eino源码学习(一)--Schema</a><a href=/posts/%E4%BA%8C%E5%8F%89%E6%A0%91%E5%BA%94%E7%94%A8/ class=post-nav-item rel=next title=二叉树：应用>二叉树：应用<i class="fa-solid fa-angle-right" aria-hidden=true></i></a></div></div></article><aside class=toc id=toc-auto aria-label=目录><h2 class=toc-title>目录&nbsp;<i class="toc-icon fa-solid fa-angle-down" aria-hidden=true></i></h2><div class=toc-content id=toc-content-auto></div></aside><dialog id=toc-dialog aria-labelledby=toc-dialog-title role=dialog><div class=toc><h2 class=toc-title>目录</h2><div class=toc-content id=toc-content-drawer><nav><ul><li><a href=#chatmodel概念>ChatModel概念</a></li><li><a href=#组件定义>组件定义</a><ul><li><a href=#接口定义>接口定义</a></li><li><a href=#公共option>公共Option</a></li></ul></li><li><a href=#实现案例>实现案例</a></li><li><a href=#chattemplate概念>ChatTemplate概念</a></li><li><a href=#组件定义-1>组件定义</a><ul><li><a href=#接口定义-1>接口定义</a></li></ul></li><li><a href=#使用方式>使用方式</a><ul><li><a href=#fstring>FString</a></li><li><a href=#gotemplate>GoTemplate</a></li><li><a href=#jinja2>Jinja2</a></li><li><a href=#小结>小结</a></li></ul></li></ul></nav></div></div></dialog></main><footer class=footer><div class=footer-container><div class="footer-line powered">由 <a href=https://gohugo.io/ target=_blank rel="external nofollow noopener noreferrer" title="Hugo 0.163.1"><img class=hugo-icon src=/images/hugo.min.svg alt="Hugo logo"> Hugo</a> 强力驱动 | 主题 - <a href=https://github.com/hugo-fixit/FixIt target=_blank rel=external title="FixIt v0.4.5"><img class=fixit-icon src=/images/fixit.min.svg alt="FixIt logo"> FixIt</a></div><div class="footer-line copyright" itemscope itemtype=http://schema.org/CreativeWork><i class="fa-regular fa-copyright" aria-hidden=true></i>
+<span itemprop=copyrightYear>2025 - 2026</span><span class=author itemprop=copyrightHolder>
+<a href=https://github.com/zenthys target=_blank rel="external nofollow noopener noreferrer">zenthys</a></span></div></div></footer></div><div class=widgets><div class=fixed-buttons><div class="fixed-button back-to-top animate__faster d-none" role=button aria-label=回到顶部><i class="fa-solid fa-arrow-up" aria-hidden=true></i></div><div id=toc-drawer-button class="fixed-button toc-drawer-button d-none" role=button aria-label=目录><i class="fa-solid fa-bars" aria-hidden=true></i></div></div><div id=mask></div><noscript><div class=noscript-warning>该网站在启用 JavaScript 的情况下效果最佳。</div></noscript></div><link rel=stylesheet href=/lib/cookieconsent/cookieconsent.min.css><script src=/lib/autocomplete/autocomplete.min.js defer></script><script src=/lib/fuse/fuse.min.js defer></script><script src=/lib/cookieconsent/cookieconsent.min.js defer></script><script src=/lib/cell-tooltip/cell-tooltip.umd.js defer></script><script src=/js/config/257566bda3cdb4de4a6737ad38a87f46.js defer></script><script src=/js/theme.min.js defer></script><script src=/js/custom.min.js defer></script></body></html>

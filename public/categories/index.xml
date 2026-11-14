@@ -28,6 +28,13 @@
 				<description></description>
 			</item>
 			<item>
+				<title>搞七捻三</title>
+				<link>http://localhost:1313/categories/%E6%90%9E%E4%B8%83%E6%8D%BB%E4%B8%89/</link>
+				<pubDate>Mon, 09 Feb 2026 15:57:24 +0800</pubDate>
+				<guid>http://localhost:1313/categories/%E6%90%9E%E4%B8%83%E6%8D%BB%E4%B8%89/</guid>
+				<description></description>
+			</item>
+			<item>
 				<title>Go</title>
 				<link>http://localhost:1313/categories/go/</link>
 				<pubDate>Tue, 25 Nov 2025 16:45:35 +0800</pubDate>
@@ -35,17 +42,24 @@
 				<description></description>
 			</item>
 			<item>
+				<title>MySQL</title>
+				<link>http://localhost:1313/categories/mysql/</link>
+				<pubDate>Wed, 12 Nov 2025 12:09:34 +0800</pubDate>
+				<guid>http://localhost:1313/categories/mysql/</guid>
+				<description></description>
+			</item>
+			<item>
 				<title>Opensource</title>
 				<link>http://localhost:1313/categories/opensource/</link>
-				<pubDate>Mon, 11 Aug 2025 20:43:32 +0800</pubDate>
+				<pubDate>Wed, 03 Sep 2025 16:35:13 +0800</pubDate>
 				<guid>http://localhost:1313/categories/opensource/</guid>
 				<description></description>
 			</item>
 			<item>
-				<title>Kubernetes</title>
-				<link>http://localhost:1313/categories/kubernetes/</link>
+				<title>K8s</title>
+				<link>http://localhost:1313/categories/k8s/</link>
 				<pubDate>Sat, 14 Jun 2025 19:08:43 +0800</pubDate>
-				<guid>http://localhost:1313/categories/kubernetes/</guid>
+				<guid>http://localhost:1313/categories/k8s/</guid>
 				<description></description>
 			</item>
 			<item>
@@ -70,10 +84,10 @@
 				<description></description>
 			</item>
 			<item>
-				<title>K8s</title>
-				<link>http://localhost:1313/categories/k8s/</link>
-				<pubDate>Tue, 13 May 2025 19:56:15 +0800</pubDate>
-				<guid>http://localhost:1313/categories/k8s/</guid>
+				<title>Kubernetes</title>
+				<link>http://localhost:1313/categories/kubernetes/</link>
+				<pubDate>Fri, 22 Nov 2024 17:35:53 +0800</pubDate>
+				<guid>http://localhost:1313/categories/kubernetes/</guid>
 				<description></description>
 			</item>
 	</channel>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>人工智能 - zenthys&#39;s blog</title>
+    <link>https://nsddd.top/ai/</link>
+    <description>记录 Go、AI、中间件与后端开发的技术博客</description>
+    <generator>Hugo 0.163.1 &amp; FixIt v0.4.5</generator>
+    <language>zh-CN</language>
+    <lastBuildDate>Wed, 11 Mar 2026 21:24:45 +0800</lastBuildDate>
+    <atom:link href="https://nsddd.top/ai/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Eino源码学习(二)--ChatModel和ChatTemplate</title>
+      <link>https://nsddd.top/ai/eino%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E4%BA%8C/</link>
+      <pubDate>Wed, 11 Mar 2026 21:24:45 +0800</pubDate>
+      <guid>https://nsddd.top/ai/eino%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E4%BA%8C/</guid>
+      <category domain="https://nsddd.top/categories/ai/">AI</category>
+      <description>&lt;h2 class=&#34;heading-element&#34; id=&#34;chatmodel概念&#34;&gt;&lt;span&gt;ChatModel概念&lt;/span&gt;&#xA;  &lt;a href=&#34;#chatmodel%e6%a6%82%e5%bf%b5&#34; class=&#34;heading-mark&#34;&gt;&#xA;    &lt;svg class=&#34;octicon octicon-link&#34; viewBox=&#34;0 0 16 16&#34; version=&#34;1.1&#34; width=&#34;16&#34; height=&#34;16&#34; aria-hidden=&#34;true&#34;&gt;&lt;path d=&#34;m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z&#34;&gt;&lt;/path&gt;&lt;/svg&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h2&gt;&lt;p&gt;ChatModel 是 Eino 中用于与大语言模型交互的核心组件。它提供了统一的接口来调用不同的大模型服务（如 OpenAI、Claude、ARK 等）。抽离出统一的接口进行模型的调用，这里就体现出框架所带来的一大优势。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Eino源码学习(一)--Schema</title>
+      <link>https://nsddd.top/ai/eino%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E4%B8%80/</link>
+      <pubDate>Wed, 11 Mar 2026 17:48:21 +0800</pubDate>
+      <guid>https://nsddd.top/ai/eino%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E4%B8%80/</guid>
+      <category domain="https://nsddd.top/categories/ai/">AI</category>
+      <description>&lt;h2 class=&#34;heading-element&#34; id=&#34;1-前言&#34;&gt;&lt;span&gt;1. 前言&lt;/span&gt;&#xA;  &lt;a href=&#34;#1-%e5%89%8d%e8%a8%80&#34; class=&#34;heading-mark&#34;&gt;&#xA;    &lt;svg class=&#34;octicon octicon-link&#34; viewBox=&#34;0 0 16 16&#34; version=&#34;1.1&#34; width=&#34;16&#34; height=&#34;16&#34; aria-hidden=&#34;true&#34;&gt;&lt;path d=&#34;m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z&#34;&gt;&lt;/path&gt;&lt;/svg&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h2&gt;&lt;p&gt;当我们在接触AI应用开发时，面对langchain、eino等框架，也许有过这样的疑问：&lt;strong&gt;我直接调用OpenAI的api不就行了？为什么要使用一层框架。&lt;/strong&gt;&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>agent设计架构(三)--Reflection</title>
+      <link>https://nsddd.top/ai/agent%E8%AE%BE%E8%AE%A1%E6%9E%B6%E6%9E%84%E4%B8%89--reflection/</link>
+      <pubDate>Thu, 12 Feb 2026 22:53:38 +0800</pubDate>
+      <guid>https://nsddd.top/ai/agent%E8%AE%BE%E8%AE%A1%E6%9E%B6%E6%9E%84%E4%B8%89--reflection/</guid>
+      <category domain="https://nsddd.top/categories/ai/">AI</category>
+      <description>&lt;p&gt;在我们已经实现的 &lt;a href=&#34;agent%e8%ae%be%e8%ae%a1%e6%9e%b6%e6%9e%84%28%e4%b8%80%29--react&#34;&gt;ReAct&lt;/a&gt; 和 &lt;a href=&#34;agent%e8%ae%be%e8%ae%a1%e6%9e%b6%e6%9e%84%28%e4%ba%8c%29--Plan-and-Solve&#34;&gt;Plan-and-Solve&lt;/a&gt; 范式中，智能体一旦完成了任务，其工作流程便告结束。然而，它们生成的初始答案，无论是行动轨迹还是最终结果，都可能存在谬误或有待改进之处。Reflection 机制的核心思想，正是为智能体引入一种事后（post-hoc）的自我校正循环，使其能够像人类一样，审视自己的工作，发现不足，并进行迭代优化。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>agent设计架构(二)--Plan-and-Solve</title>
+      <link>https://nsddd.top/ai/agent%E8%AE%BE%E8%AE%A1%E6%9E%B6%E6%9E%84%E4%BA%8C--plan-and-solve/</link>
+      <pubDate>Thu, 12 Feb 2026 22:23:44 +0800</pubDate>
+      <guid>https://nsddd.top/ai/agent%E8%AE%BE%E8%AE%A1%E6%9E%B6%E6%9E%84%E4%BA%8C--plan-and-solve/</guid>
+      <category domain="https://nsddd.top/categories/ai/">AI</category>
+      <description>&lt;p&gt;在&lt;a href=&#34;agent%e8%ae%be%e8%ae%a1%e6%9e%b6%e6%9e%84%28%e4%b8%80%29--react.md&#34;&gt;agent设计架构(一)&amp;ndash;ReAct&lt;/a&gt;掌握了 ReAct 这种反应式的、步进决策的智能体范式后，接下来将探讨一种风格迥异但同样强大的方法，Plan-and-Solve。顾名思义，这种范式将任务处理明确地分为两个阶段：先规划 (Plan)，后执行 (Solve)。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>agent设计架构(一)--ReAct</title>
+      <link>https://nsddd.top/ai/agent%E8%AE%BE%E8%AE%A1%E6%9E%B6%E6%9E%84%E4%B8%80--react/</link>
+      <pubDate>Thu, 12 Feb 2026 21:43:22 +0800</pubDate>
+      <guid>https://nsddd.top/ai/agent%E8%AE%BE%E8%AE%A1%E6%9E%B6%E6%9E%84%E4%B8%80--react/</guid>
+      <category domain="https://nsddd.top/categories/ai/">AI</category>
+      <description>&lt;p&gt;一个现代的智能体，其核心能力在于能将大语言模型的推理能力与外部世界联通。它能够自主地理解用户意图、拆解复杂任务，并通过调用代码解释器、搜索引擎、API等一系列“工具”，来获取信息、执行操作，最终达成目标。 然而，智能体并非万能，它同样面临着来自大模型本身的“幻觉”问题、在复杂任务中可能陷入推理循环、以及对工具的错误使用等挑战，这些也构成了智能体的能力边界。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>模型上下文协议(MCP)</title>
+      <link>https://nsddd.top/ai/go-mcp/</link>
+      <pubDate>Sat, 29 Nov 2025 17:36:22 +0800</pubDate>
+      <guid>https://nsddd.top/ai/go-mcp/</guid>
+      <category domain="https://nsddd.top/categories/ai/">AI</category>
+      <description>&lt;p&gt;如果你最近在看 AI 应用、Agent、工具调用或者 LLM 集成，大概率已经绕不过一个词：&lt;code&gt;MCP&lt;/code&gt;。&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>
